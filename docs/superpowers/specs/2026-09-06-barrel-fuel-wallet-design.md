@@ -2,7 +2,8 @@
 
 **Date:** 2026-09-06
 **Status:** Approved for planning
-**Scope:** Frontend UI shell with mock data. No backend, no real payments, no real station integration.
+**Status:** Revised after strategy review — v1 is a station-agnostic card product
+**Scope:** Frontend UI shell with mock data. No backend, no real payments, no station integration.
 
 ---
 
@@ -39,26 +40,59 @@ obtained, and that no station agreements exist. This is a communication requirem
 an engineering one, but it belongs in the spec because the fidelity of the build creates
 the risk.
 
+### 1.3 Strategy: demand-side aggregation
+
+Barrel is being built as a demand-side aggregator, in two deliberate phases.
+
+**Phase 1 — station-agnostic.** Barrel signs no stations. The product is a prepaid card
+that works at any fuel merchant in South Africa, so consumer growth is never gated on
+partner negotiations. Revenue is subscription, float, and issuer interchange. The goal is
+users and habit.
+
+**Phase 2 — aggregation.** With a large, habitual base, Barrel steers volume to chosen
+stations and sells that steering as a per-litre rebate. Stations sign because the volume
+is already moving and they want it pointed at them.
+
+Three consequences that shape v1, and one of them inverts an assumption:
+
+1. **No QR flow, no partner network, no redemption screens.** There is nothing to redeem
+   against. The card *is* the mechanic. This removes three screens from the original spec.
+2. **v1 is the control group, and that is a feature, not a delay.** Phase 2's leverage is
+   not user count — it is demonstrated elasticity, the proof that a nudge of a known size
+   moves a known volume. Elasticity is only measurable against a baseline of where drivers
+   fill absent any nudge, and that baseline can only be captured *before* steering exists.
+   Launching steering and measurement together yields no counterfactual and an
+   unfalsifiable number. v1 must therefore instrument per-station, per-grade, per-fill
+   attribution from the first transaction (§11).
+3. **Litre-denomination makes users unusually steerable later.** A cash customer chases
+   the cheapest pump. A Barrel customer sees no price signal at all — forty litres costs
+   forty litres wherever they go — so in phase 2 a small nudge fully determines station
+   choice. Preserving that price-blindness in the v1 interface is therefore a strategic
+   requirement, not just a brand one.
+
 ---
 
 ## 2. Goals and Non-Goals
 
 ### Goals
 
-1. Port all nine designed artboards to React Native at high visual fidelity.
-2. Add the three things the design is missing: a navigation model, a redemption flow,
-   and visible product guardrails.
-3. Make the core loop actually work against local state: top up increases the balance,
-   redeem decreases it, both write to a ledger the user can inspect.
-4. Full light/dark theming, dark by default.
-5. Keep the pure logic (lot consumption, expiry, caps, savings) unit-tested and
-   independent of React, so it can later be validated against the real backend ledger.
+1. Port the designed artboards to React Native at high visual fidelity.
+2. Add what the design is missing: a navigation model, the card as the central mechanic,
+   subscription, and visible product guardrails.
+3. Make the core loop work against local state: top up adds litres, a card fill deducts
+   them, both write to a ledger the user can inspect and audit.
+4. Model the card honestly — a card transaction carries rand, not litres, so the litre
+   deduction is an inference and the UI must show its arithmetic (§8.4).
+5. Full light/dark theming, dark by default.
+6. Keep the pure logic unit-tested and independent of React, so it can later be validated
+   against the real backend ledger.
 
 ### Non-Goals
 
 - Any backend, API, or persistence beyond in-memory state.
 - Real payments, card issuing, Apple Wallet / Google Pay passes. Those buttons are inert.
-- Real QR scanning at a pump. The redeem screen *displays* a code; nothing reads it.
+- QR redemption and partner-station flows. Cut entirely — see §1.3.
+- Real subscription billing. The paywall is UI only; nothing charges.
 - Authentication, FICA onboarding, or KYC flows.
 - Maps. The Stations screen's "VIEW ON MAP" is inert.
 - Accessibility audit beyond baseline (see §9.3).
@@ -147,9 +181,8 @@ Nine designed artboards plus three new screens.
 | 07 | Savings | `(tabs)/savings` | Artboard 07 |
 | 08 | Balance / ledger | `balance` | Artboard 08 |
 | 09 | Settings | `(tabs)/settings` | Artboard 09 |
-| — | Redeem | `(tabs)/redeem` | **New** |
-| — | Redeem confirm | `redeem/confirm` | **New** |
-| — | Redeem success | `redeem/success` | **New** |
+| — | Fill detail | `fill/[id]` | **New** |
+| — | Subscribe | `subscribe` | **New** |
 
 Artboard 05 is not a separate screen. It is artboard 01 rendered in the light theme, and
 is satisfied by §6.
@@ -162,7 +195,10 @@ Mock content is copied exactly so the build is comparable to the canvas side by 
 - Opening balance: `42.6 L` — 31.2 L petrol 95, 11.4 L diesel.
 - Holder: Thabo Makhubela, initials TM, `+27 82 441 0912`, card `•••• 4127`,
   vehicle `CA 418 921`, payment method `FNB ••4127`.
-- Network: `412 stations · 9 provinces`.
+- Network: the design's `412 stations · 9 provinces` is **replaced**. A station-agnostic
+  card has no network to count, and quoting one understates the product. The Stations
+  screen leads with `Works at any fuel station in South Africa` and the list becomes a
+  price-comparison and locator surface, not a coverage list.
 - Five stations: Engen William Nicol (Bryanston, 24h, 1.2km, R21.87), Sasol Rivonia
   (Rivonia, 05:00-23:00, 2.8km, R21.87), Shell Grayston (Sandton, 24h, 4.1km, R21.91),
   Astron Energy Fourways (Fourways, 24h, 5.6km, R21.84), Total Sunninghill
@@ -209,7 +245,7 @@ descriptions, and deltas are otherwise preserved verbatim.
 
 The Savings screen's figures — `R1,284` saved since March, `58.7 L` bought below pump
 price, average buy price `R21.24/L`, and six monthly bars from April to September — are
-derived quantities under §7.4, not literals. Displaying them as hardcoded text while
+derived quantities under §7.5, not literals. Displaying them as hardcoded text while
 computing every other number from the store would mean the screen silently stops
 agreeing with itself after the first redemption.
 
@@ -223,16 +259,20 @@ they contribute to savings and to the chart without inflating the current balanc
 
 ## 5. Navigation
 
-A five-tab bottom bar. Chosen over a hamburger menu because redemption happens at a
-forecourt, one-handed, often at night — it must be one thumb-tap from anywhere.
+A five-tab bottom bar, with **Card at the centre**. The card is the entire mechanic in
+v1 — it is how the product is used at a forecourt, one-handed, often at night — so it
+takes the centre position and the accent colour.
 
 ```
-Wallet  ·  Stations  ·  Redeem  ·  Savings  ·  Settings
+Wallet  ·  Stations  ·  Card  ·  Savings  ·  Settings
 ```
 
 Pushed screens, presented as stack screens over the tabs with the design's existing
-back-arrow header: `top-up`, `card`, `balance`, `alerts`, `redeem/confirm`,
-`redeem/success`.
+back-arrow header: `top-up`, `balance`, `alerts`, `fill/[id]`, `subscribe`.
+
+Card is promoted from a pushed screen (artboard 03) to a tab. The Wallet's `CARD` button
+is retained anyway — it is in the design, and a second path to the one screen that
+matters is not redundancy worth removing.
 
 Entry points:
 - Wallet `TOP UP` button and Balance `TOP UP` button → `top-up`
@@ -247,9 +287,8 @@ The tab bar is not in the source design and must be drawn in its language: 1px
 Icons are 22px `react-native-svg` line glyphs at 1.5px stroke. Inactive `textMuted`,
 active `text`. Labels are monospace 9px, `letterSpacing: 0.1em`, uppercase.
 
-Redeem is the exception: its icon and label take `accent` when active, marking it as the
-one destination that does something in the physical world. Height 56px plus safe-area
-inset.
+Card is the exception: its icon and label take `accent` when active, marking the one
+destination that does something in the physical world. Height 56px plus safe-area inset.
 
 ---
 
@@ -304,31 +343,73 @@ type LedgerEntry = {
   kind: 'topup' | 'fill' | 'bonus' | 'expiry';
   what: string;            // 'Top up · 95', 'Fill · Sasol Rivonia'
   when: Date;
-  detail: string;          // 'R1 500', 'pump 3', 'Lerato M.'
+  detail: string;          // 'R1 500', 'Bryanston', 'Lerato M.'
   grade: Grade;
   deltaLitres: number;     // signed
   balanceAfter: number;    // computed at write time
-  lotId?: string;
+  lotIds?: string[];       // lots consumed, for audit
+  card?: CardFill;         // present on kind === 'fill'
 };
 ```
 
 Append-only. Entries are never mutated or deleted.
 
-### 7.3 Store
+### 7.3 Card fills — rand in, litres inferred
+
+A card transaction is the only way litres leave the wallet in v1, and it is the single
+most consequential modelling decision in this spec.
+
+The card rail gives an issuer the merchant descriptor, MCC, location, rand amount and
+timestamp. It gives **no litres, no grade, and no pump number**. Every litre deduction is
+therefore an *inference*, not a measurement:
+
+```ts
+type CardFill = {
+  merchantDescriptor: string;  // 'SHELL GRAYSTON SANDTON' — raw, messy
+  stationId: string | null;    // resolved by normalisation, null when unmatched
+  mcc: '5541' | '5542';
+  randAmount: number;          // the only figure the rail actually gives us
+  assumedPricePerLitre: number;// from the pricing service
+  litres: number;              // randAmount / assumedPricePerLitre
+  gradeSource: 'vehicle' | 'user';
+  disputed: boolean;
+};
+```
+
+Three consequences carry into the build:
+
+**The pricing service is load-bearing, not decorative.** In the original spec, CEF/DMPR
+data powered price-timing nudges — a feature. Here, it determines every litre deduction.
+If the assumed price is wrong, the user's litre balance is wrong, and that is the one
+number the entire product is denominated in.
+
+**Grade must be inferred.** Balances are held per grade but the rail does not say which
+was pumped. Resolution order: (a) the linked vehicle's fuel type, which covers a driver
+with one car and one grade — nearly everyone; (b) if the driver holds balances in both
+grades *and* the vehicle type is unset or ambiguous, an in-app prompt on the fill, which
+stays actionable from the ledger until answered. Never silently guess between two
+non-zero balances.
+
+**Inference error is user-visible and must be surfaced, not hidden** — see §8.4.
+
+### 7.4 Store
 
 Zustand, in memory, seeded from `src/data/seed.ts` so the app opens on the designed state.
 
 | Action | Behaviour |
 |---|---|
 | `topUp(grade, rand)` | Rejects if over the monthly cap (§8.2). Creates a lot at the current price, appends a `topup` entry. |
-| `redeem(stationId, grade, litres, pump)` | Consumes lots FIFO, skipping expired. Rejects if insufficient unexpired litres. Appends a `fill` entry. |
+| `cardFill(descriptor, randAmount, grade?)` | Resolves station and price, infers litres, consumes lots FIFO skipping expired, appends a `fill` entry with its `CardFill` record. |
+| `resolveGrade(entryId, grade)` | Answers a pending grade prompt and re-runs the deduction. |
+| `disputeFill(entryId)` | Flags a fill; UI only, no resolution flow. |
 | `setAppearance(mode)` | Dark / Light / System. |
+| `setSubscription(state)` | `trial` / `active` / `lapsed`. UI only, nothing bills. |
 | `toggleAlert(index)` | Settings toggles. |
 
 Derived selectors: `balanceFor(grade)`, `totalBalance()`, `randValue()`,
 `litresThisMonth()`, `savingsToDate()`, `averageBuyPrice()`.
 
-### 7.4 Pure logic
+### 7.5 Pure logic
 
 All arithmetic lives in `src/lib/` as pure functions over plain data, with no React or
 store imports:
@@ -336,6 +417,7 @@ store imports:
 - `lots.ts` — `consumeFifo`, `activeLots`, `expiringSoon`, `balanceOf`
 - `savings.ts` — `savingsToDate`, `averageBuyPrice`
 - `caps.ts` — `litresThisMonth`, `capRemaining`, `withinCap`
+- `cardfill.ts` — `inferLitres`, `resolveGradeFor`, `normaliseDescriptor`
 - `format.ts` — `litres`, `rand`, `randCompact`, `pricePerLitre`, `relativeDate`
 
 The design's own formatter is ported exactly: fixed decimal places, then thousands
@@ -382,39 +464,86 @@ business overview and must not be softened in copy.
 A single line of body copy beneath the Top up confirm button:
 *"Litres you don't use convert back to the rand you paid. No cash-out above purchase price."*
 
+### 8.4 Conversion transparency — new, and the most important one
+
+Per §7.3, litres deducted on a card fill are inferred from a rand amount and an assumed
+price. A driver who pumps 40.0 L and sees 40.1 L leave their wallet will notice, and will
+be right to. On diesel — retail pricing unregulated, real dispersion between stations —
+this is routine, not an edge case.
+
+Concealing the conversion would trade a small UI simplification for the product's central
+claim. The requirement is therefore the opposite of hiding it:
+
+- Every `fill` row in the ledger is tappable, opening `fill/[id]`.
+- That screen shows the arithmetic as an equation in the numeric treatment:
+  `R873.60  ÷  R21.84/L  =  40.0 L`, with the assumed price labelled
+  `Shell Grayston · 95 · 24 Sep`.
+- A `THIS DOESN'T MATCH MY RECEIPT` button in `border` style flags the entry. In the
+  mock it sets `disputed` and shows a confirmation; no resolution flow is built.
+- A disputed row carries a 2px `accent` left rule in the ledger.
+
+The dispute affordance is not a nicety. It is the mechanism by which pricing-service
+error becomes visible to the operator instead of silently eroding trust, and it is the
+only place in v1 where a user can tell Barrel its own data is wrong.
+
 ---
 
 ## 9. New Screens
 
-### 9.1 Redeem — `(tabs)/redeem`
+### 9.1 Card — `(tabs)/card`
 
-The core mechanic, and the screen the design never drew. The source file contains an
-orphaned `unusedQrGrid()` function, evidence a QR was intended and abandoned.
+Artboard 03, promoted to a tab and made the centre of the product. The pass design is
+kept verbatim — white card, wordmark, `FUEL PASS` label, litre balance hero, holder name,
+last four digits, and the two grey strata beneath it.
 
-Layout, top to bottom: screen title `REDEEM`; station selector showing the nearest
-station with a chevron to change it; a **white square QR panel** with 24px padding — the
-only large white surface in the dark theme, which is correct both for scanner contrast
-and for visual hierarchy; beneath it the same payload as a 6-digit code in numeric hero
-treatment at 34px with `letterSpacing: 0.2em`; a countdown `expires in 04:58` in
-`textMuted`, switching to `accent` under 60 seconds; a grade toggle reusing the Top up
-tab component; and available balance for the selected grade.
+Four changes:
 
-The code is generated locally, is meaningless, and regenerates every 5 minutes. A
-`SIMULATE PUMP` button in `border` style advances to confirm — clearly a prototype
-affordance, and labelled as one.
+- **Spending power.** Beneath the litre balance, `R2,405 available at today's 95` in
+  `textDim`. This is the number that matters at a till, and in v1 it is real — it is what
+  the card will authorise.
+- **`412 stations` becomes `Works at any fuel station`.** The design's accepted-at row is
+  kept; only the claim changes.
+- **Grade.** When both balances are non-zero the card shows which grade is active, tapping
+  to switch. With one balance it shows nothing — no chrome for a choice that doesn't exist.
+- **Freeze card.** A `border`-style button beside the wallet buttons. Sets a flag, greys
+  the pass to `surface`, stamps `FROZEN` across it in `accent`. Cheap to build and the
+  first thing anyone looks for in a card app.
 
-### 9.2 Redeem confirm — `redeem/confirm`
+`ADD TO APPLE WALLET` and `ADD TO GOOGLE PAY` are retained exactly as designed, and are
+inert.
 
-Station name, pump number, litres dispensed (editable via the Top up keypad component),
-price per litre on the day, and the resulting balance. Primary button `CONFIRM FILL`.
+### 9.2 Fill detail — `fill/[id]`
 
-### 9.3 Redeem success — `redeem/success`
+The §8.4 conversion-transparency screen. Station, grade, date, the equation in numeric
+treatment, resulting balance, lots consumed, and the dispute button. Reached by tapping
+any `fill` row in the ledger.
 
-Litre delta as the hero in `text` (a withdrawal is neutral, not negative — it is the
-thing the user wanted), new balance beneath, station and pump, and the ledger entry just
-written. `DONE` returns to Wallet.
+Where a fill has an unresolved grade prompt (§7.3), this screen carries it: a two-option
+selector and `CONFIRM GRADE`, which re-runs the deduction and rewrites the entry.
 
----
+### 9.3 Subscribe — `subscribe`
+
+Subscription runs from day one, so it needs a home. It has none in the source design and
+is drawn here in the same language.
+
+**R59/month**, the midpoint of the R49–R79 range in the business overview, with a 30-day
+free trial. A single tier — the strategy is growth and habit, and a feature matrix at
+this stage buys complexity, not revenue.
+
+Layout: price as numeric hero with `/month` in `textDim`; a four-row included list on
+hairlines — price-lock on every litre, price-increase alerts, works at any fuel station,
+no markup on fuel; `START 30-DAY TRIAL` in `accent`; and beneath it in `textMuted`,
+*"Cancel any time. Your litres stay yours."*
+
+That last line is a Consumer Protection Act s14 requirement doing product work — a
+24-month cap and a 20-business-day cancellation right are easier to honour if the
+interface never implies a lock-in.
+
+Presented once after onboarding, and reachable from a Settings row showing
+`Subscription · Trial · 24 days left`. A lapsed subscription greys the Top up button and
+shows `RESUME SUBSCRIPTION`; **it never blocks the card or the existing balance** —
+litres already bought are the user's property and withholding them would be precisely the
+cash-out-restriction problem in §8.3 wearing a different hat.
 
 ## 10. Testing
 
@@ -423,6 +552,8 @@ written. `DONE` returns to Wallet.
 | Module | Cases |
 |---|---|
 | `lots.consumeFifo` | Oldest first; spans multiple lots; skips expired; exact-drain removes lot; insufficient balance rejects; partial consumption leaves remainder |
+| `cardfill.inferLitres` | Rand ÷ assumed price; rounds to 1dp; unmatched station falls back to regional price; zero and negative amounts reject |
+| `cardfill.resolveGradeFor` | Vehicle type wins; both balances non-zero with no vehicle type returns a prompt, never a guess; one non-zero balance resolves without prompting |
 | `lots.activeLots` | Excludes expired at boundary; same-day expiry is still active |
 | `caps` | Under, at, and over cap; month boundary; cap counts top-ups only, not bonuses |
 | `savings` | Positive when bought below pump; negative when above; zero balance does not divide by zero |
@@ -431,7 +562,7 @@ written. `DONE` returns to Wallet.
 No snapshot or pixel tests. The design is still moving and snapshots would calcify it.
 Visual fidelity is verified by side-by-side comparison against the canvas.
 
-### 10.3 Accessibility baseline
+### 10.1 Accessibility baseline
 
 Not a full audit, but three things are non-negotiable and cheap: every touchable has an
 `accessibilityLabel`; every touchable meets a 44x44pt target (the ledger and station rows
@@ -445,13 +576,44 @@ design's character and that is the designer's call.
 
 ---
 
-## 11. Dependencies
+## 11. Instrumentation for Phase 2
+
+Per §1.3, phase 2's leverage is demonstrated elasticity, and elasticity is only
+measurable against a pre-steering baseline that can only be captured now. This section
+exists so that v1 does not have to be rebuilt to produce the asset the strategy depends on.
+
+No analytics SDK is added in this build — there is no backend to send to. What v1 must do
+is **shape the data so the events are derivable**, which costs nothing now and is
+expensive to retrofit:
+
+| Captured per fill | Why phase 2 needs it |
+|---|---|
+| `stationId` (normalised) | The unit a rebate is negotiated over |
+| `merchantDescriptor` (raw) | Normalisation will be imperfect; keep the source |
+| Geo / suburb | Defines the catchment a station competes in |
+| Grade, litres, rand, assumed price | Volume and value, split by the regulated/unregulated divide |
+| Timestamp | Day-of-week and time-of-day patterns |
+| Driver's prior fills | Baseline station choice — the counterfactual |
+
+The normalisation problem is worth naming: merchant descriptors arrive dirty
+(`ENGEN WILLIAM NICOL`, `E WILLIAM NICOL 4412`, `ENGEN 4412 BRYANSTON`), and station
+identity is the unit the whole phase-2 negotiation is priced in. `normaliseDescriptor`
+is a stub in v1 that matches against the seeded station list and returns `null` on no
+match, but it is flagged here as real backend work, not a formality.
+
+Unmatched fills must still succeed. A driver whose station cannot be resolved still gets
+their litres, at the regional reference price, and the fill is recorded with
+`stationId: null`. Losing an attribution is acceptable; failing a transaction at a
+forecourt is not.
+
+---
+
+## 12. Dependencies
 
 | Package | Purpose |
 |---|---|
 | `expo` (SDK 54) + `expo-router` | App shell, file-based routing |
 | `react-native-svg` | Brand mark, tab icons, savings bars |
-| `react-native-qrcode-svg` | Redeem QR |
 | `zustand` | Wallet store |
 | `@expo-google-fonts/outfit` + `expo-font` | Outfit 300-900 |
 | `expo-haptics` | Keypad and confirm feedback |
@@ -463,20 +625,50 @@ operations needed (add days, diff days, month boundary, format) are a dozen line
 
 ---
 
-## 12. Out of Scope / Next
+## 13. Out of Scope / Next
 
 Deferred, in the order they would matter:
 
 1. Persistence — the store is in memory and resets on reload.
-2. Onboarding, FICA capture, vehicle linking.
-3. Station map (`VIEW ON MAP` is inert).
-4. Real push notifications — artboard 04's lock screen is a static mock.
-5. Backend: the double-entry ledger, CEF/DMPR pricing ingest, and settlement described
-   in §10 of the business overview.
-6. Apple Wallet / Google Pay pass generation.
-7. Subscription tier and paywall — the R49-R79/month fee from the revenue model has no
-   UI anywhere in the design and none is added here.
+2. Onboarding, FICA capture, vehicle linking. Vehicle fuel type is seeded, but §7.3 makes
+   it load-bearing for grade inference, so onboarding must capture it before any pilot.
+3. Real subscription billing. The paywall is UI only.
+4. Station map (`VIEW ON MAP` is inert).
+5. Real push notifications — artboard 04's lock screen is a static mock.
+6. Backend: the double-entry ledger, CEF/DMPR pricing ingest, and card-network
+   integration. Note that the pricing service moved from *feature* to *critical path* in
+   this revision (§7.3) and should be sequenced accordingly.
+7. Merchant-descriptor normalisation at real scale (§11).
+8. Phase-2 steering: bonus litres, station ranking, elasticity measurement.
 
-Item 7 is worth flagging: the business overview calls the subscription "the primary
-profit engine" and "the floor of the model", yet it is absent from the designed product.
-That is a gap in the design, not in this build, but it will need a home before launch.
+### 13.1 Resolved in this revision
+
+Three items from the first draft are now closed:
+
+- **The subscription gap.** The first draft flagged that the R49–R79/month fee the
+  business overview calls "the primary profit engine" had no UI anywhere. §9.3 gives it
+  one. With no rebate revenue in phase 1, it is close to the only revenue line, so this
+  moved from omission to central.
+- **Partner concentration risk** (business overview §8.2) is designed out of v1 rather
+  than mitigated. A station-agnostic card has no partner to concentrate on.
+- **The QR redemption flow** is cut, not deferred. It was the answer to a partner-network
+  question v1 no longer asks.
+
+### 13.2 Open risks carried forward
+
+Recorded so they are not lost between this spec and a legal opinion:
+
+- **The FSCA/FAIS argument is weaker than in the first draft.** Business overview §7 rests
+  the non-derivative case on a voucher "redeemable only for physical fuel". An open-loop
+  card converting litres to rand at a floating price is closer to cash settlement.
+  MCC-locking to 5541/5542 preserves the *fuel-only* half of that sentence, which is the
+  load-bearing half, but the floating conversion remains the exposed edge and should be
+  put to counsel explicitly rather than assumed to be covered.
+- **The station rebate — one of four revenue streams — does not exist in phase 1.**
+  Issuer interchange partially backfills it. SA fuel-MCC interchange rates should be
+  confirmed with a prospective sponsor bank before the model relies on the figure.
+- **Diesel price dispersion is an uncapped exposure.** Petrol retail price is regulated,
+  so that half is bounded by law. Diesel is not: a driver filling at a premium station
+  costs Barrel the difference, with no partner agreement to cap it. No conversion cap is
+  implemented in v1; this is a deliberate deferral, not an oversight, and it needs a
+  decision before real money moves.
