@@ -38,10 +38,11 @@ export function priceOn(zone: Zone, at: Date): number {
 
 // The next scheduled price change for a zone after a given date, or
 // `undefined` if the table has nothing later — never a hand-picked date.
-// Shared by every screen that needs to say "the price is about to change":
-// each hardcoding its own date/cents is exactly how the Wallet screen's
-// "Next change · 02 Oct" literal survived three fix rounds and two reviews
-// after the source design's canvas copy was already known to be wrong.
+// Used by both app/alerts.tsx and app/(tabs)/index.tsx, the two screens
+// that say "the price is about to change": each hardcoding its own
+// date/cents is exactly how the Wallet screen's "Next change · 02 Oct"
+// literal survived three fix rounds and two reviews after the source
+// design's canvas copy was already known to be wrong.
 export function nextPriceChange(zone: Zone, after: Date): PricePoint | undefined {
   return PRICES
     .filter(p => p.zone === zone && p.effectiveFrom.getTime() > after.getTime())

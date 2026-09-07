@@ -9,7 +9,7 @@ import { Rule } from '../src/components/Rule';
 import { Button } from '../src/components/Button';
 import { BarrelMark } from '../src/components/BarrelMark';
 import { useTheme } from '../src/theme/ThemeProvider';
-import { PRICES, priceOn } from '../src/data/prices';
+import { priceOn, nextPriceChange } from '../src/data/prices';
 import { TODAY } from '../src/data/seed';
 import { formatPrice } from '../src/lib/format';
 
@@ -39,14 +39,17 @@ export default function Alerts() {
   // copy said "2nd" / "01 OCT", both Thursday/Friday, contradicting the
   // pricing service this app already ships (src/data/prices.ts, and the
   // seed's own "today" of 30 Sep 2026 was chosen to sit before that change).
+  // `nextPriceChange` is shared with the Wallet screen's price-watch block
+  // (app/(tabs)/index.tsx) so this lookup is written once.
   const currentPrice = priceOn('inland', TODAY);
-  const nextChange = PRICES
-    .filter(p => p.zone === 'inland' && p.effectiveFrom.getTime() > TODAY.getTime())
-    .sort((a, b) => a.effectiveFrom.getTime() - b.effectiveFrom.getTime())[0];
-  const nextPrice = nextChange.pricePerLitre;
-  const nextDate = nextChange.effectiveFrom;
-  const deltaCents = Math.round((nextPrice - currentPrice) * 100);
-  const nextDateLabel = ddMonUpper(nextDate);
+  const nextChange = nextPriceChange('inland', TODAY);
+  // Guarded the same way index.tsx guards it: nothing here can throw if the
+  // table ever has no change scheduled after TODAY, even though today's
+  // seed always finds 7 Oct.
+  const nextPrice = nextChange ? nextChange.pricePerLitre : currentPrice;
+  const nextDate = nextChange ? nextChange.effectiveFrom : TODAY;
+  const deltaCents = nextChange ? Math.round((nextPrice - currentPrice) * 100) : 0;
+  const nextDateLabel = nextChange ? ddMonUpper(nextDate) : '—';
 
   return (
     <Screen>
