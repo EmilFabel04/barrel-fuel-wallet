@@ -26,24 +26,42 @@ export function averageBuyPrice(ledger: LedgerEntry[]): number {
   return f.reduce((s, e) => s + e.buyPricePerLitre! * e.card!.litres, 0) / litres;
 }
 
-// The Savings screen's chart is fixed to the seed's six active months. Every
-// fill in the seed lands in one of these buckets, so their sum always equals
-// savingsToDate exactly — see supplement Ruling C2-REVISED item 5.
-const CHART_MONTHS: { month: string; monthIndex: number }[] = [
-  { month: 'APR', monthIndex: 3 },
-  { month: 'MAY', monthIndex: 4 },
-  { month: 'JUN', monthIndex: 5 },
-  { month: 'JUL', monthIndex: 6 },
-  { month: 'AUG', monthIndex: 7 },
-  { month: 'SEP', monthIndex: 8 },
-];
+const MONTH_LABELS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 
-export function monthlySavings(ledger: LedgerEntry[]): { month: string; rand: number }[] {
+/** How many months the Savings chart shows. */
+export const CHART_MONTHS = 6;
+
+/**
+ * The last `CHART_MONTHS` months ending at `at`, oldest first, with the saving
+ * realised in each.
+ *
+ * The months used to be a fixed APR-SEP list matched on `getMonth()` alone.
+ * That was wrong in two ways once the clock could move: the window never
+ * advanced past September, and month-only matching has no year, so a fill in
+ * September of any later year would have been added to September 2026's bar.
+ * Both are silent — the chart would simply show a wrong number with no error.
+ *
+ * Against the pinned demo instant this returns exactly the same six months it
+ * always did, so no published figure moves.
+ */
+export function monthlySavings(
+  ledger: LedgerEntry[], at: Date
+): { month: string; rand: number }[] {
   const f = fills(ledger);
-  return CHART_MONTHS.map(({ month, monthIndex }) => ({
-    month,
-    rand: f
-      .filter(e => e.when.getMonth() === monthIndex)
-      .reduce((sum, e) => sum + (e.card!.pricePerLitre - e.buyPricePerLitre!) * e.card!.litres, 0),
-  }));
+  const out: { month: string; rand: number }[] = [];
+  for (let back = CHART_MONTHS - 1; back >= 0; back--) {
+    // Day 1 of the month `back` months before `at`; JS normalises a negative
+    // month index into the previous year, which is what carries the window
+    // across a year boundary.
+    const bucket = new Date(at.getFullYear(), at.getMonth() - back, 1);
+    const year = bucket.getFullYear();
+    const month = bucket.getMonth();
+    out.push({
+      month: MONTH_LABELS[month],
+      rand: f
+        .filter(e => e.when.getFullYear() === year && e.when.getMonth() === month)
+        .reduce((sum, e) => sum + (e.card!.pricePerLitre - e.buyPricePerLitre!) * e.card!.litres, 0),
+    });
+  }
+  return out;
 }

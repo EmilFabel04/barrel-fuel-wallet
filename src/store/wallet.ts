@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Lot, LedgerEntry, Zone } from '../data/types';
-import { buildSeed, TODAY } from '../data/seed';
+import { buildSeed } from '../data/seed';
+import { now } from '../lib/clock';
 import { priceOn } from '../data/prices';
 import { balanceOf, consumeFifoWithCost, expiringWithin } from '../lib/lots';
 import {
@@ -50,19 +51,22 @@ export const useWallet = create<WalletState>((set, get) => ({
 
   topUp: (rand) => {
     if (rand <= 0) return; // guard against a non-positive amount producing a negative-litre lot
-    const price = priceOn('inland', TODAY);
+    // One instant for the whole action, so the price, the cap window, the lot's
+    // purchase date and its expiry cannot disagree about what day it is.
+    const at = now();
+    const price = priceOn('inland', at);
     const litres = round1(rand / price);
     const { lots, ledger } = get();
-    if (!withinTopUpCap(ledger, TODAY, litres)) return;
+    if (!withinTopUpCap(ledger, at, litres)) return;
     const id = `lot-${Date.now()}`;
-    const balance = round1(balanceOf(lots, TODAY) + litres);
+    const balance = round1(balanceOf(lots, at) + litres);
     set({
       lots: [...lots, {
         id, grade: '95', litres, pricePerLitre: price,
-        purchasedAt: TODAY, expiresAt: expiryOf(TODAY),
+        purchasedAt: at, expiresAt: expiryOf(at),
       }],
       ledger: [...ledger, {
-        id: `e-${Date.now()}`, kind: 'topup', what: 'Top up · 95', when: TODAY,
+        id: `e-${Date.now()}`, kind: 'topup', what: 'Top up · 95', when: at,
         detail: `R${rand.toFixed(0)}`, grade: '95', deltaLitres: litres,
         balanceAfter: balance, lotIds: [id],
       }],
@@ -71,6 +75,7 @@ export const useWallet = create<WalletState>((set, get) => ({
 
   cardFill: (descriptor, rand, zone) => {
     const { lots, ledger } = get();
+    const at = now(); // one instant for the whole action, as in topUp
     const stationId = normaliseDescriptor(descriptor);
 
     // Spec §11: "Fail open on attribution; never fail the card at the pump;
@@ -93,7 +98,7 @@ export const useWallet = create<WalletState>((set, get) => ({
     let litres: number;
     try {
       resolved = resolveZone(stationId, zone);
-      price = priceOn(resolved, TODAY);
+      price = priceOn(resolved, at);
       litres = deriveLitres(rand, price);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -102,7 +107,7 @@ export const useWallet = create<WalletState>((set, get) => ({
       if (!documented) throw err;
       return;
     }
-    if (litres > balanceOf(lots, TODAY)) return;
+    if (litres > balanceOf(lots, at)) return;
 
     // Spec §8.5: the weekly redemption cap declines deliberately, which is not
     // what §11's "never fail the card at the pump" forbids. That rule is about
@@ -110,21 +115,21 @@ export const useWallet = create<WalletState>((set, get) => ({
     // not be parsed. A rate limit is a known, intended refusal for a stated
     // reason, and recording that reason keeps it from failing silently the way
     // §11 also requires.
-    if (!withinRedemptionCap(ledger, TODAY, litres)) {
-      const left = redemptionCapRemaining(ledger, TODAY);
+    if (!withinRedemptionCap(ledger, at, litres)) {
+      const left = redemptionCapRemaining(ledger, at);
       set({ lastCardFillError: `weekly redemption cap reached: ${litres} L requested, ${left} L left` });
       return;
     }
 
-    const { lots: nextLots, consumedIds, cost } = consumeFifoWithCost(lots, litres, TODAY);
+    const { lots: nextLots, consumedIds, cost } = consumeFifoWithCost(lots, litres, at);
     set({
       lots: nextLots,
       lastCardFillError: null,
       ledger: [...ledger, {
         id: `e-${Date.now()}`, kind: 'fill',
-        what: `Fill · ${descriptor}`, when: TODAY, detail: '',
+        what: `Fill · ${descriptor}`, when: at, detail: '',
         grade: '95', deltaLitres: -litres,
-        balanceAfter: round1(balanceOf(nextLots, TODAY)),
+        balanceAfter: round1(balanceOf(nextLots, at)),
         lotIds: consumedIds, buyPricePerLitre: toCents(cost / litres),
         card: {
           merchantDescriptor: descriptor, stationId, mcc: '5541',
@@ -147,7 +152,7 @@ export const useWallet = create<WalletState>((set, get) => ({
   freezeCard: (cardFrozen) => set({ cardFrozen }),
 }));
 
-export const selectBalance = (s: WalletState): number => balanceOf(s.lots, TODAY);
+export const selectBalance = (s: WalletState): number => balanceOf(s.lots, now());
 
 /**
  * The most recent `fill`, or null if nothing has been spent yet.
@@ -156,7 +161,7 @@ export const selectBalance = (s: WalletState): number => balanceOf(s.lots, TODAY
  * chronologically and the store appends at the end, but neither is guaranteed
  * and the Wallet quotes this as "last fill". `>=` breaks same-day ties toward
  * the later entry, which matters because every store-created fill is dated
- * TODAY, so a second simulated fill shares its date with the first.
+ * the demo instant, so a second simulated fill shares its date with the first.
  */
 export const selectLastFill = (s: WalletState): LedgerEntry | null =>
   s.ledger.reduce<LedgerEntry | null>(
@@ -164,10 +169,10 @@ export const selectLastFill = (s: WalletState): LedgerEntry | null =>
       e.kind === 'fill' && (best === null || e.when.getTime() >= best.when.getTime()) ? e : best,
     null
   );
-export const selectExpiringSoon = (s: WalletState): number => expiringWithin(s.lots, TODAY, 30);
-export const selectLitresThisMonth = (s: WalletState): number => litresThisMonth(s.ledger, TODAY);
-export const selectTopUpCapRemaining = (s: WalletState): number => topUpCapRemaining(s.ledger, TODAY);
-export const selectRedemptionRemaining = (s: WalletState): number => redemptionCapRemaining(s.ledger, TODAY);
+export const selectExpiringSoon = (s: WalletState): number => expiringWithin(s.lots, now(), 30);
+export const selectLitresThisMonth = (s: WalletState): number => litresThisMonth(s.ledger, now());
+export const selectTopUpCapRemaining = (s: WalletState): number => topUpCapRemaining(s.ledger, now());
+export const selectRedemptionRemaining = (s: WalletState): number => redemptionCapRemaining(s.ledger, now());
 
 /**
  * What the card would actually authorise right now: the balance, unless the
@@ -175,5 +180,7 @@ export const selectRedemptionRemaining = (s: WalletState): number => redemptionC
  * quotes this as spending power, so it must be the binding figure — quoting the
  * raw balance would advertise litres the card is about to decline.
  */
-export const selectSpendable = (s: WalletState): number =>
-  Math.min(balanceOf(s.lots, TODAY), redemptionCapRemaining(s.ledger, TODAY));
+export const selectSpendable = (s: WalletState): number => {
+  const at = now();
+  return Math.min(balanceOf(s.lots, at), redemptionCapRemaining(s.ledger, at));
+};

@@ -47,9 +47,34 @@ describe('averageBuyPrice', () => {
 });
 
 describe('monthlySavings', () => {
-  test('returns six entries labelled APR through SEP, oldest first', () => {
-    const result = monthlySavings([]);
+  const SEP_2026 = new Date(2026, 8, 30);
+
+  test('returns the six months ending at `at`, oldest first', () => {
+    const result = monthlySavings([], SEP_2026);
     expect(result.map(r => r.month)).toEqual(['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP']);
+  });
+
+  test('the window follows the clock rather than being pinned to Apr-Sep', () => {
+    const result = monthlySavings([], new Date(2027, 0, 15)); // Jan 2027
+    expect(result.map(r => r.month)).toEqual(['AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN']);
+  });
+
+  // The bug this rewrite fixes: buckets used to match on getMonth() alone, so
+  // a fill in September of any year landed in September 2026's bar. Silent —
+  // the chart would just show a wrong number.
+  test('does not merge the same month from a different year', () => {
+    const l = [
+      fill(new Date(2026, 8, 24), 10, 21.00, 21.87), // Sep 2026: saved 8.7
+      fill(new Date(2027, 8, 24), 10, 21.00, 21.87), // Sep 2027: outside the window
+    ];
+    const sep = monthlySavings(l, SEP_2026).find(r => r.month === 'SEP')!;
+    expect(sep.rand).toBeCloseTo(8.7, 1);
+  });
+
+  test('carries the window back across a year boundary', () => {
+    const l = [fill(new Date(2026, 11, 10), 10, 21.00, 21.87)]; // Dec 2026
+    const dec = monthlySavings(l, new Date(2027, 1, 5))!.find(r => r.month === 'DEC')!;
+    expect(dec.rand).toBeCloseTo(8.7, 1);
   });
   test('buckets each fill by its month and sums to savingsToDate', () => {
     const l = [
@@ -57,7 +82,7 @@ describe('monthlySavings', () => {
       fill(new Date(2026, 3, 20), 5, 20.00, 20.50),  // APR: saved 2.5
       fill(new Date(2026, 8, 24), 10, 21.00, 21.87), // SEP: saved 8.7
     ];
-    const result = monthlySavings(l);
+    const result = monthlySavings(l, SEP_2026);
     const apr = result.find(r => r.month === 'APR')!;
     const sep = result.find(r => r.month === 'SEP')!;
     expect(apr.rand).toBeCloseTo(12.5, 1);

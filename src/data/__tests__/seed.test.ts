@@ -1,4 +1,5 @@
-import { buildSeed, TODAY } from '../seed';
+import { buildSeed } from '../seed';
+import { DEMO_NOW } from '../../lib/clock';
 import { balanceOf, expiringWithin } from '../../lib/lots';
 import { litresThisMonth } from '../../lib/caps';
 import { savingsToDate, litresBelowPump, monthlySavings, averageBuyPrice } from '../../lib/savings';
@@ -8,14 +9,8 @@ import { DAY, REDEMPTION_DAYS } from '../../lib/window';
 describe('seed', () => {
   const { lots, ledger } = buildSeed();
 
-  test('today is 30 September 2026', () => {
-    expect(TODAY.getFullYear()).toBe(2026);
-    expect(TODAY.getMonth()).toBe(8);
-    expect(TODAY.getDate()).toBe(30);
-  });
-
   test('balance is 42.6 L', () => {
-    expect(balanceOf(lots, TODAY)).toBeCloseTo(42.6, 1);
+    expect(balanceOf(lots, DEMO_NOW)).toBeCloseTo(42.6, 1);
   });
 
   test('ledger chains exactly — each balanceAfter follows from the last', () => {
@@ -36,7 +31,7 @@ describe('seed', () => {
   });
 
   test('September top-ups total 105.2 L, under the 500 L cap', () => {
-    expect(litresThisMonth(ledger, TODAY)).toBeCloseTo(105.2, 1);
+    expect(litresThisMonth(ledger, DEMO_NOW)).toBeCloseTo(105.2, 1);
   });
 
   test('every lot is petrol 95', () => {
@@ -47,7 +42,7 @@ describe('seed', () => {
     // Oldest-first consumption means surviving stock is always the most recent
     // purchase. Pinned so a future seed change cannot silently break the Balance
     // screen's expiry split.
-    expect(expiringWithin(lots, TODAY, 30)).toBe(0);
+    expect(expiringWithin(lots, DEMO_NOW, 30)).toBe(0);
     expect(lots).toHaveLength(1);
     expect(lots[0].expiresAt.getMonth()).toBe(11); // December
   });
@@ -78,7 +73,7 @@ describe('seed', () => {
   });
 
   test('the six monthly savings figures sum exactly to the savings-to-date total', () => {
-    const monthly = monthlySavings(ledger);
+    const monthly = monthlySavings(ledger, DEMO_NOW);
     expect(monthly).toHaveLength(6);
     const sum = monthly.reduce((s, m) => s + m.rand, 0);
     expect(sum).toBeCloseTo(savingsToDate(ledger), 6);

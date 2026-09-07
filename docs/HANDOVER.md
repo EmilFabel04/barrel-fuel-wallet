@@ -19,7 +19,7 @@ no bank, and no station agreements.
 | | |
 |---|---|
 | `docs/superpowers/specs/2026-09-06-barrel-fuel-wallet-design.md` | **The binding authority.** Design system, screens, data model, guardrails. |
-| `docs/DECISIONS.md` | 55 rulings — 46 from the build, then 47+ made after it. Each records reasoning and cost-if-wrong. |
+| `docs/DECISIONS.md` | 56 rulings — 46 from the build, then 47+ made after it. Each records reasoning and cost-if-wrong. |
 | `docs/superpowers/plans/2026-09-07-barrel-fuel-wallet-ui.md` | The build plan. **Historical — it was wrong in ~15 places.** Do not treat as current. |
 
 **When anything disagrees with the spec, the spec wins.** This was true seven times during
@@ -29,7 +29,7 @@ canvas that turned out to be arithmetically wrong.
 ## Architecture
 
 ```
-src/lib/     pure, React-free, fully tested — the model
+src/lib/     pure, React-free, fully tested — the model (+ the app clock)
 src/data/    types, zone price table, stations, the seed
 src/store/   zustand wrapping src/lib
 src/theme/   tokens + provider (the ONLY file containing hex)
@@ -38,7 +38,7 @@ app/         11 screens, expo-router
 ```
 
 `src/lib` and `src/data` are the good part: pure functions over plain data, one definition
-of each operation, 167 tests. If you keep only `src/`, you have a portable model ready to
+of each operation, 178 tests. If you keep only `src/`, you have a portable model ready to
 validate against a real backend. Change logic there and let the screens follow.
 
 **Litres are held as dated `Lot`s**, each carrying the price paid and a 90-day expiry — not
@@ -70,8 +70,9 @@ savings (what a litre cost vs the pump price the day it was burned).
    four wrong literals shipped from the design canvas and each survived multiple reviews.
 6. **One definition per operation.** `round1`/`toCents` in `src/lib/round.ts`, the 90-day
    window in `src/lib/window.ts`, FIFO+cost in `src/lib/lots.ts`, price lookup in
-   `src/data/prices.ts`. Four separate rulings were needed to establish this; do not
-   re-duplicate.
+   `src/data/prices.ts`, the clock in `src/lib/clock.ts`. Four separate rulings were needed
+   to establish this; do not re-duplicate. **`src/lib` and `src/data` must never call
+   `now()`** — they take an explicit `at: Date`, and that is why they are testable.
 7. **Two caps, and they are not interchangeable.** `MONTHLY_TOPUP_CAP_L` (500) limits
    what can be *bought in* per calendar month; `WEEKLY_REDEMPTION_CAP_L` (110) limits
    what can be *spent out* over a rolling 7 days, as fraud mitigation. Separately,
@@ -93,7 +94,7 @@ these tests will tell you what you broke:
 | Savings | **R71.65** · 118.4 L below pump · R21.21/L average |
 | Monthly bars | APR 9.00 · MAY 18.00 · JUN 16.80 · JUL 12.00 · AUG 4.41 · **SEP 11.44** |
 | Surviving lots | exactly **one**, expiring 27 Dec |
-| App "today" | **30 September 2026** (`TODAY` in `src/data/seed.ts`) |
+| App "today" | **30 September 2026** (`DEMO_NOW` in `src/lib/clock.ts`) |
 
 **May is the tallest savings bar, not September.** The chart scales to the largest month in
 the data.
@@ -105,13 +106,27 @@ is for.
 
 ## Traps
 
-- **`TODAY` is a `const` in `src/data/seed.ts`**, imported by six screens and the store. A data-seed
-  module is a strange home for the app clock. Moving to a real clock is the highest-leverage
-  refactor before any backend work, and two things break quietly on the way:
-  `monthlySavings` buckets by month with no year check, and the price table only spans
-  Mar–Oct 2026. Note the price table fails in *both* directions but only one is loud:
-  `priceOn` throws before 4 Mar 2026, and after 7 Oct 2026 it silently returns the last
-  price forever. The silent direction is the one a real clock travels.
+- **The clock lives in `src/lib/clock.ts`** — `now()`, pinned to `DEMO_NOW`
+  (30 Sep 2026). It used to be `TODAY`, a `const` in `src/data/seed.ts`; that is done.
+  `src/lib` and `src/data` never read it — every date-sensitive function there takes an
+  explicit `at: Date`, which is what keeps them pure. Only the store and the screens call
+  `now()`, and each hoists it to a single `const at = now()` per action or render so one
+  render cannot straddle a date boundary.
+
+  **Switching to real time is one line** — `setClock(() => new Date())` — but do not do it
+  casually. The seed is dated absolutely and does not survive contact with real time:
+  - the ledger runs to 30 Sep 2026, so entries are already *future-dated* against a real
+    clock today;
+  - the monthly cap meter reads 0 from 1 Oct 2026;
+  - `nextPriceChange` returns undefined after 7 Oct 2026, gutting the Alerts screen;
+  - the last surviving lot expires 27 Dec 2026, taking the balance to **0.0 L** on the
+    Wallet, Card and Balance screens.
+
+  Making the seed relative to `now()` is a separate piece of work and a product decision.
+  The price table also fails in **both** directions and only one is loud: `priceOn` throws
+  before 4 Mar 2026, and after 7 Oct 2026 it silently returns October's price forever. The
+  silent direction is the one a real clock travels. Both are pinned by tests in
+  `src/data/__tests__/prices.test.ts`.
 - **The `lots` ↔ `ledger` relationship.** Fully-consumed lots are *deleted* from the array,
   so a ledger row must never look up its lot to find an expiry date — derive from the
   entry's own `when + 90 days`. Getting this wrong showed the expiry on 1 of 9 rows.
@@ -152,6 +167,6 @@ is for.
 npx expo start --tunnel     # phone, any network
 npx expo start              # phone, same wifi, faster
 npx expo start --web        # browser
-npm test                    # 167 tests
+npm test                    # 178 tests
 npx tsc --noEmit
 ```

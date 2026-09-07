@@ -301,3 +301,41 @@ and the fallback matters because spec §11 requires an unattributed fill to rema
 first-class entry rather than render blank.
 — Cost if wrong: an unmatched merchant shows its raw descriptor in the Wallet footer,
 which is honest but ugly. The alternative — hiding the row — would hide a real fill.
+
+### 56. The app clock moved out of the seed, and stayed pinned
+`TODAY` was a `const` exported from `src/data/seed.ts` and imported by the store and six
+screens. Wrong home twice over: a seed is fixture data, not the app's sense of time, and a
+`const` cannot be swapped for a test or a real clock without editing every caller.
+
+`src/lib/clock.ts` now owns it — `DEMO_NOW`, `now()`, `setClock()`, `resetClock()`. Worth
+recording what did *not* need to change: `src/lib` and `src/data` were already clean, since
+every date-sensitive function there takes an explicit `at: Date`. The coupling was entirely
+in the layer above, which is the argument for that boundary having been drawn where it was.
+
+Callers now hoist a single `const at = now()` per action or render rather than calling the
+function repeatedly. With a fixed clock that is cosmetic; with a real one it stops a single
+render or a single `topUp` from straddling a date boundary and disagreeing with itself
+about the price, the cap window, and a lot's expiry.
+
+**The clock stays pinned to the demo instant, and that is the decision, not an oversight.**
+Switching to real time is `setClock(() => new Date())` — one line — but the seed is dated
+absolutely and does not survive it: some ledger entries are already future-dated against
+today's real date, the cap meter empties on 1 Oct 2026, `nextPriceChange` runs out after
+7 Oct 2026, and the last lot expires 27 Dec 2026, taking the balance to zero on three
+screens. Making the seed relative to `now()` is a product decision about whether this is a
+pinned demo or a self-refreshing one, and it deserves its own pass rather than arriving as
+a side effect of moving a constant.
+
+Two latent bugs fixed while in here, both named in the handover as what "breaks quietly"
+on the way to a real clock:
+- `monthlySavings` bucketed on `getMonth()` with no year, so a fill in September of any
+  later year would have been added to September 2026's bar, and the window never advanced
+  past September. It now takes `at` and returns the six months ending there, year-aware.
+  Against the demo instant it returns exactly the same six months, so no published figure
+  moved.
+- The price table's forward boundary was untested. `priceOn` throws before the table
+  starts — loud — but after it ends silently returns the last known price forever, which
+  is the direction a real clock travels. Both boundaries are now pinned by tests. The
+  table is not extended: that means adding real DMPR figures, not inventing them.
+— Cost if wrong: none identified. The refactor is behaviour-preserving and verified as
+such — every screen renders identically and all eleven pinned figures are unmoved.

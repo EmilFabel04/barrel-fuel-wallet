@@ -603,6 +603,21 @@ It must be keyed by zone *and* effective date, not by a single current national 
 
 Zustand, in memory, seeded from `src/data/seed.ts` so the app opens on the designed state.
 
+**The app clock is `src/lib/clock.ts`**, not the seed. `now()` returns `DEMO_NOW`
+(30 September 2026, derived in §4.2). `src/lib` and `src/data` never call it — every
+date-sensitive function there takes an explicit `at: Date`, which is what keeps §7.5 pure
+and testable. Only the store and the screens read the clock, and each hoists a single
+`const at = now()` per action or render so that one render cannot straddle a date boundary
+and disagree with itself about the price, the cap window and a lot's expiry.
+
+Real time is `setClock(() => new Date())`, one line, and deliberately not the default. The
+seed is dated absolutely: against a real clock some ledger entries are future-dated today,
+the §8.2 cap meter empties on 1 October 2026, `nextPriceChange` runs out after 7 October
+2026, and the last surviving lot expires 27 December 2026 — taking the balance to zero on
+the Wallet, Card and Balance screens. Re-anchoring the seed to `now()` is a product
+decision about whether this is a pinned demo or a self-refreshing one, and belongs in its
+own pass.
+
 | Action | Behaviour |
 |---|---|
 | `topUp(grade, rand)` | Rejects if over the monthly cap (§8.2). Creates a lot at the current price, appends a `topup` entry. |

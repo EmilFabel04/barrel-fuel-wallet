@@ -48,3 +48,24 @@ describe('nextPriceChange', () => {
     expect(next?.pricePerLitre).toBe(21.37);
   });
 });
+
+// The price table's two boundaries fail in opposite ways, and only one is
+// loud. Both are pinned here because the quiet one is what a real clock walks
+// into: `now()` moves forward, and past the end of the table every screen would
+// go on quoting October 2026's price as "today's" with nothing erroring.
+// Extending the table means adding real DMPR figures, not inventing them, so
+// this records the behaviour rather than papering over it.
+describe('the table boundaries', () => {
+  test('before the table starts, priceOn throws — loud', () => {
+    expect(() => priceOn('inland', new Date(2026, 0, 1))).toThrow(/no price/i);
+  });
+
+  test('after the table ends, priceOn silently returns the last known price', () => {
+    const lastKnown = priceOn('inland', new Date(2026, 9, 7)); // the 7 Oct change
+    expect(priceOn('inland', new Date(2030, 5, 1))).toBe(lastKnown);
+  });
+
+  test('after the table ends, nextPriceChange returns undefined rather than throwing', () => {
+    expect(nextPriceChange('inland', new Date(2030, 5, 1))).toBeUndefined();
+  });
+});

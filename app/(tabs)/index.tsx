@@ -13,7 +13,7 @@ import { useWallet, selectBalance, selectLastFill } from '../../src/store/wallet
 import { formatLitres, formatRand, formatPrice } from '../../src/lib/format';
 import { priceOn, nextPriceChange } from '../../src/data/prices';
 import { STATIONS } from '../../src/data/stations';
-import { TODAY } from '../../src/data/seed';
+import { now } from '../../src/lib/clock';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -47,11 +47,14 @@ export default function Wallet() {
   const lastFillName = lastFill?.card
     ? STATIONS.find(s => s.id === lastFill.card!.stationId)?.name ?? lastFill.card.merchantDescriptor
     : null;
-  const price = priceOn('inland', TODAY);
+  // One instant per render: `now()` is a function, so calling it repeatedly
+  // could straddle a date boundary once it is backed by a real clock.
+  const at = now();
+  const price = priceOn('inland', at);
   // The preceding month's price is always readable as "the price in effect
   // the day before this month's change" — day 0 of the current month is a
   // plain JS idiom for the last day of the previous one.
-  const priorPrice = priceOn('inland', new Date(TODAY.getFullYear(), TODAY.getMonth(), 0));
+  const priorPrice = priceOn('inland', new Date(at.getFullYear(), at.getMonth(), 0));
   const priceDeltaPct = ((price - priorPrice) / priorPrice) * 100;
 
   // The upcoming change, read from the same pricing table the wallet
@@ -61,7 +64,7 @@ export default function Wallet() {
   // right (7 Oct). This is the exact literal that survived three fix rounds
   // on this screen because every review checked the diff against the brief,
   // not the price table.
-  const nextChange = nextPriceChange('inland', TODAY);
+  const nextChange = nextPriceChange('inland', at);
   const nextChangeCents = nextChange ? Math.round((nextChange.pricePerLitre - price) * 100) : null;
 
   return (

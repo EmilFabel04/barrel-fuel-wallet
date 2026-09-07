@@ -31,7 +31,7 @@ describe('useWallet initial state (from the seed)', () => {
   });
 
   // The seed's last two fills — 31.4 L on 24 Sep and 38.0 L on 30 Sep — both
-  // fall inside the trailing 7 days from TODAY, so 69.4 L of the 110 L weekly
+  // fall inside the trailing 7 days from the demo instant, so 69.4 L of the 110 L weekly
   // cap is already spent. That leaves less headroom than the balance, which
   // makes the cap the binding constraint in the seeded state.
   test('69.4 L of the weekly redemption cap is already spent, leaving 40.6 L', () => {
@@ -211,7 +211,7 @@ describe('selectLastFill', () => {
     expect(selectLastFill(useWallet.getState())!.id).toBe('newest');
   });
 
-  // Every store-created fill is dated TODAY, so a second simulated fill shares
+  // Every store-created fill is dated at the clock, so a second simulated fill shares
   // its date with the first and the later one must win.
   test('breaks a same-day tie toward the later entry', () => {
     const d = new Date(2026, 8, 30);

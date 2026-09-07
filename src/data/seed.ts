@@ -3,8 +3,7 @@ import { priceOn } from './prices';
 import { round1, toCents } from '../lib/round';
 import { consumeFifoWithCost } from '../lib/lots';
 import { expiryOf } from '../lib/window';
-
-export const TODAY = new Date(2026, 8, 30);
+import { DEMO_NOW } from '../lib/clock';
 
 const STATION_FOR: Record<string, string> = {
   'Engen William Nicol': 'engen-william-nicol',
@@ -109,7 +108,10 @@ export function buildSeed(): { lots: Lot[]; ledger: LedgerEntry[] } {
     const price = priceOn('inland', date);
     credit(date, round1(1500 / price), 'topup', 'Top up · 95', 'R1 500');
   }
-  debit(new Date(2026, 8, 30), 38.0, 'Shell Grayston', 'Sandton');
+  // Dated to the demo instant itself: this is the fill the Wallet's "last fill"
+  // row shows on open, so it is the same day the app believes it is, not a
+  // coincidence of two literals matching.
+  debit(DEMO_NOW, 38.0, 'Shell Grayston', 'Sandton');
 
   return { lots, ledger };
 }

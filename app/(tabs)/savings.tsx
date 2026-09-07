@@ -11,7 +11,7 @@ import { useWallet } from '../../src/store/wallet';
 import { savingsToDate, litresBelowPump, averageBuyPrice, monthlySavings } from '../../src/lib/savings';
 import { formatRand, formatLitres, formatPrice, spokenRand } from '../../src/lib/format';
 import { priceOn } from '../../src/data/prices';
-import { TODAY } from '../../src/data/seed';
+import { now } from '../../src/lib/clock';
 
 const MAX_BAR_HEIGHT = 100;
 
@@ -21,13 +21,14 @@ export default function Savings() {
   const saved = savingsToDate(ledger);
   const below = litresBelowPump(ledger);
   const avg = averageBuyPrice(ledger);
-  const pump = priceOn('inland', TODAY);
+  const at = now();
+  const pump = priceOn('inland', at);
 
   // Controller supplement (Task 17): every figure here — hero, litres,
   // average, and the six monthly bars — is derived from the ledger, never a
   // literal. Bar height is a percentage of the largest month in the returned
   // data, and the tallest month (not necessarily September) takes `positive`.
-  const monthly = monthlySavings(ledger);
+  const monthly = monthlySavings(ledger, at);
   const maxRand = Math.max(0, ...monthly.map(m => m.rand));
 
   return (

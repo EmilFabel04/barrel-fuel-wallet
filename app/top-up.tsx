@@ -14,7 +14,7 @@ import { useWallet, selectLitresThisMonth, selectTopUpCapRemaining } from '../sr
 import { MONTHLY_TOPUP_CAP_L } from '../src/lib/caps';
 import { formatLitres, formatRandWhole, formatPrice, spokenRand } from '../src/lib/format';
 import { priceOn } from '../src/data/prices';
-import { TODAY } from '../src/data/seed';
+import { now } from '../src/lib/clock';
 
 // The design's R1 500 default is restored. Ruling C3 had lowered it to R500
 // because a 150 L monthly cap minus the seed's 105.2 L of September top-ups
@@ -36,7 +36,7 @@ export default function TopUp() {
   // going inert.
   const lapsed = subscription === 'lapsed';
 
-  const price = priceOn('inland', TODAY);
+  const price = priceOn('inland', now());
   const rand = parseInt(raw || '0', 10);
   const litres = rand / price;
   const wouldExceed = litres > remaining;

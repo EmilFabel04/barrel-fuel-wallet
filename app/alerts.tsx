@@ -11,7 +11,7 @@ import { BarrelMark } from '../src/components/BarrelMark';
 import { useTheme, useElevation } from '../src/theme/ThemeProvider';
 import { RADIUS } from '../src/theme/tokens';
 import { priceOn, nextPriceChange } from '../src/data/prices';
-import { TODAY } from '../src/data/seed';
+import { now } from '../src/lib/clock';
 import { formatPrice, formatLitres } from '../src/lib/format';
 import { round1 } from '../src/lib/round';
 
@@ -44,13 +44,15 @@ export default function Alerts() {
   // seed's own "today" of 30 Sep 2026 was chosen to sit before that change).
   // `nextPriceChange` is shared with the Wallet screen's price-watch block
   // (app/(tabs)/index.tsx) so this lookup is written once.
-  const currentPrice = priceOn('inland', TODAY);
-  const nextChange = nextPriceChange('inland', TODAY);
+  // One instant for the whole render — see the note in (tabs)/index.tsx.
+  const at = now();
+  const currentPrice = priceOn('inland', at);
+  const nextChange = nextPriceChange('inland', at);
   // Guarded the same way index.tsx guards it: nothing here can throw if the
-  // table ever has no change scheduled after TODAY, even though today's
+  // table ever has no change scheduled after now(), even though today's
   // seed always finds 7 Oct.
   const nextPrice = nextChange ? nextChange.pricePerLitre : currentPrice;
-  const nextDate = nextChange ? nextChange.effectiveFrom : TODAY;
+  const nextDate = nextChange ? nextChange.effectiveFrom : at;
   const deltaCents = nextChange ? Math.round((nextPrice - currentPrice) * 100) : 0;
   const nextDateLabel = nextChange ? ddMonUpper(nextDate) : '—';
 

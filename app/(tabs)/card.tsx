@@ -11,7 +11,7 @@ import { useTheme, useElevation } from '../../src/theme/ThemeProvider';
 import { useWallet, selectBalance, selectSpendable, selectRedemptionRemaining } from '../../src/store/wallet';
 import { formatLitres, formatRandWhole } from '../../src/lib/format';
 import { priceOn } from '../../src/data/prices';
-import { TODAY } from '../../src/data/seed';
+import { now } from '../../src/lib/clock';
 import { PASS, RADIUS } from '../../src/theme/tokens';
 import { STATIONS } from '../../src/data/stations';
 import { WEEKLY_REDEMPTION_CAP_L } from '../../src/lib/caps';
@@ -32,7 +32,7 @@ export default function Card() {
   const frozen = useWallet(s => s.cardFrozen);
   const freeze = useWallet(s => s.freezeCard);
   const cardFill = useWallet(s => s.cardFill);
-  const price = priceOn('inland', TODAY);
+  const price = priceOn('inland', now());
 
   // Debug-only affordance (goal §2.3, §1.1): store.cardFill is fully
   // implemented and tested but, absent this, has no UI trigger anywhere in

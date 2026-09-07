@@ -10,7 +10,7 @@ import { useTheme } from '../src/theme/ThemeProvider';
 import { useWallet, selectBalance, selectExpiringSoon } from '../src/store/wallet';
 import { round1 } from '../src/lib/round';
 import { formatLitres, formatDayMonth } from '../src/lib/format';
-import { TODAY } from '../src/data/seed';
+import { now } from '../src/lib/clock';
 import { DAY, expiryOf } from '../src/lib/window';
 
 export default function Balance() {
@@ -75,7 +75,7 @@ export default function Balance() {
             // anything already expired (the difference goes negative), which
             // would paint long-spent March/April top-ups in the one colour
             // this design reserves for an active warning (spec §8.1).
-            const remaining = exp ? exp.getTime() - TODAY.getTime() : null;
+            const remaining = exp ? exp.getTime() - now().getTime() : null;
             const soonish = remaining !== null && remaining >= 0 && remaining < 14 * DAY;
             return (
               <Pressable
