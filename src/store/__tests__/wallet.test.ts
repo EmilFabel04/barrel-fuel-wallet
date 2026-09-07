@@ -53,6 +53,22 @@ describe('topUp', () => {
     expect(after.lots.length).toBe(before.lots.length);
     expect(selectBalance(after)).toBeCloseTo(selectBalance(before), 1);
   });
+
+  test('topUp(0) is a no-op', () => {
+    const before = useWallet.getState();
+    before.topUp(0);
+    const after = useWallet.getState();
+    expect(after.ledger.length).toBe(before.ledger.length);
+    expect(after.lots.length).toBe(before.lots.length);
+  });
+
+  test('topUp(-500) is a no-op', () => {
+    const before = useWallet.getState();
+    before.topUp(-500);
+    const after = useWallet.getState();
+    expect(after.ledger.length).toBe(before.ledger.length);
+    expect(after.lots.length).toBe(before.lots.length);
+  });
 });
 
 describe('cardFill', () => {
@@ -71,6 +87,15 @@ describe('cardFill', () => {
   test('is a no-op when the requested fill exceeds the current balance', () => {
     const before = useWallet.getState();
     before.cardFill('SHELL GRAYSTON SANDTON', 1_000_000, null);
+    const after = useWallet.getState();
+    expect(after.ledger.length).toBe(before.ledger.length);
+    expect(after.lots.length).toBe(before.lots.length);
+  });
+
+  // Spec §11: "Fail open on attribution; never fail the card at the pump."
+  test('an unresolvable descriptor with no fallback zone is a no-op, and does not throw', () => {
+    const before = useWallet.getState();
+    expect(() => before.cardFill('SOME UNKNOWN MERCHANT 9999', 200, null)).not.toThrow();
     const after = useWallet.getState();
     expect(after.ledger.length).toBe(before.ledger.length);
     expect(after.lots.length).toBe(before.lots.length);
