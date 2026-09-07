@@ -1,8 +1,7 @@
 import { LedgerEntry } from '../data/types';
+import { round1 } from './round';
 
 export const MONTHLY_CAP_LITRES = 150;
-
-const round1 = (n: number): number => Math.round(n * 10) / 10;
 
 const sameMonth = (a: Date, b: Date): boolean =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
