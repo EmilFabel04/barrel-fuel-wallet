@@ -53,8 +53,8 @@ export default function Balance() {
 
         <Text style={{ marginTop: 14, fontFamily: 'Outfit_400Regular', fontSize: 12, lineHeight: 18, color: t.textMuted }}>
           {soonestExpiry
-            ? `Soonest expiry · ${formatDayMonth(soonestExpiry)}. Unused litres convert back to the rand you paid — they never expire to zero.`
-            : 'Unused litres convert back to the rand you paid — they never expire to zero.'}
+            ? `Soonest expiry · ${formatDayMonth(soonestExpiry)}. Unused litres convert back to the rand you paid for them. They never expire to zero.`
+            : 'Unused litres convert back to the rand you paid for them. They never expire to zero.'}
         </Text>
       </View>
 
@@ -71,7 +71,12 @@ export default function Balance() {
             // expiry date off every historical topup row that has since been
             // used, which is most of them in the seeded ledger.
             const exp = e.kind === 'topup' ? new Date(e.when.getTime() + REDEMPTION_DAYS * DAY) : null;
-            const soonish = exp ? exp.getTime() - TODAY.getTime() < 14 * DAY : false;
+            // Bounded below at zero: an unbounded `< 14 * DAY` is also true for
+            // anything already expired (the difference goes negative), which
+            // would paint long-spent March/April top-ups in the one colour
+            // this design reserves for an active warning (spec §8.1).
+            const remaining = exp ? exp.getTime() - TODAY.getTime() : null;
+            const soonish = remaining !== null && remaining >= 0 && remaining < 14 * DAY;
             return (
               <Pressable
                 key={e.id}

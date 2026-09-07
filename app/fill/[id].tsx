@@ -28,6 +28,11 @@ export default function FillDetail() {
     );
   }
   const c = entry.card;
+  // Spec §9.2 names "lots consumed" as a screen requirement — the brief's
+  // sample omitted it. More than one id here is the interesting case: it's
+  // why buyPricePerLitre (savings.ts) is a weighted average, not a single
+  // lot's price.
+  const lotsConsumed = entry.lotIds && entry.lotIds.length > 0 ? entry.lotIds.join(', ') : '—';
 
   // Spec §7.3/§8.4: the price that produced `c.pricePerLitre` is keyed by
   // zone AND effective date, not a single current number — so recover which
@@ -70,6 +75,7 @@ export default function FillDetail() {
         <Row label="Station" value={c.merchantDescriptor} />
         <Row label="Date" value={formatDayMonth(entry.when)} />
         <Row label="Balance after" value={`${formatLitres(entry.balanceAfter)} L`} />
+        <Row label="Lots consumed" value={lotsConsumed} />
       </View>
 
       <View style={{ marginTop: 'auto', paddingBottom: 12 }}>
