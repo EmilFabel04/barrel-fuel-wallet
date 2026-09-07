@@ -8,7 +8,7 @@ import { Button } from '../../src/components/Button';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { STATIONS } from '../../src/data/stations';
 import { priceOn } from '../../src/data/prices';
-import { formatPrice } from '../../src/lib/format';
+import { formatPrice, spokenRand } from '../../src/lib/format';
 import { TODAY } from '../../src/data/seed';
 
 // Spec §9.5 / §4.1: regulated petrol does not vary between stations inside a
@@ -27,7 +27,9 @@ export default function Stations() {
       <ScreenHeader title="Stations" back={false} />
 
       <View style={{ paddingTop: 30 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+        {/* spec §10.1: grouped into one accessible node, spelled-out label
+            derived from the same `price` the hero displays. */}
+        <View accessible accessibilityLabel={`Petrol 95, ${spokenRand(price)} per litre`} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
           <Num size={62}>{`R${formatPrice(price)}`}</Num>
           <Text style={{ fontFamily: 'Outfit_600SemiBold', fontSize: 15, color: t.textDim }}>/ L</Text>
         </View>

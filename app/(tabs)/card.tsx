@@ -71,7 +71,11 @@ export default function Card() {
           </View>
 
           <Text style={{ marginTop: 34, fontFamily: 'Outfit_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: PASS.muted }}>BALANCE</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 7, marginTop: 10 }}>
+          {/* spec §10.1: a numeric hero split across two Num nodes (value,
+              unit) is announced as two separate stops by a screen reader.
+              Grouped into one accessible node with a spelled-out label,
+              derived from the same `balance` the display uses. */}
+          <View accessible accessibilityLabel={`Balance, ${formatLitres(balance)} litres`} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 7, marginTop: 10 }}>
             <Num size={66} color={PASS.text}>{formatLitres(balance)}</Num>
             <Num size={26} color={PASS.dim}>L</Num>
           </View>

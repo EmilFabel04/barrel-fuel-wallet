@@ -11,7 +11,7 @@ import { Keypad } from '../src/components/Keypad';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { useWallet, selectLitresThisMonth, selectCapRemaining } from '../src/store/wallet';
 import { MONTHLY_CAP_LITRES } from '../src/lib/caps';
-import { formatLitres, formatRandWhole, formatPrice } from '../src/lib/format';
+import { formatLitres, formatRandWhole, formatPrice, spokenRand } from '../src/lib/format';
 import { priceOn } from '../src/data/prices';
 import { TODAY } from '../src/data/seed';
 
@@ -62,7 +62,10 @@ export default function TopUp() {
 
       <View style={{ paddingTop: 40 }}>
         <SectionLabel>You pay</SectionLabel>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10, marginTop: 14 }}>
+        {/* spec §10.1: grouped into one accessible node, spelled-out label
+            derived from the same `rand` value the hero displays. The accent
+            bar is decorative, not part of the value being announced. */}
+        <View accessible accessibilityLabel={`You pay, ${spokenRand(rand)}`} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10, marginTop: 14 }}>
           <Num size={30} color={t.textMuted}>R</Num>
           <Num size={76}>{formatRandWhole(rand)}</Num>
           <View style={{ width: 2, height: 56, backgroundColor: t.accent }} />

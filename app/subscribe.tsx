@@ -8,6 +8,11 @@ import { Rule } from '../src/components/Rule';
 import { Button } from '../src/components/Button';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { useWallet } from '../src/store/wallet';
+import { spokenRand } from '../src/lib/format';
+
+// spec §9.3: "R59/month, the midpoint of the R49-R79 range." A single
+// source for the hero and its accessibility label, so the two can't drift.
+const MONTHLY_PRICE = 59;
 
 // spec §9.3: "a four-row included list ... price-lock on every litre, price-
 // increase alerts, works at any fuel station, no markup on fuel."
@@ -28,9 +33,12 @@ export default function Subscribe() {
       <ScreenHeader title="Subscription" />
 
       <View style={{ paddingTop: 44 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+        {/* spec §10.1: grouped into one accessible node rather than three
+            separate text nodes, derived from the same MONTHLY_PRICE the
+            hero displays. */}
+        <View accessible accessibilityLabel={`${spokenRand(MONTHLY_PRICE)} per month`} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
           <Num size={34} color={t.textMuted}>R</Num>
-          <Num size={82}>59</Num>
+          <Num size={82}>{MONTHLY_PRICE}</Num>
           <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 17, color: t.textDim }}>/ month</Text>
         </View>
       </View>

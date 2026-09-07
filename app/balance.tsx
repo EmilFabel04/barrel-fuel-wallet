@@ -32,7 +32,9 @@ export default function Balance() {
       <ScreenHeader title="Balance" />
 
       <View style={{ paddingTop: 30 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 7 }}>
+        {/* spec §10.1: grouped into one accessible node, spelled-out label
+            derived from the same `balance` the hero displays. */}
+        <View accessible accessibilityLabel={`Balance, ${formatLitres(balance)} litres`} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 7 }}>
           <Num size={74}>{formatLitres(balance)}</Num>
           <Num size={28} color={t.textDim}>L</Num>
         </View>

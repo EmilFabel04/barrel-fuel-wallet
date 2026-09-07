@@ -8,7 +8,7 @@ import { Rule } from '../../src/components/Rule';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useWallet } from '../../src/store/wallet';
 import { savingsToDate, litresBelowPump, averageBuyPrice, monthlySavings } from '../../src/lib/savings';
-import { formatRand, formatLitres, formatPrice } from '../../src/lib/format';
+import { formatRand, formatLitres, formatPrice, spokenRand } from '../../src/lib/format';
 import { priceOn } from '../../src/data/prices';
 import { TODAY } from '../../src/data/seed';
 
@@ -35,7 +35,10 @@ export default function Savings() {
 
       <View style={{ paddingTop: 40 }}>
         <SectionLabel>Saved since March</SectionLabel>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 14 }}>
+        {/* spec §10.1: grouped into one accessible node so "R" and the value
+            don't announce as separate stops; label derived from the same
+            `saved` value the hero displays. */}
+        <View accessible accessibilityLabel={`Saved since March, ${spokenRand(Math.max(0, saved))}`} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 14 }}>
           <Num size={34} color={t.positiveText}>R</Num>
           <Num size={82} color={t.positiveText}>{formatRand(Math.max(0, saved))}</Num>
         </View>

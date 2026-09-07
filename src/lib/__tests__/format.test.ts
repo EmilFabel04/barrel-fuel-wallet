@@ -1,4 +1,4 @@
-import { formatLitres, formatRand, formatRandWhole, formatPrice, formatDayMonth } from '../format';
+import { formatLitres, formatRand, formatRandWhole, formatPrice, formatDayMonth, spokenRand } from '../format';
 
 describe('formatLitres', () => {
   test('one decimal place', () => expect(formatLitres(42.6)).toBe('42.6'));
@@ -21,6 +21,13 @@ describe('formatRandWhole', () => {
 
 describe('formatPrice', () => {
   test('two decimals, no grouping', () => expect(formatPrice(21.87)).toBe('21.87'));
+});
+
+describe('spokenRand', () => {
+  test('splits rand and cents', () => expect(spokenRand(21.87)).toBe('21 rand 87'));
+  test('rounds cents to the nearest whole', () => expect(spokenRand(71.654)).toBe('71 rand 65'));
+  test('omits cents when exactly whole', () => expect(spokenRand(500)).toBe('500 rand'));
+  test('handles zero', () => expect(spokenRand(0)).toBe('0 rand'));
 });
 
 describe('formatDayMonth', () => {
