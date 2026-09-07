@@ -32,6 +32,11 @@ export function consumeFifoWithCost(
   litres: number,
   at: Date
 ): { lots: Lot[]; consumedIds: string[]; cost: number } {
+  // Matches the guard style in cardfill.ts: a non-positive amount is a
+  // caller bug, not a valid consumption of zero or negative litres. Without
+  // this, a negative `litres` slips past the balance check below (it is
+  // never ">" the balance) and returns a negative `cost`.
+  if (litres <= 0) throw new Error('litres must be positive');
   if (litres > balanceOf(lots, at)) {
     throw new Error('insufficient unexpired litres');
   }

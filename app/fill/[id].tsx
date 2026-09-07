@@ -11,7 +11,7 @@ import { Button } from '../../src/components/Button';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useWallet } from '../../src/store/wallet';
 import { formatLitres, formatRand, formatPrice, formatDayMonth } from '../../src/lib/format';
-import { PRICES } from '../../src/data/prices';
+import { pricePointOn } from '../../src/data/prices';
 
 export default function FillDetail() {
   const t = useTheme();
@@ -37,10 +37,16 @@ export default function FillDetail() {
   // Spec §7.3/§8.4: the price that produced `c.pricePerLitre` is keyed by
   // zone AND effective date, not a single current number — so recover which
   // price point that was (the most recent one for this zone as of the fill's
-  // date) to name it, rather than hardcoding the date shown.
-  const effective = PRICES
-    .filter(p => p.zone === c.zone && p.effectiveFrom.getTime() <= entry.when.getTime())
-    .sort((a, b) => b.effectiveFrom.getTime() - a.effectiveFrom.getTime())[0];
+  // date) to name it, rather than hardcoding the date shown. `pricePointOn`
+  // is the single definition of that lookup (src/data/prices.ts); guarded
+  // here rather than left to throw, since a fill screen should still render
+  // if the table were ever missing an entry for this date.
+  let effective;
+  try {
+    effective = pricePointOn(c.zone, entry.when);
+  } catch {
+    effective = undefined;
+  }
 
   return (
     <Screen>

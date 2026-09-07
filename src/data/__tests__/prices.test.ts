@@ -1,4 +1,4 @@
-import { priceOn, nextPriceChange } from '../prices';
+import { priceOn, pricePointOn, nextPriceChange } from '../prices';
 
 describe('priceOn', () => {
   test('returns the inland price for a date inside September', () => {
@@ -18,6 +18,18 @@ describe('priceOn', () => {
   });
   test('throws for a date before the table starts', () => {
     expect(() => priceOn('inland', new Date(2020, 0, 1))).toThrow(/no price/i);
+  });
+});
+
+describe('pricePointOn', () => {
+  test('returns the full point, not just the number, and priceOn agrees with it', () => {
+    const point = pricePointOn('inland', new Date(2026, 8, 30));
+    expect(point.pricePerLitre).toBe(priceOn('inland', new Date(2026, 8, 30)));
+    expect(point.zone).toBe('inland');
+    expect(point.effectiveFrom).toEqual(new Date(2026, 8, 2));
+  });
+  test('throws for a date before the table starts, same as priceOn', () => {
+    expect(() => pricePointOn('inland', new Date(2020, 0, 1))).toThrow(/no price/i);
   });
 });
 

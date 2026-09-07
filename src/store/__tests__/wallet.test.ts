@@ -100,6 +100,26 @@ describe('cardFill', () => {
     expect(after.ledger.length).toBe(before.ledger.length);
     expect(after.lots.length).toBe(before.lots.length);
   });
+
+  // Spec §11: "never fail silently on price." The bare `catch {}` this
+  // replaced left no way to tell an expected no-op from a swallowed bug.
+  test('an unresolvable descriptor records why in lastCardFillError', () => {
+    useWallet.getState().cardFill('SOME UNKNOWN MERCHANT 9999', 200, null);
+    expect(useWallet.getState().lastCardFillError).toMatch(/cannot resolve zone/i);
+  });
+
+  test('a non-positive rand amount records why in lastCardFillError', () => {
+    useWallet.getState().cardFill('SASOL RIVONIA', 0, null);
+    expect(useWallet.getState().lastCardFillError).toMatch(/positive/i);
+  });
+
+  test('lastCardFillError clears on the next successful fill', () => {
+    useWallet.getState().cardFill('SOME UNKNOWN MERCHANT 9999', 200, null);
+    expect(useWallet.getState().lastCardFillError).not.toBeNull();
+
+    useWallet.getState().cardFill('SASOL RIVONIA', 200, null);
+    expect(useWallet.getState().lastCardFillError).toBeNull();
+  });
 });
 
 describe('disputeFill', () => {

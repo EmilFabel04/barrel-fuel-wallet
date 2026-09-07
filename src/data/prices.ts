@@ -26,14 +26,22 @@ export const PRICES: PricePoint[] = [
   { zone: 'coastal', effectiveFrom: new Date(2026, 9, 7),  pricePerLitre: 21.37 },
 ];
 
-export function priceOn(zone: Zone, at: Date): number {
+// The full PricePoint that was in effect for a zone on a given date — not
+// just its number. app/fill/[id].tsx needs the point itself (to name the
+// zone and effective date per spec §8.4/§9.2); priceOn is the number-only
+// convenience built on top, so there is exactly one filter+sort over PRICES.
+export function pricePointOn(zone: Zone, at: Date): PricePoint {
   const candidates = PRICES
     .filter(p => p.zone === zone && p.effectiveFrom.getTime() <= at.getTime())
     .sort((a, b) => b.effectiveFrom.getTime() - a.effectiveFrom.getTime());
   if (candidates.length === 0) {
     throw new Error(`no price for ${zone} on ${at.toISOString()}`);
   }
-  return candidates[0].pricePerLitre;
+  return candidates[0];
+}
+
+export function priceOn(zone: Zone, at: Date): number {
+  return pricePointOn(zone, at).pricePerLitre;
 }
 
 // The next scheduled price change for a zone after a given date, or

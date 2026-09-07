@@ -19,6 +19,11 @@ export type WalletState = {
   trialDaysLeft: number;
   alerts: boolean[];
   cardFrozen: boolean;
+  // Spec §11: "never fail silently on price." Set whenever cardFill declines
+  // to record a fill, and cleared on the next successful one, so a caller
+  // (or a test) can observe why a fill didn't happen instead of the bare
+  // `catch {}` this replaces swallowing the reason entirely.
+  lastCardFillError: string | null;
   topUp: (rand: number) => void;
   cardFill: (descriptor: string, rand: number, zone: Zone | null) => void;
   disputeFill: (entryId: string) => void;
@@ -38,6 +43,7 @@ export const useWallet = create<WalletState>((set, get) => ({
   trialDaysLeft: 24,
   alerts: [true, true, false],
   cardFrozen: false,
+  lastCardFillError: null,
 
   topUp: (rand) => {
     if (rand <= 0) return; // guard against a non-positive amount producing a negative-litre lot
@@ -66,12 +72,19 @@ export const useWallet = create<WalletState>((set, get) => ({
 
     // Spec §11: "Fail open on attribution; never fail the card at the pump;
     // but never fail silently on price." resolveZone()/deriveLitres() throw
-    // when the merchant can't be matched and no fallback zone is available,
-    // or when the amount isn't positive — an unresolvable descriptor must
-    // never crash the action the way a declined card would. Production
-    // behaviour here is to queue the fill for manual pricing rather than
-    // guess at a price; that queue is backend work and out of scope for this
-    // UI shell, so for now the fill is simply not recorded.
+    // for exactly two documented reasons — the merchant can't be matched and
+    // no fallback zone is available, or the rand amount isn't positive — and
+    // an unresolvable descriptor must never crash the action the way a
+    // declined card would, so those two are caught. A bare `catch {}` used
+    // to catch everything here, which meant a genuine bug (e.g. priceOn
+    // finding no price for a zone/date) vanished identically to an expected
+    // no-op. Only the two documented messages are treated as expected; any
+    // other error rethrows rather than disappearing. Either way,
+    // lastCardFillError records what happened for a caller to observe.
+    // Production behaviour for the two documented cases is to queue the fill
+    // for manual pricing rather than guess at a price; that queue is backend
+    // work and out of scope for this UI shell, so for now the fill is simply
+    // not recorded.
     let resolved: Zone;
     let price: number;
     let litres: number;
@@ -79,7 +92,11 @@ export const useWallet = create<WalletState>((set, get) => ({
       resolved = resolveZone(stationId, zone);
       price = priceOn(resolved, TODAY);
       litres = deriveLitres(rand, price);
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const documented = /cannot resolve zone/i.test(message) || /must be positive/i.test(message);
+      set({ lastCardFillError: message });
+      if (!documented) throw err;
       return;
     }
     if (litres > balanceOf(lots, TODAY)) return;
@@ -87,6 +104,7 @@ export const useWallet = create<WalletState>((set, get) => ({
     const { lots: nextLots, consumedIds, cost } = consumeFifoWithCost(lots, litres, TODAY);
     set({
       lots: nextLots,
+      lastCardFillError: null,
       ledger: [...ledger, {
         id: `e-${Date.now()}`, kind: 'fill',
         what: `Fill · ${descriptor}`, when: TODAY, detail: '',

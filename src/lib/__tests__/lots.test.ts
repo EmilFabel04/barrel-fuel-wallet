@@ -92,6 +92,14 @@ describe('consumeFifoWithCost', () => {
     expect(() => consumeFifoWithCost([older], 50, AT)).toThrow(/insufficient/i);
   });
 
+  test('throws on a negative litres amount rather than yielding a negative cost', () => {
+    expect(() => consumeFifoWithCost([older], -5, AT)).toThrow(/positive/i);
+  });
+
+  test('throws on a zero litres amount', () => {
+    expect(() => consumeFifoWithCost([older], 0, AT)).toThrow(/positive/i);
+  });
+
   test('does not mutate the input array', () => {
     const input = [older];
     consumeFifoWithCost(input, 4, AT);
