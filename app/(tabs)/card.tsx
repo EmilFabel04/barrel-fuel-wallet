@@ -4,6 +4,7 @@ import { Screen } from '../../src/components/Screen';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { Num } from '../../src/components/Num';
 import { SectionLabel } from '../../src/components/SectionLabel';
+import { Rule } from '../../src/components/Rule';
 import { Button } from '../../src/components/Button';
 import { BarrelMark } from '../../src/components/BarrelMark';
 import { useTheme } from '../../src/theme/ThemeProvider';
@@ -12,13 +13,30 @@ import { formatLitres, formatRandWhole } from '../../src/lib/format';
 import { priceOn } from '../../src/data/prices';
 import { TODAY } from '../../src/data/seed';
 import { PASS } from '../../src/theme/tokens';
+import { STATIONS } from '../../src/data/stations';
 
 export default function Card() {
   const t = useTheme();
   const balance = useWallet(selectBalance);
   const frozen = useWallet(s => s.cardFrozen);
   const freeze = useWallet(s => s.freezeCard);
+  const cardFill = useWallet(s => s.cardFill);
   const price = priceOn('inland', TODAY);
+
+  // Debug-only affordance (goal §2.3, §1.1): store.cardFill is fully
+  // implemented and tested but, absent this, has no UI trigger anywhere in
+  // the app, so the redemption half of the core loop can't be demonstrated.
+  // Picks a real station and a plausible rand amount scaled to whatever's
+  // left in the wallet (20% of it, R50-R300), so repeated taps stay
+  // resolvable instead of running the balance dry after one or two presses.
+  // Exercises normaliseDescriptor, resolveZone, deriveLitres, FIFO
+  // consumption, the ledger write and fill/[id] end to end.
+  const simulateFill = () => {
+    const station = STATIONS[Math.floor(Math.random() * STATIONS.length)];
+    const availableRand = balance * price;
+    const amount = Math.max(50, Math.round(Math.min(300, availableRand * 0.2) / 10) * 10);
+    cardFill(station.name.toUpperCase(), amount, station.zone);
+  };
 
   return (
     <Screen insetBottom={false}>
@@ -90,6 +108,22 @@ export default function Card() {
           height={54}
           onPress={() => freeze(!frozen)}
         />
+
+        {/* Prototype control, not shipping UI — see comment above simulateFill.
+            Deliberately labelled and captioned so it reads as a debug tool,
+            not a product feature a reviewer could mistake it for. */}
+        <Rule margin={4} />
+        <SectionLabel>Debug — prototype only</SectionLabel>
+        <Button
+          label="SIMULATE A FILL"
+          variant="secondary"
+          height={54}
+          onPress={simulateFill}
+        />
+        <Text style={{ fontFamily: 'Outfit_400Regular', fontSize: 11, lineHeight: 16, color: t.textMuted }}>
+          Fakes a card-rail fill at a random station to demo the redemption half of the
+          core loop end to end. Not part of the product.
+        </Text>
       </View>
     </Screen>
   );
