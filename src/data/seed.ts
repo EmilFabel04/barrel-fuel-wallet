@@ -1,6 +1,7 @@
 import { Lot, LedgerEntry } from './types';
 import { priceOn } from './prices';
 import { round1 } from '../lib/round';
+import { consumeFifoWithCost } from '../lib/lots';
 
 export const TODAY = new Date(2026, 8, 30);
 const DAY = 86_400_000;
@@ -40,29 +41,22 @@ export function buildSeed(): { lots: Lot[]; ledger: LedgerEntry[] } {
     });
   }
 
+  // FIFO consumption and its weighted cost both come from the single
+  // definition in lib/lots.ts (consumeFifoWithCost) — it enforces the
+  // product's 90-day redemption window (spec §8.1), so a fill dated more
+  // than 90 days after its lot's purchase throws here rather than silently
+  // spending litres that should already have expired.
   function debit(date: Date, litres: number, station: string, suburb: string): void {
     n += 1;
     const pumpPrice = priceOn('inland', date);
 
-    // FIFO: consume oldest active lots first.
-    const order = [...lots].sort((a, b) => a.purchasedAt.getTime() - b.purchasedAt.getTime());
-    let outstanding = litres;
-    let cost = 0;
-    const lotIds: string[] = [];
-    for (const lot of order) {
-      if (outstanding <= 0) break;
-      const take = Math.min(lot.litres, outstanding);
-      cost += take * lot.pricePerLitre;
-      lot.litres = round1(lot.litres - take);
-      outstanding = round1(outstanding - take);
-      lotIds.push(lot.id);
-    }
-    lots = lots.filter(l => l.litres > 0);
+    const { lots: nextLots, consumedIds, cost } = consumeFifoWithCost(lots, litres, date);
+    lots = nextLots;
 
     balance = round1(balance - litres);
     ledger.push({
       id: `e-${n}`, kind: 'fill', what: `Fill · ${station}`, when: date, detail: suburb,
-      grade: '95', deltaLitres: -litres, balanceAfter: balance, lotIds,
+      grade: '95', deltaLitres: -litres, balanceAfter: balance, lotIds: consumedIds,
       buyPricePerLitre: toCents(cost / litres),
       card: {
         merchantDescriptor: station.toUpperCase(), stationId: STATION_FOR[station] ?? null,
@@ -72,14 +66,17 @@ export function buildSeed(): { lots: Lot[]; ledger: LedgerEntry[] } {
     });
   }
 
-  // --- Controller supplement Ruling C2-REVISED: historical lots and fills,
-  // March-August 2026, so savings and the chart are derived rather than
-  // hardcoded. Bought cheap in early March (pre-shock) and spent down across
-  // April-August, each purchase fully drained by its matching fill before the
-  // next one — net litres contribution to the current balance is zero, and
-  // none of this ever touches the September opening lots below.
+  // --- Controller supplement Ruling C2-REVISED, fix round 2: historical
+  // lots and fills, March-August 2026, so savings and the chart are derived
+  // rather than hardcoded. Each lot is bought near the start of its 90-day
+  // window and fully drained by one fill nearer the end of that window —
+  // the redemption pattern the product actually sells (spec §8.1: the
+  // window is "a product requirement, not decoration") — never held longer
+  // than 90 days. Every credit/debit call is issued in true chronological
+  // order (see the note on `balance` below), and each fill's litres exactly
+  // match the oldest lot outstanding at that moment, so consumption never
+  // spills into a neighbouring batch or into the September opening lots.
   //
-  // Every credit/debit call below is issued in true chronological order.
   // `balance` is a simple running total, so out-of-order calls would still
   // sum to the right final number but would stamp the wrong `balanceAfter`
   // on individual entries once the ledger-chain test re-sorts by date —
@@ -87,25 +84,27 @@ export function buildSeed(): { lots: Lot[]; ledger: LedgerEntry[] } {
   // 12) with the historical fills that surround them rather than grouping
   // "history" and "opening lots" as separate code blocks.
   credit(new Date(2026, 2, 4), 10.0, 'topup', 'Top up · 95', 'R195');
-  credit(new Date(2026, 2, 5), 10.0, 'topup', 'Top up · 95', 'R195');
-  credit(new Date(2026, 2, 6), 12.0, 'topup', 'Top up · 95', 'R234');
-  credit(new Date(2026, 2, 7), 12.0, 'topup', 'Top up · 95', 'R234');
-  credit(new Date(2026, 2, 8), 14.7, 'topup', 'Top up · 95', 'R287');
-
+  credit(new Date(2026, 2, 9), 10.0, 'topup', 'Top up · 95', 'R195');
   debit(new Date(2026, 3, 3), 10.0, 'Engen William Nicol', 'Bryanston');
+
+  credit(new Date(2026, 3, 13), 12.0, 'topup', 'Top up · 95', 'R245');
+  credit(new Date(2026, 3, 25), 12.0, 'topup', 'Top up · 95', 'R245');
   debit(new Date(2026, 4, 7), 10.0, 'Sasol Rivonia', 'Rivonia');
-  debit(new Date(2026, 5, 4), 12.0, 'Shell Grayston', 'Sandton');
-  debit(new Date(2026, 6, 3), 12.0, 'Astron Energy Fourways', 'Fourways');
+
+  credit(new Date(2026, 4, 20), 14.7, 'topup', 'Top up · 95', 'R313');
+  debit(new Date(2026, 5, 25), 12.0, 'Shell Grayston', 'Sandton');
 
   // --- Opening balance for the September chain: 33.1 L across two lots,
   // dated between the historical fills that precede/follow them.
   credit(new Date(2026, 6, 8), 12.4, 'topup', 'Top up · 95', 'R267');
 
-  debit(new Date(2026, 7, 6), 14.7, 'Total Sunninghill', 'Sunninghill');
+  debit(new Date(2026, 6, 15), 12.0, 'Astron Energy Fourways', 'Fourways');
+  debit(new Date(2026, 7, 10), 14.7, 'Total Sunninghill', 'Sunninghill');
 
   credit(new Date(2026, 7, 12), 20.7, 'topup', 'Top up · 95', 'R450');
 
-  // --- September chain from spec §4.2 — 33.1 -> 42.6.
+  // --- September chain from spec §4.2 — 33.1 -> 42.6. Dates and litre
+  // deltas are fixed by the spec and unchanged by this fix round.
   credit(new Date(2026, 8, 4), 2.0, 'bonus', 'Referral bonus', 'Lerato M.');
   debit(new Date(2026, 8, 11), 28.3, 'Engen William Nicol', 'Bryanston');
   {
