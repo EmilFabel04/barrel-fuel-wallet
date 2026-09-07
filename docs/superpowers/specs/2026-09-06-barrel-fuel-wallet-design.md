@@ -223,9 +223,10 @@ Mock content is copied exactly so the build is comparable to the canvas side by 
   column is not just inaccurate, it teaches the user to shop on a number that cannot
   differ, and quietly contradicts the reason the card works everywhere. The zone price is
   stated once at the top of the screen instead (§9.5).
-- Savings: `R1,284` since March, `58.7 L` bought below pump price, average buy price
-  `R21.24/L`. Bars: APR R128 (42%), MAY R186 (61%), JUN R104 (34%), JUL R271 (88%),
-  AUG R221 (72%), SEP R374 (100%, lime).
+- Savings: the canvas's figures — `R1,284` since March, `58.7 L` below pump, `R21.24/L`
+  average, and bars APR R128 / MAY R186 / JUN R104 / JUL R271 / AUG R221 / SEP R374 — are
+  **not** preserved. They are arithmetically impossible; see §4.3. Every figure on that
+  screen is computed from the seeded ledger.
 - Ledger, five entries: Top up 95 (28 Sep, R1 500, +68.6 L, after 74.0 L); Fill Sasol
   Rivonia (24 Sep, -31.4 L); Top up (18 Sep, R800, at 95 rather than diesel, so +36.6 L
   not +39.7 L); Fill Engen William Nicol (11 Sep, -28.3 L); Referral bonus (04 Sep,
@@ -282,20 +283,47 @@ a 2 October increase and says `TOP UP BEFORE 01 OCT`.
 
 ### 4.3 Seeding history for the Savings screen
 
-The Savings screen's figures — `R1,284` saved since March, `58.7 L` bought below pump
-price, average buy price `R21.24/L`, and six monthly bars from April to September — are
-derived quantities under §7.5, not literals. Displaying them as hardcoded text while
-computing every other number from the store would mean the screen silently stops
-agreeing with itself after the first redemption.
+The Savings screen's figures are **derived quantities** under §7.5, never literals.
+Hardcoding them while computing every other number from the store would mean the screen
+silently stops agreeing with itself after the first redemption.
 
-The seed therefore includes **historical lots back to March**, chosen so the computed
-outputs land on the design's published figures. Where the three targets cannot all be hit
-exactly, `R1,284` saved and `58.7 L` bought below pump are matched, and the average buy
-price is displayed from whatever the data yields rather than forced to `R21.24` — a
-derived figure that disagrees with its own inputs is worse than one that reads R21.26. The bar heights follow from the same
-data: APR R128, MAY R186, JUN R104, JUL R271, AUG R221, SEP R374, with September at 100%
-in `positive` as the tallest bar. Historical lots are seeded already fully consumed, so
-they contribute to savings and to the chart without inflating the current balance.
+**The design canvas's figures cannot be reproduced, because they are wrong.** The canvas
+claims `R1,284` saved alongside `58.7 L` bought below pump price. Those are the same
+quantity: 58.7 × R21.87 = R1,283.77. The canvas mislabelled the rand *value* of the litres
+as the *saving* on them, and its six monthly bars sum to that same R1,284. For 58.7 litres
+to have saved R1,284, every litre would have had to be free. Reproducing it would overstate
+customer savings by roughly eighteen times, in a product whose central claim (§8.4) is
+arithmetic the user can check.
+
+A second constraint reduced the figure further. The seed originally held litres for up to
+151 days, violating the 90-day redemption window §8.1 calls a product requirement. Once
+every historical fill was made to draw only unexpired lots, less favourable price movement
+could be captured, and savings fell accordingly. That is the honest consequence of the
+product's own rules.
+
+**The seeded state therefore produces:**
+
+| Figure | Value |
+|---|---|
+| `savingsToDate` | R71.65 |
+| `litresBelowPump` | 118.4 L |
+| `averageBuyPrice` | R21.21/L |
+| Pump price today | R21.87/L |
+
+Monthly: APR R9.00 · MAY R18.00 · JUN R16.80 · JUL R12.00 · AUG R4.41 · SEP R11.44.
+**May is the tallest bar, not September** — the chart scales to the largest month in the
+data and gives `positive` to whichever that is, rather than assuming.
+
+Historical lots are seeded already fully consumed, so they feed savings and the chart
+without inflating the current balance, and every seeded fill draws only lots unexpired at
+that fill's date. A test asserts the six monthly figures sum bit-for-bit to
+`savingsToDate`, so the chart and the hero can never disagree.
+
+**Open product question, not an engineering one.** At R71.65 the hero is a much smaller
+number than the canvas implied, and the chart is flat. That is the truthful picture and it
+must not be inflated. If the screen reads as underwhelming the answer is a different
+headline metric — "R2,590 of fuel locked in below today's price" is both true and large —
+not a bigger savings figure.
 
 ---
 
