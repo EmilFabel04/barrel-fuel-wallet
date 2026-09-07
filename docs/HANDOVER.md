@@ -19,7 +19,7 @@ no bank, and no station agreements.
 | | |
 |---|---|
 | `docs/superpowers/specs/2026-09-06-barrel-fuel-wallet-design.md` | **The binding authority.** Design system, screens, data model, guardrails. |
-| `docs/DECISIONS.md` | 46 rulings made during the build, each with reasoning and cost-if-wrong. |
+| `docs/DECISIONS.md` | 51 rulings — 46 from the build, then 47+ made after it. Each records reasoning and cost-if-wrong. |
 | `docs/superpowers/plans/2026-09-07-barrel-fuel-wallet-ui.md` | The build plan. **Historical — it was wrong in ~15 places.** Do not treat as current. |
 
 **When anything disagrees with the spec, the spec wins.** This was true seven times during
@@ -38,7 +38,7 @@ app/         12 screens, expo-router
 ```
 
 `src/lib` and `src/data` are the good part: pure functions over plain data, one definition
-of each operation, 126 tests. If you keep only `src/`, you have a portable model ready to
+of each operation, 153 tests. If you keep only `src/`, you have a portable model ready to
 validate against a real backend. Change logic there and let the screens follow.
 
 **Litres are held as dated `Lot`s**, each carrying the price paid and a 90-day expiry — not
@@ -66,7 +66,12 @@ savings (what a litre cost vs the pump price the day it was burned).
    window in `src/lib/window.ts`, FIFO+cost in `src/lib/lots.ts`, price lookup in
    `src/data/prices.ts`. Four separate rulings were needed to establish this; do not
    re-duplicate.
-7. **The Barrel card pass uses the `PASS` token group, never `useTheme()`.** It depicts a
+7. **Two caps, and they are not interchangeable.** `MONTHLY_TOPUP_CAP_L` (500) limits
+   what can be *bought in* per calendar month; `WEEKLY_REDEMPTION_CAP_L` (110) limits
+   what can be *spent out* over a rolling 7 days, as fraud mitigation. Separately,
+   `REDEMPTION_CAP_WINDOW_DAYS` (7) is not `REDEMPTION_DAYS` (90) — the latter is a
+   litre's price-lock life. Three names say "redemption" and mean three things.
+8. **The Barrel card pass uses the `PASS` token group, never `useTheme()`.** It depicts a
    physical white card and must look identical in both themes.
 
 ## The seeded state
@@ -77,7 +82,8 @@ these tests will tell you what you broke:
 | | |
 |---|---|
 | Balance | **42.6 L** (Wallet, Card, Balance all show this) |
-| September top-ups | **105.2 L** of the 150 L cap |
+| Weekly redemption cap | **40.6 L** left of 110 L — the binding constraint on the Card |
+| September top-ups | **105.2 L** of the 500 L monthly top-up cap |
 | Savings | **R71.65** · 118.4 L below pump · R21.21/L average |
 | Monthly bars | APR 9.00 · MAY 18.00 · JUN 16.80 · JUL 12.00 · AUG 4.41 · **SEP 11.44** |
 | Surviving lots | exactly **one**, expiring 27 Dec |
@@ -93,11 +99,13 @@ is for.
 
 ## Traps
 
-- **`TODAY` is a `const` in `src/data/seed.ts`**, imported by seven screens. A data-seed
+- **`TODAY` is a `const` in `src/data/seed.ts`**, imported by six screens and the store. A data-seed
   module is a strange home for the app clock. Moving to a real clock is the highest-leverage
   refactor before any backend work, and two things break quietly on the way:
   `monthlySavings` buckets by month with no year check, and the price table only spans
-  Mar–Oct 2026 so `priceOn` throws outside it.
+  Mar–Oct 2026. Note the price table fails in *both* directions but only one is loud:
+  `priceOn` throws before 4 Mar 2026, and after 7 Oct 2026 it silently returns the last
+  price forever. The silent direction is the one a real clock travels.
 - **The `lots` ↔ `ledger` relationship.** Fully-consumed lots are *deleted* from the array,
   so a ledger row must never look up its lot to find an expiry date — derive from the
   entry's own `when + 90 days`. Getting this wrong showed the expiry on 1 of 9 rows.
@@ -138,6 +146,6 @@ is for.
 npx expo start --tunnel     # phone, any network
 npx expo start              # phone, same wifi, faster
 npx expo start --web        # browser
-npm test                    # 126 tests
+npm test                    # 153 tests
 npx tsc --noEmit
 ```

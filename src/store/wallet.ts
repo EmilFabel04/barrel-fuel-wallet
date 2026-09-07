@@ -3,7 +3,10 @@ import { Lot, LedgerEntry, Zone } from '../data/types';
 import { buildSeed, TODAY } from '../data/seed';
 import { priceOn } from '../data/prices';
 import { balanceOf, consumeFifoWithCost, expiringWithin } from '../lib/lots';
-import { withinCap, litresThisMonth, capRemaining } from '../lib/caps';
+import {
+  withinTopUpCap, litresThisMonth, topUpCapRemaining,
+  withinRedemptionCap, redemptionCapRemaining,
+} from '../lib/caps';
 import { normaliseDescriptor, resolveZone, deriveLitres } from '../lib/cardfill';
 import { round1, toCents } from '../lib/round';
 import { expiryOf } from '../lib/window';
@@ -50,7 +53,7 @@ export const useWallet = create<WalletState>((set, get) => ({
     const price = priceOn('inland', TODAY);
     const litres = round1(rand / price);
     const { lots, ledger } = get();
-    if (!withinCap(ledger, TODAY, litres)) return;
+    if (!withinTopUpCap(ledger, TODAY, litres)) return;
     const id = `lot-${Date.now()}`;
     const balance = round1(balanceOf(lots, TODAY) + litres);
     set({
@@ -101,6 +104,18 @@ export const useWallet = create<WalletState>((set, get) => ({
     }
     if (litres > balanceOf(lots, TODAY)) return;
 
+    // Spec §8.5: the weekly redemption cap declines deliberately, which is not
+    // what §11's "never fail the card at the pump" forbids. That rule is about
+    // attribution — never punish a driver because a merchant descriptor could
+    // not be parsed. A rate limit is a known, intended refusal for a stated
+    // reason, and recording that reason keeps it from failing silently the way
+    // §11 also requires.
+    if (!withinRedemptionCap(ledger, TODAY, litres)) {
+      const left = redemptionCapRemaining(ledger, TODAY);
+      set({ lastCardFillError: `weekly redemption cap reached: ${litres} L requested, ${left} L left` });
+      return;
+    }
+
     const { lots: nextLots, consumedIds, cost } = consumeFifoWithCost(lots, litres, TODAY);
     set({
       lots: nextLots,
@@ -135,4 +150,14 @@ export const useWallet = create<WalletState>((set, get) => ({
 export const selectBalance = (s: WalletState): number => balanceOf(s.lots, TODAY);
 export const selectExpiringSoon = (s: WalletState): number => expiringWithin(s.lots, TODAY, 30);
 export const selectLitresThisMonth = (s: WalletState): number => litresThisMonth(s.ledger, TODAY);
-export const selectCapRemaining = (s: WalletState): number => capRemaining(s.ledger, TODAY);
+export const selectTopUpCapRemaining = (s: WalletState): number => topUpCapRemaining(s.ledger, TODAY);
+export const selectRedemptionRemaining = (s: WalletState): number => redemptionCapRemaining(s.ledger, TODAY);
+
+/**
+ * What the card would actually authorise right now: the balance, unless the
+ * weekly redemption cap (spec §8.5) is the tighter constraint. The Card screen
+ * quotes this as spending power, so it must be the binding figure — quoting the
+ * raw balance would advertise litres the card is about to decline.
+ */
+export const selectSpendable = (s: WalletState): number =>
+  Math.min(balanceOf(s.lots, TODAY), redemptionCapRemaining(s.ledger, TODAY));

@@ -331,8 +331,9 @@ Every intermediate balance is positive, and the opening 33.1 L is carried by
 pre-September lots that also feed the Savings screen (§4.3) and the expiry split (§9.4).
 
 Two figures follow from this rather than being invented. September top-ups total
-**105.2 L**, so the §8.2 cap meter reads `105.2 / 150 L this month` — 70%, just below the
-80% accent threshold, which is a better demo state than a near-empty meter. And app
+**105.2 L**. Against the original 150 L cap this filled the §8.2 meter to 70%, just below
+the 80% accent threshold. The cap is now 500 L (§8.2), so the meter reads 21%; the figure
+itself is unchanged because it follows from the ledger chain above. And app
 "today" is **30 September 2026**, which the design already implies: artboard 04 warns of
 a 2 October increase and says `TOP UP BEFORE 01 OCT`.
 
@@ -565,8 +566,9 @@ input 0.
 
 ## 8. Guardrails
 
-The business overview (§3.2, §7) defines three controls. None appear in the source
-design. Because the litre-voucher framing is what keeps Barrel outside FSCA/FAIS
+The business overview (§3.2, §7) defines three controls, and a fourth — the weekly
+redemption cap (§8.5) — was added by the project owner after the build as fraud
+mitigation. None appear in the source design. Because the litre-voucher framing is what keeps Barrel outside FSCA/FAIS
 oversight, a UI that conceals the terms of the voucher undermines the structure it
 depends on. They are therefore product requirements, not decoration.
 
@@ -587,14 +589,31 @@ never expire to zero."* The 90-day figure is the *price lock* duration, not the 
 the money. This distinction is the product's answer to the s63 tension identified in the
 business overview and must not be softened in copy.
 
-### 8.2 Per-vehicle monthly cap — 150 L
+### 8.2 Per-vehicle monthly top-up cap — 500 L
 
-- The Top up screen carries a meter under the grade selector: `68.6 / 150 L this month`,
+**Amended from 150 L.** This cap limits how much fuel may be *bought into* the wallet in
+a calendar month. It is distinct from the §8.5 weekly redemption cap, which limits how
+fast litres may be *spent back out*, and the two are named `MONTHLY_TOPUP_CAP_L` and
+`WEEKLY_REDEMPTION_CAP_L` so neither can be reached in place of the other.
+
+- The Top up screen carries a meter under the grade selector: `105.2 / 500 L this month`,
   a 2px hairline track filled in `text`, turning `accent` above 80%.
 - Entering an amount that would breach the cap disables the confirm button, which changes
   its label to `MONTHLY CAP REACHED` and drops to `surface` with `textMuted` text.
 - The cap is per linked vehicle. Settings shows `Linked vehicle · CA 418 921` as it
-  already does; a `Monthly cap · 150 L` row is added beneath it.
+  already does; a `Monthly top-up cap · 500 L` row is added beneath it.
+
+**Ruling C3 is withdrawn by this change.** It had lowered the Top up keypad's default
+from the design's R1 500 to R500, because 150 L minus the seed's 105.2 L of September
+top-ups left only 44.8 L (~R980) and R1 500 opened the screen already disabled. At 500 L
+the headroom is 394.8 L (~R8 630), so the design's R1 500 is restored and the workaround
+is gone.
+
+**Known consequence.** §4.2 chose the seed's 105.2 L partly because it filled 70% of a
+150 L cap — a better demo state than a near-empty meter. Against 500 L the meter now
+reads 21%. The seed is not retuned to improve this: 105.2 L falls out of the §4.2 ledger
+chain that terminates at 42.6 L, and reverse-engineering data to flatter a screen is the
+error §4.3 exists to prevent.
 
 ### 8.3 No cash-out above purchase price
 
@@ -624,6 +643,40 @@ The dispute affordance is the only place in v1 where a user can tell Barrel its 
 pricing data is wrong. Zone misassignment is silent, systematic, and invisible from the
 inside — it will only ever surface through a user with a receipt.
 
+### 8.5 Weekly redemption cap — 110 L
+
+A limit on how fast litres can be *spent*, as distinct from §8.2's limit on how much can
+be bought. Its purpose is fraud mitigation: capping redemption rate blunts bulk-resale
+and similar abuse. The number is a lever rather than a product promise — it is sized to
+make abuse slow, not to shape ordinary use — so it may be retuned without redesigning
+anything.
+
+**The window rolls; it does not reset on a fixed weekday.** A calendar reset would let a
+customer redeem the full cap on the last day of one week and the full cap again on the
+first day of the next — double the limit within hours, which is precisely the pattern the
+cap exists to stop. A trailing seven-day window has no such edge. `litresRedeemedSince`
+counts `fill` entries only, over `(at − 7 days, at]`: a fill exactly one window old has
+aged out, and a future-dated entry cannot consume cap that has not been reached.
+
+**Naming hazard.** `REDEMPTION_CAP_WINDOW_DAYS` (7) is not `REDEMPTION_DAYS` (90) in
+`lib/window.ts`. The latter is the price-lock life of a litre — how long a purchase keeps
+its price. Both are called "redemption" in the product vocabulary and mean different
+things, so neither name is abbreviated, and a test pins them apart.
+
+**A cap breach declines the card, and that does not contradict §11.** §11's "never fail
+the card at the pump" governs *attribution* — a driver must never be punished because a
+merchant descriptor could not be parsed. A rate limit is a known, intended refusal for a
+stated reason. It is recorded in `lastCardFillError`, satisfying §11's other half:
+never fail silently.
+
+**Spending power must respect it.** The Card screen quotes what the card will authorise,
+which is `min(balance, cap remaining)` — never the raw balance, which would advertise
+litres the card is about to decline (§9.1).
+
+In the seeded state the cap is the binding constraint: the 24 and 30 September fills
+(31.4 L and 38.0 L) both fall inside the trailing window, so 69.4 L is already spent and
+40.6 L remains against a 42.6 L balance.
+
 ---
 
 ## 9. New Screens
@@ -636,9 +689,12 @@ last four digits, and the two grey strata beneath it.
 
 Four changes:
 
-- **Spending power.** Beneath the litre balance, `R2,405 available at today's 95` in
+- **Spending power.** Beneath the litre balance, `R888 available at today's 95` in
   `textDim`. This is the number that matters at a till, and in v1 it is real — it is what
-  the card will authorise.
+  the card will authorise, which is `min(balance, §8.5 cap remaining)` rather than the
+  raw balance. When the weekly cap is the tighter of the two, a second line names it
+  (`40.6 L left of your 110 L weekly limit`); when the balance binds, that line is absent
+  rather than restating what the hero already says.
 - **`412 stations` becomes `Works at any fuel station`.** The design's accepted-at row is
   kept; only the claim changes.
 - **Grade.** A static `PETROL 95` label. v1 has one grade, so there is no switcher and no

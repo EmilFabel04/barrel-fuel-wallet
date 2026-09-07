@@ -161,3 +161,62 @@ chevron.
 — Cost if wrong: one path swap and a regenerated icon set. If the crescent is wanted
 in-app, the escalation is a mask plus a `bgColor` prop, and the mark should be drawn
 larger than 17px for it to be worth having.
+
+### 48. Two caps, renamed and resized: 500 L monthly top-up, 110 L weekly redemption
+The project owner clarified that the build's single `MONTHLY_CAP_LITRES = 150` was wrong
+on both count and value. Checked against the code first: there was no daily cap and no
+redemption cap of any kind — grepping `src/`, `app/` and `docs/` for `110`, `daily`,
+`per day` or `DAILY_REDEMPTION` returned nothing. The one cap present was unambiguously a
+top-up cap (`litresThisMonth` filters `kind === 'topup'`, with a test asserting bonuses
+are excluded), and `withinCap` was called only from `topUp`. So the instruction to "fix
+the reset cadence, not just the label" had no cadence to fix: the monthly cap needed
+resizing, and the weekly cap needed building.
+
+Decision: `MONTHLY_TOPUP_CAP_L = 500` and `WEEKLY_REDEMPTION_CAP_L = 110`, with the
+top-up helpers renamed (`topUpCapRemaining`, `withinTopUpCap`) so neither cap can be
+reached in place of the other.
+— Cost if wrong: the constants are one-line edits; the naming is the part that would be
+expensive to undo later, and it is the part guarding against conflation.
+
+### 49. The redemption window rolls rather than resetting weekly
+The owner asked for a "weekly cap and weekly reset", but stated its purpose as blunting
+bulk-resale. Those conflict: a calendar reset lets the full cap be spent on the last day
+of one week and again on the first day of the next — double the limit inside hours, which
+is the exact pattern being defended against. Raised it, and the owner chose a rolling
+7-day window. `litresRedeemedSince` counts fills over `(at − 7 days, at]`, so a fill
+exactly one window old has aged out and a future-dated entry cannot consume cap early.
+
+Also guarded a naming hazard: `REDEMPTION_CAP_WINDOW_DAYS` (7) sits alongside
+`REDEMPTION_DAYS` (90) in `lib/window.ts`, which is a litre's price-lock life. A test
+pins them apart so neither can be quietly pointed at the other.
+— Cost if wrong: a calendar-week variant is a small change to one function, and the tests
+that pin the boundary would catch the switch.
+
+### 50. A cap breach declines the card, which spec §11 permits
+§11 says "never fail the card at the pump", and `cardFill`'s existing guards all fail open
+for that reason. A rate limit is a different thing: §11 governs *attribution* — a driver
+must not be punished because a merchant descriptor could not be parsed — whereas a cap is
+a known, intended refusal. It is recorded in `lastCardFillError`, satisfying §11's other
+half, "never fail silently on price".
+
+Follow-on the owner's instruction implies but did not name: the Card screen quoted
+`balance × price` as spending power. With a redemption cap that becomes a false claim —
+the card would advertise litres it is about to decline, the same defect class as rulings
+29, 34 and 37. Spending power is now `min(balance, cap remaining)`, with a second line
+naming the cap only when it is the binding constraint.
+— Cost if wrong: if the cap should never surface to the customer, the caption is one
+conditional to delete; the derived figure should stay regardless.
+
+### 51. Ruling C3 withdrawn; the seed's cap meter is left honest
+C3 lowered the Top up keypad default from the design's R1 500 to R500 because 150 L minus
+the seed's 105.2 L left only 44.8 L (~R980), so the screen opened already disabled. At
+500 L the headroom is 394.8 L (~R8 630) and that no longer happens, so the design's
+R1 500 is restored and the workaround is gone.
+
+The same change costs a demo state: §4.2 chose 105.2 L partly because it filled 70% of a
+150 L cap, and against 500 L the meter reads 21%. Not fixed. 105.2 L falls out of the
+§4.2 ledger chain terminating at 42.6 L, so it cannot move without breaking the published
+balance — and retuning data to flatter a screen is the error §4.3 exists to prevent.
+Reported rather than engineered around.
+— Cost if wrong: the Top up meter looks emptier than it did. If that matters the fix is
+the meter's framing, not the seed.

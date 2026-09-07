@@ -10,7 +10,7 @@ import { Toggle } from '../../src/components/Toggle';
 import { Button } from '../../src/components/Button';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useWallet, Appearance } from '../../src/store/wallet';
-import { MONTHLY_CAP_LITRES } from '../../src/lib/caps';
+import { MONTHLY_TOPUP_CAP_L, WEEKLY_REDEMPTION_CAP_L } from '../../src/lib/caps';
 
 const TOGGLE_LABELS = ['Price increase alerts', 'Weekly balance summary', 'Station promotions'];
 
@@ -69,7 +69,8 @@ export default function Settings() {
             <Row label="Subscription" value={subscriptionValue} onPress={() => router.push('/subscribe')} />
             <Row label="Payment methods" value="FNB ••4127" />
             <Row label="Linked vehicle" value="CA 418 921" />
-            <Row label="Monthly cap" value={`${MONTHLY_CAP_LITRES} L`} />
+            <Row label="Monthly top-up cap" value={`${MONTHLY_TOPUP_CAP_L} L`} />
+            <Row label="Weekly card limit" value={`${WEEKLY_REDEMPTION_CAP_L} L`} />
             <Row label="Fuel grade" value="Petrol 95" />
             <Row
               label="Appearance"

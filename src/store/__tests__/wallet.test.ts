@@ -3,7 +3,9 @@ import {
   selectBalance,
   selectExpiringSoon,
   selectLitresThisMonth,
-  selectCapRemaining,
+  selectTopUpCapRemaining,
+  selectRedemptionRemaining,
+  selectSpendable,
 } from '../wallet';
 
 const initial = useWallet.getState();
@@ -21,9 +23,23 @@ describe('useWallet initial state (from the seed)', () => {
     expect(selectExpiringSoon(useWallet.getState())).toBe(0);
   });
 
-  test('September top-ups total 105.2 L, leaving 44.8 L of cap', () => {
+  test('September top-ups total 105.2 L, leaving 394.8 L of the 500 L cap', () => {
     expect(selectLitresThisMonth(useWallet.getState())).toBeCloseTo(105.2, 1);
-    expect(selectCapRemaining(useWallet.getState())).toBeCloseTo(44.8, 1);
+    expect(selectTopUpCapRemaining(useWallet.getState())).toBeCloseTo(394.8, 1);
+  });
+
+  // The seed's last two fills — 31.4 L on 24 Sep and 38.0 L on 30 Sep — both
+  // fall inside the trailing 7 days from TODAY, so 69.4 L of the 110 L weekly
+  // cap is already spent. That leaves less headroom than the balance, which
+  // makes the cap the binding constraint in the seeded state.
+  test('69.4 L of the weekly redemption cap is already spent, leaving 40.6 L', () => {
+    expect(selectRedemptionRemaining(useWallet.getState())).toBeCloseTo(40.6, 1);
+  });
+
+  test('spendable is the weekly cap, not the balance, when the cap is tighter', () => {
+    const s = useWallet.getState();
+    expect(selectSpendable(s)).toBeCloseTo(40.6, 1);
+    expect(selectSpendable(s)).toBeLessThan(selectBalance(s));
   });
 
   test('appearance defaults to dark and the card starts unfrozen', () => {
@@ -47,7 +63,7 @@ describe('topUp', () => {
 
   test('is a no-op once the monthly cap is exhausted', () => {
     const before = useWallet.getState();
-    before.topUp(100_000); // litres far beyond the 44.8 L of cap headroom
+    before.topUp(100_000); // litres far beyond the 394.8 L of cap headroom
     const after = useWallet.getState();
     expect(after.ledger.length).toBe(before.ledger.length);
     expect(after.lots.length).toBe(before.lots.length);
@@ -119,6 +135,40 @@ describe('cardFill', () => {
 
     useWallet.getState().cardFill('SASOL RIVONIA', 200, null);
     expect(useWallet.getState().lastCardFillError).toBeNull();
+  });
+});
+
+describe('cardFill — weekly redemption cap (spec §8.5)', () => {
+  // R900 buys 41.2 L: inside the 42.6 L balance, but past the 40.6 L left of
+  // the weekly cap. So this isolates the cap from the balance guard above it.
+  test('declines a fill that fits the balance but breaches the weekly cap', () => {
+    const before = useWallet.getState();
+    before.cardFill('SASOL RIVONIA', 900, null);
+    const after = useWallet.getState();
+    expect(after.ledger.length).toBe(before.ledger.length);
+    expect(after.lots.length).toBe(before.lots.length);
+    expect(selectBalance(after)).toBeCloseTo(selectBalance(before), 1);
+  });
+
+  // Spec §11 requires the reason be observable rather than swallowed. A cap
+  // decline is a deliberate refusal, not the attribution failure §11 forbids.
+  test('records the cap as the reason rather than failing silently', () => {
+    useWallet.getState().cardFill('SASOL RIVONIA', 900, null);
+    expect(useWallet.getState().lastCardFillError).toMatch(/weekly redemption cap/i);
+  });
+
+  test('allows a fill that fits inside the remaining cap', () => {
+    const before = useWallet.getState();
+    before.cardFill('SASOL RIVONIA', 200, null);
+    const after = useWallet.getState();
+    expect(after.ledger.length).toBe(before.ledger.length + 1);
+    expect(after.lastCardFillError).toBeNull();
+  });
+
+  test('spending against the cap reduces what is left', () => {
+    const before = selectRedemptionRemaining(useWallet.getState());
+    useWallet.getState().cardFill('SASOL RIVONIA', 200, null);
+    expect(selectRedemptionRemaining(useWallet.getState())).toBeLessThan(before);
   });
 });
 

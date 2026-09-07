@@ -8,16 +8,23 @@ import { Rule } from '../../src/components/Rule';
 import { Button } from '../../src/components/Button';
 import { BarrelMark } from '../../src/components/BarrelMark';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { useWallet, selectBalance } from '../../src/store/wallet';
+import { useWallet, selectBalance, selectSpendable, selectRedemptionRemaining } from '../../src/store/wallet';
 import { formatLitres, formatRandWhole } from '../../src/lib/format';
 import { priceOn } from '../../src/data/prices';
 import { TODAY } from '../../src/data/seed';
 import { PASS } from '../../src/theme/tokens';
 import { STATIONS } from '../../src/data/stations';
+import { WEEKLY_REDEMPTION_CAP_L } from '../../src/lib/caps';
 
 export default function Card() {
   const t = useTheme();
   const balance = useWallet(selectBalance);
+  // What the card would actually authorise: the balance, unless the weekly
+  // redemption cap (spec §8.5) is the tighter of the two. Quoting the raw
+  // balance here would advertise litres the card is about to decline.
+  const spendable = useWallet(selectSpendable);
+  const weeklyLeft = useWallet(selectRedemptionRemaining);
+  const cappedByWeek = weeklyLeft < balance;
   const frozen = useWallet(s => s.cardFrozen);
   const freeze = useWallet(s => s.freezeCard);
   const cardFill = useWallet(s => s.cardFill);
@@ -33,7 +40,7 @@ export default function Card() {
   // consumption, the ledger write and fill/[id] end to end.
   const simulateFill = () => {
     const station = STATIONS[Math.floor(Math.random() * STATIONS.length)];
-    const availableRand = balance * price;
+    const availableRand = spendable * price;
     const amount = Math.max(50, Math.round(Math.min(300, availableRand * 0.2) / 10) * 10);
     cardFill(station.name.toUpperCase(), amount, station.zone);
   };
@@ -80,8 +87,15 @@ export default function Card() {
             <Num size={26} color={PASS.dim}>L</Num>
           </View>
           <Text style={{ marginTop: 8, fontFamily: 'Outfit_500Medium', fontSize: 13, color: PASS.dim, fontVariant: ['tabular-nums'] }}>
-            R{formatRandWhole(balance * price)} available at today's 95
+            R{formatRandWhole(spendable * price)} available at today's 95
           </Text>
+          {/* Only shown when the weekly cap is what's binding — in the common
+              case the balance is the limit and this line would be noise. */}
+          {cappedByWeek ? (
+            <Text style={{ marginTop: 6, fontFamily: 'Outfit_500Medium', fontSize: 11, color: PASS.muted, fontVariant: ['tabular-nums'] }}>
+              {formatLitres(weeklyLeft)} L left of your {WEEKLY_REDEMPTION_CAP_L} L weekly limit
+            </Text>
+          ) : null}
 
           <View style={{ height: 1, backgroundColor: PASS.hairline, marginTop: 22, marginBottom: 14 }} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>

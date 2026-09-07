@@ -9,24 +9,24 @@ import { Rule } from '../src/components/Rule';
 import { Button } from '../src/components/Button';
 import { Keypad } from '../src/components/Keypad';
 import { useTheme } from '../src/theme/ThemeProvider';
-import { useWallet, selectLitresThisMonth, selectCapRemaining } from '../src/store/wallet';
-import { MONTHLY_CAP_LITRES } from '../src/lib/caps';
+import { useWallet, selectLitresThisMonth, selectTopUpCapRemaining } from '../src/store/wallet';
+import { MONTHLY_TOPUP_CAP_L } from '../src/lib/caps';
 import { formatLitres, formatRandWhole, formatPrice, spokenRand } from '../src/lib/format';
 import { priceOn } from '../src/data/prices';
 import { TODAY } from '../src/data/seed';
 
-// Default of R500 (not the design's R1 500) is deliberate: the seed already
-// carries 105.2 L of September top-ups against the 150 L cap, leaving 44.8 L
-// (~R980) of headroom. R1 500 would open this screen already disabled at
-// "MONTHLY CAP REACHED", hiding the live conversion the screen exists to
-// demonstrate (spec §4.2, §8.2).
+// The design's R1 500 default is restored. Ruling C3 had lowered it to R500
+// because a 150 L monthly cap minus the seed's 105.2 L of September top-ups
+// left only 44.8 L (~R980), so R1 500 opened this screen already disabled at
+// "MONTHLY CAP REACHED". The cap is now 500 L (spec §8.2), leaving 394.8 L
+// (~R8 630) of headroom, so that no longer happens and the workaround goes.
 export default function TopUp() {
   const t = useTheme();
   const router = useRouter();
-  const [raw, setRaw] = useState('500');
+  const [raw, setRaw] = useState('1500');
   const topUp = useWallet(s => s.topUp);
   const used = useWallet(selectLitresThisMonth);
-  const remaining = useWallet(selectCapRemaining);
+  const remaining = useWallet(selectTopUpCapRemaining);
   const subscription = useWallet(s => s.subscription);
   // spec §9.3: "A lapsed subscription greys the Top up button and shows
   // RESUME SUBSCRIPTION; it never blocks the card or the existing balance."
@@ -39,7 +39,7 @@ export default function TopUp() {
   const rand = parseInt(raw || '0', 10);
   const litres = rand / price;
   const wouldExceed = litres > remaining;
-  const pct = Math.min(1, used / MONTHLY_CAP_LITRES);
+  const pct = Math.min(1, used / MONTHLY_TOPUP_CAP_L);
 
   return (
     <Screen>
@@ -52,7 +52,7 @@ export default function TopUp() {
 
         <View style={{ marginTop: 14 }}>
           <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 12, color: t.textMuted }}>
-            {formatLitres(used)} / {MONTHLY_CAP_LITRES} L this month
+            {formatLitres(used)} / {MONTHLY_TOPUP_CAP_L} L this month
           </Text>
           <View style={{ height: 2, backgroundColor: t.hairline, marginTop: 8 }}>
             <View style={{ height: 2, width: `${pct * 100}%`, backgroundColor: pct > 0.8 ? t.accent : t.text }} />

@@ -35,7 +35,7 @@ describe('seed', () => {
     for (const e of ledger) expect(e.balanceAfter).toBeGreaterThanOrEqual(0);
   });
 
-  test('September top-ups total 105.2 L, under the 150 L cap', () => {
+  test('September top-ups total 105.2 L, under the 500 L cap', () => {
     expect(litresThisMonth(ledger, TODAY)).toBeCloseTo(105.2, 1);
   });
 
