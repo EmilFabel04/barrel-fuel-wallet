@@ -11,8 +11,18 @@ import { useTheme, useIsLight } from '../../src/theme/ThemeProvider';
 import { DARK } from '../../src/theme/tokens';
 import { useWallet, selectBalance } from '../../src/store/wallet';
 import { formatLitres, formatRand, formatPrice } from '../../src/lib/format';
-import { priceOn } from '../../src/data/prices';
+import { priceOn, nextPriceChange } from '../../src/data/prices';
 import { TODAY } from '../../src/data/seed';
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// "02 Oct" — zero-padded day, sentence-case month, matching this screen's
+// own copy voice. Deliberately not shared with alerts.tsx's ALL-CAPS
+// `ddMonUpper`: each screen formats to its own casing, same as the two
+// already do for everything else on the page.
+function ddMon(d: Date): string {
+  return `${String(d.getDate()).padStart(2, '0')} ${MONTHS[d.getMonth()]}`;
+}
 
 export default function Wallet() {
   const t = useTheme();
@@ -28,6 +38,16 @@ export default function Wallet() {
   // plain JS idiom for the last day of the previous one.
   const priorPrice = priceOn('inland', new Date(TODAY.getFullYear(), TODAY.getMonth(), 0));
   const priceDeltaPct = ((price - priorPrice) / priorPrice) * 100;
+
+  // The upcoming change, read from the same pricing table the wallet
+  // deducts against (src/data/prices.ts) rather than transcribed from the
+  // source design — the design's "2 Oct" canvas copy is a Thursday and
+  // contradicts DMPR's first-Wednesday rule, which the table already gets
+  // right (7 Oct). This is the exact literal that survived three fix rounds
+  // on this screen because every review checked the diff against the brief,
+  // not the price table.
+  const nextChange = nextPriceChange('inland', TODAY);
+  const nextChangeCents = nextChange ? Math.round((nextChange.pricePerLitre - price) * 100) : null;
 
   return (
     <Screen insetBottom={false}>
@@ -95,8 +115,12 @@ export default function Wallet() {
         </View>
         <View style={{ height: 1, backgroundColor: DARK.hairline }} />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 13, color: t.textMuted }}>Next change · 02 Oct</Text>
-          <Num size={14} color={t.accent}>+12c expected</Num>
+          <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 13, color: t.textMuted }}>
+            {nextChange ? `Next change · ${ddMon(nextChange.effectiveFrom)}` : 'No change scheduled'}
+          </Text>
+          {nextChange ? (
+            <Num size={14} color={t.accent}>{`+${nextChangeCents}c expected`}</Num>
+          ) : null}
         </View>
       </Pressable>
 

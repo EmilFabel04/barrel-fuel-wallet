@@ -46,7 +46,10 @@ export default function Stations() {
           {CHIPS.map((c, i) => (
             <View
               key={c}
-              accessibilityRole="button"
+              // Not Pressables — filtering is out of scope for v1 (see the
+              // comment above), and a `button` role with no `onPress` would
+              // announce these as interactive to a screen reader and then do
+              // nothing. They're static labels, so they announce as such.
               accessibilityLabel={c}
               style={{
                 paddingHorizontal: 13, paddingVertical: 8, minHeight: 44, justifyContent: 'center',
