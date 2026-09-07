@@ -134,3 +134,30 @@ contradict the app's own data.
 ### 45. Ruling F-9: fix the three "fix soon" deferred minors — non-positive litre guard in lots.ts, the bare catch in cardFill, and pricePointOn to kill the last price-lookup duplicate.
 
 ### 46. ★ Ruling F-10 (adjudicating the re-review's one residual): the SIMULATE A FILL debug control is content-distinct — it sits under a "Debug — prototype only" section label with an explanatory caption — but uses the same secondary Button styling as FREEZE CARD above it. The reviewer asked whether that satisfies "clearly debug-styled". Decision: accept as-is. Giving it a visually distinct treatment means either a new Button variant or a new colour, and spec 3.1 forbids introducing colours without amending it. The design's whole character is that two accents carry all meaning; spending one on a control that is deleted before any real build would cost more discipline than it buys. The section label and caption make it unmistakable in context. — Cost if wrong: someone screenshots the Card screen for a deck and the debug button is in frame. Mitigated by the label directly above it saying "Debug — prototype only".
+
+---
+
+## Decisions after the autonomous build
+
+### 47. Official Barrel mark: flat droplet in the UI, full artwork in the icon set
+The project owner supplied `Barrel_Logo.svg` as the official mark. It is a different
+silhouette from the canvas placeholder the build shipped (a filled square with a droplet
+knocked out) — a standalone droplet with a white crescent highlight — and it is two-tone,
+which the single-`color` `BarrelMark` API cannot express.
+
+Measured at true size, the crescent reads at 30px, is marginal at 17px and is gone by
+14px; it is 3.9% of the mark's area. The app draws the mark only at 17px and 14px, so it
+would never render. Forcing it would also break dark mode: the crescent is a literal
+`#FFFFFF`, so on a `t.text`-tinted droplet it vanishes on black, and keeping it visible
+needs a `react-native-svg` knockout mask plus a second colour prop — a rendering
+dependency and an API change bought for a detail no screen can show.
+
+Decision: `BarrelMark` carries the droplet outline alone, verbatim from the source file
+(so it diffs against the artwork) on a `297 0 948 1500` viewBox trimmed to its bounds,
+with `size` setting height and width derived from the 0.632 aspect. The full two-tone
+artwork generates the icon set at 1024px, where the crescent reads. This also replaces
+the Expo template defaults the app was still shipping — `icon.png` was the blue Expo
+chevron.
+— Cost if wrong: one path swap and a regenerated icon set. If the crescent is wanted
+in-app, the escalation is a mask plus a `bgColor` prop, and the mark should be drawn
+larger than 17px for it to be worth having.

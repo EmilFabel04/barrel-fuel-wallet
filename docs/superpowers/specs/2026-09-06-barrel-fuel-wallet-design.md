@@ -198,9 +198,34 @@ em to points at the call site.
 
 ### 3.4 Brand mark
 
-A 24x24 SVG: a filled square with a droplet knocked out, `fill-rule="evenodd"`.
-Path is carried over verbatim into `react-native-svg`. Renders at 30px (canvas header),
-17px (screen headers, card), 14px (lock-screen notification), 13px (compact).
+**Amended — the official mark supersedes the canvas placeholder.** The design canvas
+used a 24x24 SVG of a filled square with a droplet knocked out (`fill-rule="evenodd"`).
+The official artwork (`Barrel_Logo.svg`) is a different silhouette: a standalone droplet,
+solid, with a white crescent highlight in its lower right, on a 1500x1500 canvas.
+
+**The crescent does not ship in the UI.** It is 3.9% of the mark's area and stops
+resolving below roughly 20px — measured at true size it reads at 30px, is marginal at
+17px, and is gone by 14px. The app draws the mark only at 17px (Wallet header, Card
+pass) and 14px (Alerts lock-screen mock), so the highlight would never render on any
+screen. It would also cost a second colour: the crescent is a literal `#FFFFFF`, so
+against a `t.text`-tinted droplet it disappears entirely in dark mode, and preserving it
+needs a knockout mask plus a second colour prop — spending a rendering dependency and an
+API change on a detail no screen can show.
+
+`BarrelMark` therefore carries the droplet outline alone: one path, taken verbatim from
+the source file so it can be diffed against the artwork, on a `297 0 948 1500` viewBox
+trimmed to the droplet's exact bounds. The mark is taller than wide (ratio 0.632), so
+`size` sets its height and the width follows from the artwork. A single `color` prop
+tints it, defaulting to `t.text` — so §3.1's no-raw-hex rule and the `PASS` group's
+theme-invariance (Ruling C1) both hold unchanged.
+
+**The full two-tone artwork is used for the app icon set**, where it renders at 1024px
+and the crescent reads properly: `icon.png` (1024, opaque white ground),
+`splash-icon.png` (1024, transparent), the Android adaptive `foreground`/`background`
+pair (512, foreground sized to the 66% safe zone), and `favicon.png` (48). The Android
+`monochrome` icon and the favicon use the flat droplet — monochrome cannot express two
+tones, and 48px is below the crescent's resolving size. `adaptiveIcon.backgroundColor`
+moves from the Expo template's `#E6F4FE` to `#FFFFFF`.
 
 ---
 
