@@ -16,6 +16,17 @@ describe('normaliseDescriptor', () => {
   test('returns null when nothing matches', () => {
     expect(normaliseDescriptor('PUMA MUSINA N1')).toBeNull();
   });
+
+  test('matches whole words, not substrings', () => {
+    // 'RIVONIAN' contains 'rivonia' as a substring but is a different word
+    expect(normaliseDescriptor('RIVONIAN SASOL PLAZA')).toBeNull();
+    expect(normaliseDescriptor('NICOLAS ENGEN WILLIAM')).toBeNull();
+  });
+
+  test('requires every significant word, not just some', () => {
+    // 'astron' is missing, so this must not match astron-fourways
+    expect(normaliseDescriptor('FOURWAYS SERVICE STATION')).toBeNull();
+  });
 });
 
 describe('resolveZone', () => {

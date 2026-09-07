@@ -1,5 +1,6 @@
 import { STATIONS } from '../data/stations';
 import { Zone } from '../data/types';
+import { round1 } from './round';
 
 // Merchant descriptors arrive dirty: 'ENGEN WILLIAM NICOL 4412',
 // 'SHELL GRAYSTON SANDTON'. Strip digits and punctuation, then look for a
@@ -33,5 +34,5 @@ export function resolveZone(stationId: string | null, fallbackZone: Zone | null)
 export function deriveLitres(randAmount: number, pricePerLitre: number): number {
   if (randAmount <= 0) throw new Error('rand amount must be positive');
   if (pricePerLitre <= 0) throw new Error('price must be positive');
-  return Math.round((randAmount / pricePerLitre) * 10) / 10;
+  return round1(randAmount / pricePerLitre);
 }
