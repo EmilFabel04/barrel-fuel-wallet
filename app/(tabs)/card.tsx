@@ -47,7 +47,7 @@ export default function Card() {
               <BarrelMark size={17} color={PASS.text} />
               <Text style={{ fontFamily: 'Outfit_800ExtraBold', fontSize: 16, letterSpacing: -0.56, color: PASS.text }}>BARREL</Text>
             </View>
-            <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 9, letterSpacing: 1.44, color: PASS.muted }}>
+            <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 9, letterSpacing: 1.44, color: frozen ? t.accent : PASS.muted }}>
               {frozen ? 'FROZEN' : 'FUEL PASS'}
             </Text>
           </View>
@@ -57,8 +57,8 @@ export default function Card() {
             <Num size={66} color={PASS.text}>{formatLitres(balance)}</Num>
             <Num size={26} color={PASS.dim}>L</Num>
           </View>
-          <Text style={{ marginTop: 8, fontFamily: 'Outfit_500Medium', fontSize: 13, color: PASS.muted, fontVariant: ['tabular-nums'] }}>
-            R{formatRandWhole(balance * price)} available · PETROL 95
+          <Text style={{ marginTop: 8, fontFamily: 'Outfit_500Medium', fontSize: 13, color: PASS.dim, fontVariant: ['tabular-nums'] }}>
+            R{formatRandWhole(balance * price)} available at today's 95
           </Text>
 
           <View style={{ height: 1, backgroundColor: PASS.hairline, marginTop: 22, marginBottom: 14 }} />

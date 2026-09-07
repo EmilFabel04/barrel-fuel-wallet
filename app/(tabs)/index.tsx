@@ -7,23 +7,27 @@ import { SectionLabel } from '../../src/components/SectionLabel';
 import { Rule } from '../../src/components/Rule';
 import { Button } from '../../src/components/Button';
 import { BarrelMark } from '../../src/components/BarrelMark';
-import { useTheme } from '../../src/theme/ThemeProvider';
-import { DARK, LIGHT } from '../../src/theme/tokens';
+import { useTheme, useIsLight } from '../../src/theme/ThemeProvider';
+import { DARK } from '../../src/theme/tokens';
 import { useWallet, selectBalance } from '../../src/store/wallet';
-import { formatLitres, formatRand } from '../../src/lib/format';
+import { formatLitres, formatRand, formatPrice } from '../../src/lib/format';
 import { priceOn } from '../../src/data/prices';
 import { TODAY } from '../../src/data/seed';
 
 export default function Wallet() {
   const t = useTheme();
-  // ThemeProvider hands out the DARK/LIGHT token objects themselves (never a
-  // copy), so identity comparison is a clean, hex-free way to know which
-  // theme is active — needed below because the price-watch block is the one
-  // place light mode isn't a mechanical token swap (spec §6).
-  const isLight = t === LIGHT;
+  // Needed below because the price-watch block is the one place light mode
+  // isn't a mechanical token swap (spec §6). Sourced from ThemeProvider's own
+  // light/dark computation rather than re-derived here.
+  const isLight = useIsLight();
   const router = useRouter();
   const balance = useWallet(selectBalance);
   const price = priceOn('inland', TODAY);
+  // The preceding month's price is always readable as "the price in effect
+  // the day before this month's change" — day 0 of the current month is a
+  // plain JS idiom for the last day of the previous one.
+  const priorPrice = priceOn('inland', new Date(TODAY.getFullYear(), TODAY.getMonth(), 0));
+  const priceDeltaPct = ((price - priorPrice) / priorPrice) * 100;
 
   return (
     <Screen insetBottom={false}>
@@ -77,7 +81,7 @@ export default function Wallet() {
           <View>
             <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 12, letterSpacing: 0.24, color: DARK.text }}>PETROL 95</Text>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 7 }}>
-              <Num size={26} color={DARK.text}>R21.87</Num>
+              <Num size={26} color={DARK.text}>{`R${formatPrice(price)}`}</Num>
               <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 13, color: t.textMuted }}>/L</Text>
             </View>
           </View>
@@ -86,7 +90,7 @@ export default function Wallet() {
               width: 0, height: 0, borderLeftWidth: 6, borderRightWidth: 6, borderBottomWidth: 9,
               borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: t.accent,
             }} />
-            <Num size={15} color={t.accent}>+0.55%</Num>
+            <Num size={15} color={t.accent}>{`+${formatPrice(priceDeltaPct)}%`}</Num>
           </View>
         </View>
         <View style={{ height: 1, backgroundColor: DARK.hairline }} />
