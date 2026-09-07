@@ -135,11 +135,37 @@ Two accents, unchanged across themes:
 | Token | Value | Use |
 |---|---|---|
 | `accent` | `#D9541E` | Primary CTA, rising prices, expiry warnings |
-| `positive` | `#C6F24E` | Savings, credits, falling prices, active toggles |
+| `positive` | `#C6F24E` | Fill colour: chart bars, active-toggle track |
 
 The design exposes accent alternates (`#E08A1E`, `#B8461A`, `#FF4D1F`) and positive
 alternates (`#8CE563`, `#E8E8E8`, `#5AD1FF`) as canvas props. These are recorded as
 constants but not exposed in the app.
+
+**Amendment — `positiveText`.** `#C6F24E` measures 1.30:1 against `LIGHT.bg`
+(`#FFFFFF`), which is invisible, not merely low-contrast: on white it fails as text for
+the Savings hero, the §8.4 equation's answer, ledger credit deltas and the Subscribe
+bullets — all sites that render it *as* text or a glyph rather than *as* a fill behind
+other content. `positive` cannot simply be darkened, because the same value is also the
+fill colour for chart bars and the Toggle's active track, where it reads fine against
+`border`/`surface` neighbours and where the design's canvas value should be preserved
+exactly.
+
+The fix is a second token, text-only:
+
+| Token | Dark | Light | Use |
+|---|---|---|---|
+| `positiveText` | `#C6F24E` | `#5A7A0A` | Text and glyphs only: savings hero, the §8.4 equation's answer, ledger credits, Subscribe bullets |
+
+`positiveText` is identical to `positive` in dark mode (no change there) and 4.97:1 on
+white in light mode, passing WCAG AA while staying recognisably the same hue. `positive`
+itself is unchanged in both themes and remains fill-only — bar fills and the Toggle
+track keep using it, never `positiveText`.
+
+The Toggle's knob has the same defect one level deeper: it uses `inverse`
+("text on accent/white fills"), which is `#FFFFFF` in light mode — 1.30:1 against the
+lime track for the same reason. A knob is a fill sitting on a fill, not text, so it gets
+neither `positive` nor `positiveText`; it is pinned to `DARK.bg` (`#000000`) in both
+themes, since a dark knob reads correctly against the lime track regardless of theme.
 
 ### 3.2 Typography
 

@@ -58,7 +58,7 @@ export default function FillDetail() {
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
             <Num size={24} color={t.textMuted}>=</Num>
-            <Num size={44} color={t.positive}>{formatLitres(c.litres)}</Num>
+            <Num size={44} color={t.positiveText}>{formatLitres(c.litres)}</Num>
             <Num size={20} color={t.textDim}>L</Num>
           </View>
         </View>

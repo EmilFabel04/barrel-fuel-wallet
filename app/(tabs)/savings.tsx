@@ -36,13 +36,13 @@ export default function Savings() {
       <View style={{ paddingTop: 40 }}>
         <SectionLabel>Saved since March</SectionLabel>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 14 }}>
-          <Num size={34} color={t.positive}>R</Num>
-          <Num size={82} color={t.positive}>{formatRand(Math.max(0, saved))}</Num>
+          <Num size={34} color={t.positiveText}>R</Num>
+          <Num size={82} color={t.positiveText}>{formatRand(Math.max(0, saved))}</Num>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 16 }}>
           <View style={{
             width: 0, height: 0, borderLeftWidth: 6, borderRightWidth: 6, borderBottomWidth: 9,
-            borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: t.positive,
+            borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: t.positiveText,
           }} />
           <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 15, color: t.textDim }}>
             {formatLitres(below)} L bought below the pump price

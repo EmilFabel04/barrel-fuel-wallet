@@ -103,7 +103,7 @@ export default function Balance() {
                   </Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Num size={15} color={e.deltaLitres > 0 ? t.positive : t.text}>
+                  <Num size={15} color={e.deltaLitres > 0 ? t.positiveText : t.text}>
                     {e.deltaLitres > 0 ? '+' : '−'}{formatLitres(Math.abs(e.deltaLitres))} L
                   </Num>
                   <Num size={11} weight="500" color={t.textMuted} style={{ marginTop: 7 }}>

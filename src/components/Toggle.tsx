@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
+import { DARK } from '../theme/tokens';
 
 export function Toggle({ on, onPress, label }: { on: boolean; onPress: () => void; label: string }) {
   const t = useTheme();
@@ -19,7 +20,11 @@ export function Toggle({ on, onPress, label }: { on: boolean; onPress: () => voi
         backgroundColor: on ? t.positive : t.border,
       }}
     >
-      <View style={{ width: 20, height: 20, backgroundColor: on ? t.inverse : t.textMuted }} />
+      {/* spec §3.1: `inverse` is text-on-accent/white — #FFFFFF in light mode,
+          which on this lime track is 1.30:1 and nearly invisible. The knob
+          needs a dark fill against the lime track in both themes, so it's
+          pinned to DARK.bg rather than themed. */}
+      <View style={{ width: 20, height: 20, backgroundColor: on ? DARK.bg : t.textMuted }} />
     </Pressable>
   );
 }

@@ -40,7 +40,7 @@ export default function Subscribe() {
         {INCLUDED.map(line => (
           <View key={line}>
             <View style={{ paddingVertical: 17, flexDirection: 'row', gap: 12 }}>
-              <Text style={{ fontFamily: 'Outfit_800ExtraBold', fontSize: 14, color: t.positive }}>—</Text>
+              <Text style={{ fontFamily: 'Outfit_800ExtraBold', fontSize: 14, color: t.positiveText }}>—</Text>
               <Text style={{ flex: 1, fontFamily: 'Outfit_500Medium', fontSize: 14, lineHeight: 20, color: t.text }}>{line}</Text>
             </View>
             <Rule />
