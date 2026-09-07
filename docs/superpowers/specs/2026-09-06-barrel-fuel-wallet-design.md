@@ -233,8 +233,12 @@ Mock content is copied exactly so the build is comparable to the canvas side by 
   Lerato M., +2.0 L). Pump numbers are dropped — a card transaction does not carry one
   (§7.3). `balanceAfter` values are computed, not copied (§4.2).
 - Alert copy: "Petrol price rising 12c on the 2nd — top up now", R21.87 → R21.99/L,
-  `2.4 L saved`, "Topping up R2 000 before the increase buys you 2.4 litres more than it
-  will on Wednesday." Threshold: alert when 95 moves by ≥ 10c.
+  Threshold: alert when 95 moves by ≥ 10c. **`2.4 L saved` is not preserved** — it is
+  wrong by roughly 5x against the two prices printed on the same screen. On R2 000,
+  today's R21.87/L buys 91.4495 L; at R21.99/L it buys 90.9504 L; the gap is 0.5 L, not
+  2.4 L. This screen's own hero and prose are computed from `priceOn`/`nextPriceChange`
+  (§4.2's precedent — every figure here is derived, never a literal) rather than copied
+  from the canvas.
 - Settings toggles: Price increase alerts (on), Weekly balance summary (on),
   Station promotions (off).
 - Footer: `Barrel v2.4.0 · FSP 51284`.

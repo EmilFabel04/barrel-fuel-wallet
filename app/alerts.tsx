@@ -11,7 +11,8 @@ import { BarrelMark } from '../src/components/BarrelMark';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { priceOn, nextPriceChange } from '../src/data/prices';
 import { TODAY } from '../src/data/seed';
-import { formatPrice } from '../src/lib/format';
+import { formatPrice, formatLitres } from '../src/lib/format';
+import { round1 } from '../src/lib/round';
 
 const MONTHS_UPPER = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
@@ -50,6 +51,16 @@ export default function Alerts() {
   const nextDate = nextChange ? nextChange.effectiveFrom : TODAY;
   const deltaCents = nextChange ? Math.round((nextPrice - currentPrice) * 100) : 0;
   const nextDateLabel = nextChange ? ddMonUpper(nextDate) : '—';
+
+  // "buys you N litres more than it will on Wednesday" — how many more
+  // litres the same R2 000 buys today than it will once the price above
+  // takes effect. Derived from the same price table as everything else on
+  // this screen, never hand-picked: the canvas's "2.4 L saved" was off by
+  // ~5x against these two prices (R2 000 / 21.87 = 91.4 L vs / 21.99 = 91.0
+  // L, a 0.5 L gap, not 2.4 L). When there's no scheduled change, nextPrice
+  // falls back to currentPrice above, so this naturally resolves to 0.
+  const illustrativeRand = 2000;
+  const litresSaved = round1(illustrativeRand / currentPrice - illustrativeRand / nextPrice);
 
   return (
     <Screen>
@@ -102,11 +113,11 @@ export default function Alerts() {
             </View>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 20 }}>
-            <Num size={54}>2.4</Num>
+            <Num size={54}>{formatLitres(litresSaved)}</Num>
             <Num size={18} color={t.textDim}>L saved</Num>
           </View>
           <Text style={{ marginVertical: 14, fontFamily: 'Outfit_400Regular', fontSize: 13, lineHeight: 19.5, color: t.textDim }}>
-            Topping up R2 000 before the increase buys you 2.4 litres more than it will on Wednesday.
+            {`Topping up R2 000 before the increase buys you ${formatLitres(litresSaved)} litres more than it will on Wednesday.`}
           </Text>
           <Button label={`TOP UP BEFORE ${nextDateLabel}`} height={54} onPress={() => router.push('/top-up')} />
         </View>
