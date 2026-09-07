@@ -1,20 +1,25 @@
 import { PricePoint, Zone } from './types';
 
 // DMPR sets petrol prices by zone, effective the first Wednesday of each month.
-// Coastal runs roughly R0.60/L below inland.
+// Coastal runs roughly R0.55-0.65/L below inland.
+//
+// 2026 saw an oil supply shock: prices rallied from March through June, eased
+// back in July, then resumed climbing into September/October. September and
+// October inland are pinned exactly (21.87 / 21.99) — other tests and screens
+// depend on both.
 export const PRICES: PricePoint[] = [
-  { zone: 'inland',  effectiveFrom: new Date(2026, 2, 4),  pricePerLitre: 20.94 },
-  { zone: 'coastal', effectiveFrom: new Date(2026, 2, 4),  pricePerLitre: 20.32 },
-  { zone: 'inland',  effectiveFrom: new Date(2026, 3, 1),  pricePerLitre: 21.12 },
-  { zone: 'coastal', effectiveFrom: new Date(2026, 3, 1),  pricePerLitre: 20.50 },
-  { zone: 'inland',  effectiveFrom: new Date(2026, 4, 6),  pricePerLitre: 21.35 },
-  { zone: 'coastal', effectiveFrom: new Date(2026, 4, 6),  pricePerLitre: 20.73 },
-  { zone: 'inland',  effectiveFrom: new Date(2026, 5, 3),  pricePerLitre: 21.08 },
-  { zone: 'coastal', effectiveFrom: new Date(2026, 5, 3),  pricePerLitre: 20.46 },
-  { zone: 'inland',  effectiveFrom: new Date(2026, 6, 1),  pricePerLitre: 21.61 },
-  { zone: 'coastal', effectiveFrom: new Date(2026, 6, 1),  pricePerLitre: 20.99 },
-  { zone: 'inland',  effectiveFrom: new Date(2026, 7, 5),  pricePerLitre: 21.75 },
-  { zone: 'coastal', effectiveFrom: new Date(2026, 7, 5),  pricePerLitre: 21.13 },
+  { zone: 'inland',  effectiveFrom: new Date(2026, 2, 4),  pricePerLitre: 19.50 },
+  { zone: 'coastal', effectiveFrom: new Date(2026, 2, 4),  pricePerLitre: 18.90 },
+  { zone: 'inland',  effectiveFrom: new Date(2026, 3, 1),  pricePerLitre: 20.40 },
+  { zone: 'coastal', effectiveFrom: new Date(2026, 3, 1),  pricePerLitre: 19.80 },
+  { zone: 'inland',  effectiveFrom: new Date(2026, 4, 6),  pricePerLitre: 21.30 },
+  { zone: 'coastal', effectiveFrom: new Date(2026, 4, 6),  pricePerLitre: 20.70 },
+  { zone: 'inland',  effectiveFrom: new Date(2026, 5, 3),  pricePerLitre: 21.80 },
+  { zone: 'coastal', effectiveFrom: new Date(2026, 5, 3),  pricePerLitre: 21.20 },
+  { zone: 'inland',  effectiveFrom: new Date(2026, 6, 1),  pricePerLitre: 21.40 },
+  { zone: 'coastal', effectiveFrom: new Date(2026, 6, 1),  pricePerLitre: 20.80 },
+  { zone: 'inland',  effectiveFrom: new Date(2026, 7, 5),  pricePerLitre: 21.60 },
+  { zone: 'coastal', effectiveFrom: new Date(2026, 7, 5),  pricePerLitre: 21.00 },
   { zone: 'inland',  effectiveFrom: new Date(2026, 8, 2),  pricePerLitre: 21.87 },
   { zone: 'coastal', effectiveFrom: new Date(2026, 8, 2),  pricePerLitre: 21.25 },
   { zone: 'inland',  effectiveFrom: new Date(2026, 9, 7),  pricePerLitre: 21.99 },

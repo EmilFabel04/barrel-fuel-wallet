@@ -32,6 +32,7 @@ export type LedgerEntry = {
   balanceAfter: number;
   lotIds?: string[];
   card?: CardFill;
+  buyPricePerLitre?: number;  // weighted price of the lots consumed by a fill
 };
 
 export type Station = {
