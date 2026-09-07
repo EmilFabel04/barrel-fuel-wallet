@@ -9,6 +9,7 @@ import { Button } from '../../src/components/Button';
 import { BarrelMark } from '../../src/components/BarrelMark';
 import { useTheme, useIsLight, useElevation } from '../../src/theme/ThemeProvider';
 import { DARK, RADIUS } from '../../src/theme/tokens';
+import { MOTION } from '../../src/theme/motion';
 import { useWallet, selectBalance, selectLastFill } from '../../src/store/wallet';
 import { formatLitres, formatRand, formatPrice } from '../../src/lib/format';
 import { priceOn, nextPriceChange } from '../../src/data/prices';
@@ -83,7 +84,9 @@ export default function Wallet() {
         accessibilityRole="button"
         accessibilityLabel={`Available fuel, ${formatLitres(balance)} litres. View balance.`}
         onPress={() => router.push('/balance')}
-        style={{ paddingTop: 44 }}
+        // Dim only. A 92px balance hero that scales under the thumb reads as a
+        // button; it is a tappable region, and the distinction is worth keeping.
+        style={({ pressed }) => ({ paddingTop: 44, opacity: pressed ? MOTION.surfaceOpacity : 1 })}
       >
         <SectionLabel>Available fuel</SectionLabel>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 14 }}>
@@ -110,9 +113,12 @@ export default function Wallet() {
         accessibilityRole="button"
         accessibilityLabel="Price watch. View price alerts."
         onPress={() => router.push('/alerts')}
-        style={isLight
-          ? { marginTop: 34, backgroundColor: DARK.bg, paddingVertical: 22, paddingHorizontal: 24, gap: 16, borderRadius: RADIUS.lg, ...blockShadow }
-          : { paddingTop: 20, gap: 16 }}
+        style={({ pressed }) => ({
+          ...(isLight
+            ? { marginTop: 34, backgroundColor: DARK.bg, paddingVertical: 22, paddingHorizontal: 24, gap: 16, borderRadius: RADIUS.lg, ...blockShadow }
+            : { paddingTop: 20, gap: 16 }),
+          opacity: pressed ? MOTION.surfaceOpacity : 1,
+        })}
       >
         <SectionLabel>Price watch · Gauteng</SectionLabel>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>

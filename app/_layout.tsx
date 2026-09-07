@@ -7,6 +7,7 @@ import {
 } from '@expo-google-fonts/figtree';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '../src/theme/ThemeProvider';
+import { MOTION } from '../src/theme/motion';
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -17,7 +18,16 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <Stack screenOptions={{ headerShown: false }}>
+        {/* Set explicitly rather than left to the per-platform default, so a
+            push looks the same on both. iOS's native stack already slides from
+            the right; naming it makes Android match instead of cross-fading,
+            and gives the two a shared duration. The back swipe is the native
+            stack's own and is left alone. */}
+        <Stack screenOptions={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          animationDuration: MOTION.screen,
+        }}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="top-up" />
           <Stack.Screen name="balance" />

@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../theme/ThemeProvider';
+import { MOTION } from '../theme/motion';
 
 export function ScreenHeader({ title, back = true }: { title: string; back?: boolean }) {
   const t = useTheme();
@@ -13,7 +14,11 @@ export function ScreenHeader({ title, back = true }: { title: string; back?: boo
     }}>
       {back ? (
         <Pressable accessibilityRole="button" accessibilityLabel="Go back"
-          onPress={() => router.back()} style={{ minWidth: 44, minHeight: 44, justifyContent: 'center' }}>
+          onPress={() => router.back()}
+          style={({ pressed }) => ({
+            minWidth: 44, minHeight: 44, justifyContent: 'center',
+            opacity: pressed ? MOTION.surfaceOpacity : 1,
+          })}>
           <Text style={{ fontFamily: 'Figtree_700Bold', fontSize: 20, color: t.textMuted }}>←</Text>
         </Pressable>
       ) : <View style={{ width: 44 }} />}

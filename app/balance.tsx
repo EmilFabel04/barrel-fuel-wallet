@@ -12,6 +12,7 @@ import { round1 } from '../src/lib/round';
 import { formatLitres, formatDayMonth } from '../src/lib/format';
 import { now } from '../src/lib/clock';
 import { DAY, expiryOf } from '../src/lib/window';
+import { MOTION } from '../src/theme/motion';
 
 export default function Balance() {
   const t = useTheme();
@@ -27,8 +28,11 @@ export default function Balance() {
     : null;
   const rows = [...ledger].sort((a, b) => b.when.getTime() - a.when.getTime());
 
+  // scroll={false}: the ledger below has its own ScrollView, and two on the
+  // same axis fight for the gesture. The outer View bounds it, so the ledger
+  // scrolls between a fixed hero and a fixed footer.
   return (
-    <Screen>
+    <Screen scroll={false}>
       <ScreenHeader title="Balance" />
 
       <View style={{ paddingTop: 30 }}>
@@ -83,13 +87,16 @@ export default function Balance() {
                 accessibilityRole={e.kind === 'fill' ? 'button' : undefined}
                 accessibilityLabel={`${e.what}, ${formatLitres(e.deltaLitres)} litres`}
                 onPress={e.kind === 'fill' ? () => router.push(`/fill/${e.id}`) : undefined}
-                style={{
+                // Only fill rows navigate, so only they respond. A top-up row
+                // lighting up would promise a detail screen that doesn't exist.
+                style={({ pressed }) => ({
                   flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
                   paddingVertical: 16, minHeight: 44, gap: 16,
                   borderBottomWidth: 1, borderBottomColor: t.hairline,
                   borderLeftWidth: e.card?.disputed ? 2 : 0, borderLeftColor: t.accent,
                   paddingLeft: e.card?.disputed ? 10 : 0,
-                }}
+                  opacity: pressed && e.kind === 'fill' ? MOTION.surfaceOpacity : 1,
+                })}
               >
                 <View>
                   <Text style={{ fontFamily: 'Figtree_600SemiBold', fontSize: 14, color: t.text }}>{e.what}</Text>

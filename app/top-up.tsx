@@ -10,6 +10,7 @@ import { Button } from '../src/components/Button';
 import { Keypad } from '../src/components/Keypad';
 import { useTheme } from '../src/theme/ThemeProvider';
 import { RADIUS } from '../src/theme/tokens';
+import { MOTION } from '../src/theme/motion';
 import { useWallet, selectLitresThisMonth, selectTopUpCapRemaining } from '../src/store/wallet';
 import { MONTHLY_TOPUP_CAP_L } from '../src/lib/caps';
 import { formatLitres, formatRandWhole, formatPrice, spokenRand } from '../src/lib/format';
@@ -97,10 +98,11 @@ export default function TopUp() {
               accessibilityRole="button"
               accessibilityLabel="RESUME SUBSCRIPTION"
               onPress={() => router.push('/subscribe')}
-              style={{
+              style={({ pressed }) => ({
                 height: 58, borderRadius: RADIUS.md, backgroundColor: t.surface,
                 alignItems: 'center', justifyContent: 'center', minHeight: 44, minWidth: 44,
-              }}
+                opacity: pressed ? MOTION.pressOpacity : 1,
+              })}
             >
               <Text style={{ fontFamily: 'Figtree_800ExtraBold', fontSize: 15, letterSpacing: 0.45, color: t.textMuted }}>
                 RESUME SUBSCRIPTION

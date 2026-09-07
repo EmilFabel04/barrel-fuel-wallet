@@ -1,4 +1,5 @@
 import { DARK, LIGHT, PASS, RADIUS, DARK_ELEVATION, LIGHT_ELEVATION } from '../tokens';
+import { MOTION } from '../motion';
 
 test('both themes define every token', () => {
   expect(Object.keys(DARK).sort()).toEqual(Object.keys(LIGHT).sort());
@@ -95,5 +96,40 @@ describe('elevation', () => {
 
   test('shadows stay subtle — this system has no heavy elevation', () => {
     expect(LIGHT_ELEVATION.high.shadowOpacity).toBeLessThanOrEqual(0.15);
+  });
+});
+
+// Motion is a system, not per-screen taste, so the values are pinned the same
+// way the colours and radii are. The properties matter more than the numbers:
+// every animated value must be one the native driver can carry, or a press
+// lands on the JS thread and janks exactly when the app is busiest.
+describe('MOTION', () => {
+  test('press-in is faster than press-out', () => {
+    // A press should land under the finger and release as a settle.
+    expect(MOTION.pressIn).toBeLessThan(MOTION.pressOut);
+  });
+
+  test('every duration is short enough to feel like feedback, not animation', () => {
+    const durations = [MOTION.pressIn, MOTION.pressOut, MOTION.toggle, MOTION.screen];
+    for (const d of durations) {
+      expect(d).toBeGreaterThan(0);
+      expect(d).toBeLessThanOrEqual(300);
+    }
+  });
+
+  test('the press scale shrinks, and only slightly', () => {
+    expect(MOTION.pressScale).toBeLessThan(1);
+    expect(MOTION.pressScale).toBeGreaterThanOrEqual(0.95);
+  });
+
+  test('opacities dim without hiding', () => {
+    for (const o of [MOTION.pressOpacity, MOTION.surfaceOpacity]) {
+      expect(o).toBeLessThan(1);
+      expect(o).toBeGreaterThan(0.5);
+    }
+  });
+
+  test('a large surface dims further than a button, since it does not scale', () => {
+    expect(MOTION.surfaceOpacity).toBeLessThan(MOTION.pressOpacity);
   });
 });

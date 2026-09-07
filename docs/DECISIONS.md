@@ -339,3 +339,54 @@ on the way to a real clock:
   table is not extended: that means adding real DMPR figures, not inventing them.
 — Cost if wrong: none identified. The refactor is behaviour-preserving and verified as
 such — every screen renders identically and all eleven pinned figures are unmoved.
+
+### 57. Press feedback and transitions, within spec §12's one-library limit
+Audited before changing anything: there was **no press feedback and no animation anywhere**.
+All 26 `Pressable`s fired haptics and moved nothing — a tap you could feel and not see —
+and both navigators ran on unconfigured defaults.
+
+Spec §12 permits React Native's own `Animated` and no other animation library, so nothing
+was added. `src/theme/motion.ts` holds the durations and amounts in one place, pinned by
+tests, so motion is tuned as a system rather than per screen.
+
+Everything animated is `opacity` or `transform`, the two the native driver can carry, so a
+press never lands on the JS thread. That is why the Toggle's track colour switches instantly
+while its knob slides: `backgroundColor` cannot run on the native driver, and animating it
+would move every toggle press onto the JS thread to smooth a change the knob already sells.
+
+Two things fell out of the audit rather than being invented:
+- Spec §3.1 already defines `surface` as "keypad grid gaps, **pressed states**". The pressed
+  colour was in the design system and had never been wired up. Keys now use it, as an
+  instant swap — a held key should look held, and it makes the pressed key match the grid
+  lines around it, so it reads as recessed rather than tinted.
+- Only rows that navigate get a pressed state. A static Settings row or a top-up ledger row
+  lighting up would promise a destination that does not exist.
+
+Large surfaces (the balance hero, the price-watch block) dim without scaling: a 92px hero
+that shrinks under the thumb reads as a button, and it is a tappable region.
+— Cost if wrong: every number is in one file. Halve them for less motion, or set the
+durations to 0 to remove it entirely.
+
+### 58. `<Screen>` now scrolls by default — it was clipping content with no way to reach it
+Reported from the device: text cut off at the bottom. Two compounding defects.
+
+`Screen` had a `scroll` prop that **no screen passed**, so every screen was a fixed `View`
+that clipped. And it would not have worked if passed: the gutter was on `style` instead of
+`contentContainerStyle` (which pads the scroll viewport and clips the content's own edges),
+and without `flexGrow: 1` the `marginTop: 'auto'` footers seven screens rely on would have
+collapsed to the top.
+
+The Card screen's content is roughly 830pt against about 710pt of usable height on a
+390x844 phone, so its debug caption and part of the button above it were simply
+unreachable. Verified before and after in a browser.
+
+Decision: scroll by DEFAULT, not opt-in. A screen that never overflows loses nothing by
+being scrollable; one that does is broken without it. Opting in would have left the next
+screen to rediscover this. `flexGrow: 1` is what makes one prop serve both cases — short
+content still fills the viewport so footers stay pinned, long content scrolls.
+
+`balance.tsx` and `settings.tsx` pass `scroll={false}`: they own their own ScrollView, and
+two on the same axis fight for the gesture. Balance in particular wants a fixed hero, a
+scrolling ledger between, and a pinned CTA — which is what it still does.
+— Cost if wrong: a screen that fits exactly can now be dragged a few points. The
+alternative is content nobody can reach.

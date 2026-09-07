@@ -19,7 +19,7 @@ no bank, and no station agreements.
 | | |
 |---|---|
 | `docs/superpowers/specs/2026-09-06-barrel-fuel-wallet-design.md` | **The binding authority.** Design system, screens, data model, guardrails. |
-| `docs/DECISIONS.md` | 56 rulings — 46 from the build, then 47+ made after it. Each records reasoning and cost-if-wrong. |
+| `docs/DECISIONS.md` | 58 rulings — 46 from the build, then 47+ made after it. Each records reasoning and cost-if-wrong. |
 | `docs/superpowers/plans/2026-09-07-barrel-fuel-wallet-ui.md` | The build plan. **Historical — it was wrong in ~15 places.** Do not treat as current. |
 
 **When anything disagrees with the spec, the spec wins.** This was true seven times during
@@ -38,7 +38,7 @@ app/         11 screens, expo-router
 ```
 
 `src/lib` and `src/data` are the good part: pure functions over plain data, one definition
-of each operation, 178 tests. If you keep only `src/`, you have a portable model ready to
+of each operation, 183 tests. If you keep only `src/`, you have a portable model ready to
 validate against a real backend. Change logic there and let the screens follow.
 
 **Litres are held as dated `Lot`s**, each carrying the price paid and a 90-day expiry — not
@@ -65,6 +65,10 @@ savings (what a litre cost vs the pump price the day it was burned).
    `fontVariant: ['tabular-nums']` into a no-op and set the heroes jittering.
 4. **Tab screens pass `insetBottom={false}` to `<Screen>`; pushed screens do not.** The tab
    bar already clears the safe area; padding twice leaves dead space.
+   **`<Screen>` scrolls by default.** Pass `scroll={false}` only when the screen owns its
+   own ScrollView (`balance.tsx`, `settings.tsx`) — two on one axis fight for the gesture.
+   The `flexGrow: 1` on its content container is load-bearing: it is what lets the seven
+   `marginTop: 'auto'` footers stay pinned on short screens while long ones still scroll.
 5. **Never hardcode a number a function can derive.** Prices, deltas, dates, litres all come
    from `priceOn`, `nextPriceChange`, the store, or the formatters. This rule exists because
    four wrong literals shipped from the design canvas and each survived multiple reviews.
@@ -167,6 +171,6 @@ is for.
 npx expo start --tunnel     # phone, any network
 npx expo start              # phone, same wifi, faster
 npx expo start --web        # browser
-npm test                    # 178 tests
+npm test                    # 183 tests
 npx tsc --noEmit
 ```

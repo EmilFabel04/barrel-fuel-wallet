@@ -39,8 +39,9 @@ export default function Settings() {
     ? `Trial · ${trialDaysLeft} days left`
     : capitalise(subscription);
 
+  // scroll={false}: this screen's body is already a ScrollView.
   return (
-    <Screen insetBottom={false}>
+    <Screen insetBottom={false} scroll={false}>
       <ScreenHeader title="Settings" back={false} />
       <ScrollView>
         <View style={{ paddingTop: 34, flexDirection: 'row', alignItems: 'center', gap: 16 }}>

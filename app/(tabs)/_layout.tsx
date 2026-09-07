@@ -4,6 +4,7 @@ import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { TabIcon, TabName } from '../../src/components/TabIcon';
+import { MOTION } from '../../src/theme/motion';
 
 const TABS: { name: string; label: string; icon: TabName }[] = [
   { name: 'index',    label: 'Wallet',   icon: 'wallet' },
@@ -25,6 +26,11 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        // Tabs default to a hard cut. A short cross-fade smooths the switch
+        // without implying direction — these four are siblings, so sliding
+        // between them would suggest an order they do not have.
+        animation: 'fade',
+        transitionSpec: { animation: 'timing', config: { duration: MOTION.screen } },
         tabBarStyle: {
           backgroundColor: t.bg, borderTopWidth: 1, borderTopColor: t.hairline,
           height: 56 + insets.bottom, elevation: 0,

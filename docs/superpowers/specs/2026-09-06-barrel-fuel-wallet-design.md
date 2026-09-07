@@ -243,6 +243,19 @@ border relaxes back to `PASS.hairline`.
 
 - Borders: **1px**, never thicker.
 - **No gradients, no blur** anywhere in the system.
+
+**Motion.** Fast, flat, and confirming rather than decorative — nothing bounces or
+overshoots. Durations and amounts live in `src/theme/motion.ts` and are pinned by tests, so
+motion is tuned as a system rather than per screen. Every animated value is `opacity` or
+`transform`, the two React Native's native driver can carry, so a press never lands on the
+JS thread; §12's one-library limit is respected and nothing was added. Note the corollary:
+`backgroundColor` is never animated, because it cannot run on the native driver.
+
+**Screens scroll by default.** `<Screen>` wraps its children in a ScrollView whose content
+container carries `flexGrow: 1`. That single property serves both cases: content shorter
+than the viewport still fills it, so `marginTop: 'auto'` footers stay pinned to the bottom;
+content taller than it scrolls rather than clipping. `scroll={false}` is only for a screen
+that owns its own ScrollView.
 - Screen horizontal padding: **26px**. Alert screen and keypad use 20px and 18px.
 - Primary button height: **58px**. Secondary CTA in cards: **54px**.
 - Grade tab height: **50px**. Keypad key height: **62px**.

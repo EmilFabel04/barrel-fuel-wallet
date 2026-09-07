@@ -22,10 +22,18 @@ export function Keypad({ value, onChange }: { value: string; onChange: (v: strin
           accessibilityRole="button"
           accessibilityLabel={k === '←' ? 'Delete' : k}
           onPress={() => press(k)}
-          style={{
-            width: '33%', flexGrow: 1, height: 62, backgroundColor: t.bg,
+          // Spec §3.1 defines `surface` as "keypad grid gaps, pressed states" —
+          // the pressed colour was specified in the design system and never
+          // wired up, so keys gave haptic feedback and no visual feedback.
+          // Deliberately an instant swap rather than an animated fade: a key
+          // held down should look held, and a keypad wants to feel immediate.
+          // It also makes the pressed key match the grid lines around it, so
+          // the key reads as recessed into the grid rather than tinted.
+          style={({ pressed }) => ({
+            width: '33%', flexGrow: 1, height: 62,
+            backgroundColor: pressed ? t.surface : t.bg,
             alignItems: 'center', justifyContent: 'center',
-          }}
+          })}
         >
           <Text style={{ fontFamily: 'Figtree_700Bold', fontSize: 25, color: t.text, fontVariant: ['tabular-nums'] }}>{k}</Text>
         </Pressable>
