@@ -1,19 +1,10 @@
 import { Lot, LedgerEntry } from './types';
 import { priceOn } from './prices';
-import { round1 } from '../lib/round';
+import { round1, toCents } from '../lib/round';
 import { consumeFifoWithCost } from '../lib/lots';
+import { expiryOf } from '../lib/window';
 
 export const TODAY = new Date(2026, 8, 30);
-const DAY = 86_400_000;
-const plus90 = (d: Date): Date => new Date(d.getTime() + 90 * DAY);
-
-// Money is rounded to the cent it would actually be billed at. This also
-// neutralises floating-point noise from summing several lots at the *same*
-// per-litre price (e.g. two September lots both bought at 21.87) — without
-// it, `cost / litres` can land a few ulps under the price and get
-// misclassified as "below pump" by savings.ts. `toFixed` does this without
-// reintroducing a second litres-rounding helper (see round.ts / Ruling T4-a).
-const toCents = (n: number): number => Number(n.toFixed(2));
 
 const STATION_FOR: Record<string, string> = {
   'Engen William Nicol': 'engen-william-nicol',
@@ -34,7 +25,7 @@ export function buildSeed(): { lots: Lot[]; ledger: LedgerEntry[] } {
     const price = priceOn('inland', date);
     const id = `lot-${n}`;
     balance = round1(balance + litres);
-    lots.push({ id, grade: '95', litres, pricePerLitre: price, purchasedAt: date, expiresAt: plus90(date) });
+    lots.push({ id, grade: '95', litres, pricePerLitre: price, purchasedAt: date, expiresAt: expiryOf(date) });
     ledger.push({
       id: `e-${n}`, kind, what, when: date, detail,
       grade: '95', deltaLitres: litres, balanceAfter: balance, lotIds: [id],

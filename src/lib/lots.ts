@@ -1,5 +1,6 @@
 import { Lot } from '../data/types';
 import { round1 } from './round';
+import { DAY } from './window';
 
 export function activeLots(lots: Lot[], at: Date): Lot[] {
   return lots
@@ -12,7 +13,7 @@ export function balanceOf(lots: Lot[], at: Date): number {
 }
 
 export function expiringWithin(lots: Lot[], at: Date, days: number): number {
-  const cutoff = new Date(at.getTime() + days * 86_400_000);
+  const cutoff = new Date(at.getTime() + days * DAY);
   return round1(
     activeLots(lots, at)
       .filter(l => l.expiresAt.getTime() <= cutoff.getTime())

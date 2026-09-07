@@ -1,8 +1,9 @@
 import { buildSeed, TODAY } from '../seed';
 import { balanceOf, expiringWithin } from '../../lib/lots';
 import { litresThisMonth } from '../../lib/caps';
-import { savingsToDate, litresBelowPump, monthlySavings } from '../../lib/savings';
+import { savingsToDate, litresBelowPump, monthlySavings, averageBuyPrice } from '../../lib/savings';
 import { round1 } from '../../lib/round';
+import { DAY, REDEMPTION_DAYS } from '../../lib/window';
 
 describe('seed', () => {
   const { lots, ledger } = buildSeed();
@@ -96,7 +97,7 @@ describe('seed', () => {
         for (const id of e.lotIds ?? []) purchasedAt.set(id, e.when);
       }
     }
-    const NINETY_DAYS = 90 * 86_400_000;
+    const NINETY_DAYS = REDEMPTION_DAYS * DAY;
     for (const e of ledger) {
       if (e.kind !== 'fill') continue;
       for (const id of e.lotIds ?? []) {

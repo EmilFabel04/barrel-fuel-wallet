@@ -11,9 +11,7 @@ import { useWallet, selectBalance, selectExpiringSoon } from '../src/store/walle
 import { round1 } from '../src/lib/round';
 import { formatLitres, formatDayMonth } from '../src/lib/format';
 import { TODAY } from '../src/data/seed';
-
-const DAY = 86_400_000;
-const REDEMPTION_DAYS = 90; // spec §8.1 — matches the window seed.ts / wallet.ts apply to every lot
+import { DAY, expiryOf } from '../src/lib/window';
 
 export default function Balance() {
   const t = useTheme();
@@ -70,7 +68,7 @@ export default function Balance() {
             // (lib/lots.ts) — looking it up there would silently drop the
             // expiry date off every historical topup row that has since been
             // used, which is most of them in the seeded ledger.
-            const exp = e.kind === 'topup' ? new Date(e.when.getTime() + REDEMPTION_DAYS * DAY) : null;
+            const exp = e.kind === 'topup' ? expiryOf(e.when) : null;
             // Bounded below at zero: an unbounded `< 14 * DAY` is also true for
             // anything already expired (the difference goes negative), which
             // would paint long-spent March/April top-ups in the one colour

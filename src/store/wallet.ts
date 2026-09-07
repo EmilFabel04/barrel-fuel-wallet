@@ -5,17 +5,11 @@ import { priceOn } from '../data/prices';
 import { balanceOf, consumeFifoWithCost, expiringWithin } from '../lib/lots';
 import { withinCap, litresThisMonth, capRemaining } from '../lib/caps';
 import { normaliseDescriptor, resolveZone, deriveLitres } from '../lib/cardfill';
-import { round1 } from '../lib/round';
+import { round1, toCents } from '../lib/round';
+import { expiryOf } from '../lib/window';
 
 export type Appearance = 'dark' | 'light' | 'system';
 export type Subscription = 'trial' | 'active' | 'lapsed';
-
-const DAY = 86_400_000;
-
-// Money is rounded to the cent it would actually be billed/charged at — see
-// the matching comment in data/seed.ts. `toFixed` avoids reintroducing a
-// second "round to N decimals" helper alongside round1 (Ruling T4-a).
-const toCents = (n: number): number => Number(n.toFixed(2));
 
 export type WalletState = {
   lots: Lot[];
@@ -56,7 +50,7 @@ export const useWallet = create<WalletState>((set, get) => ({
     set({
       lots: [...lots, {
         id, grade: '95', litres, pricePerLitre: price,
-        purchasedAt: TODAY, expiresAt: new Date(TODAY.getTime() + 90 * DAY),
+        purchasedAt: TODAY, expiresAt: expiryOf(TODAY),
       }],
       ledger: [...ledger, {
         id: `e-${Date.now()}`, kind: 'topup', what: 'Top up · 95', when: TODAY,
