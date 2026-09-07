@@ -63,9 +63,18 @@ describe('seed', () => {
     expect(litresBelowPump(historical)).toBeGreaterThan(20);
   });
 
-  test('savings-to-date is a positive, non-trivial rand amount', () => {
-    const total = savingsToDate(ledger);
-    expect(total).toBeGreaterThan(20);
+  // Pinned to spec §4.3's published figures rather than a loose bound, so the
+  // seed cannot silently drift off the numbers the spec itself commits to.
+  test('savings-to-date matches spec §4.3: R71.654', () => {
+    expect(savingsToDate(ledger)).toBeCloseTo(71.654, 3);
+  });
+
+  test('litres bought below the pump price matches spec §4.3: 118.4 L', () => {
+    expect(litresBelowPump(ledger)).toBeCloseTo(118.4, 1);
+  });
+
+  test('average buy price matches spec §4.3: R21.21/L', () => {
+    expect(Number(averageBuyPrice(ledger).toFixed(2))).toBeCloseTo(21.21, 2);
   });
 
   test('the six monthly savings figures sum exactly to the savings-to-date total', () => {
