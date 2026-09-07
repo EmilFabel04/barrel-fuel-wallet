@@ -32,28 +32,31 @@ export default function TabsLayout() {
         },
       }}
     >
-      {TABS.map(({ name, label, icon }) => (
-        <Tabs.Screen
-          key={name}
-          name={name}
-          options={{
-            tabBarAccessibilityLabel: label,
-            tabBarLabel: ({ focused }) => (
-              <Text style={{
-                fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),
-                fontSize: 9, letterSpacing: 0.9, textTransform: 'uppercase',
-                color: focused ? (name === 'card' ? t.accent : t.text) : t.textMuted,
-              }}>{label}</Text>
-            ),
-            tabBarIcon: ({ focused }) => (
-              <TabIcon
-                name={icon}
-                color={focused ? (name === 'card' ? t.accent : t.text) : t.textMuted}
-              />
-            ),
-          }}
-        />
-      ))}
+      {TABS.map(({ name, label, icon }) => {
+        // Card is the one tab that acts in the physical world, so it alone
+        // takes the accent colour when active; the rest take plain text.
+        const tint = (focused: boolean) =>
+          focused ? (name === 'card' ? t.accent : t.text) : t.textMuted;
+        return (
+          <Tabs.Screen
+            key={name}
+            name={name}
+            options={{
+              tabBarAccessibilityLabel: label,
+              tabBarLabel: ({ focused }) => (
+                <Text style={{
+                  fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),
+                  fontSize: 9, letterSpacing: 0.9, textTransform: 'uppercase',
+                  color: tint(focused),
+                }}>{label}</Text>
+              ),
+              tabBarIcon: ({ focused }) => (
+                <TabIcon name={icon} color={tint(focused)} />
+              ),
+            }}
+          />
+        );
+      })}
     </Tabs>
   );
 }

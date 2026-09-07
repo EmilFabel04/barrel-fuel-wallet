@@ -4,6 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/outfit": "^0.4.3",
+    "@expo/metro-runtime": "~57.0.15",
     "expo": "~57.0.20",
     "expo-constants": "^57.0.17",
     "expo-font": "^57.0.3",
@@ -12,10 +13,12 @@
     "expo-router": "^57.0.19",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-safe-area-context": "^5.9.1",
     "react-native-screens": "^4.27.0",
     "react-native-svg": "^15.15.5",
+    "react-native-web": "^0.21.2",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
