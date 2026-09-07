@@ -606,10 +606,22 @@ Artboard 08's two-column `PETROL 95 / DIESEL` split has nothing to divide in a
 single-grade product. The columns are kept — the layout is good — and repurposed to the
 cut that now matters:
 
-`EXPIRES WITHIN 30 DAYS · 12.4 L`  |  `LATER · 30.2 L`
+`EXPIRES WITHIN 30 DAYS`  |  `LATER`
 
 The left column takes `accent` when non-zero. This serves §8.1 directly and puts the one
 genuinely time-sensitive fact about a litre balance on the screen built to hold it.
+
+**In the seeded state the left column reads `0.0 L` and the right `42.6 L`.** FIFO
+consumes oldest lots first, so surviving stock is always the most recent purchase — here
+the 28 September top-up, expiring 27 December. An expiry warning in the seed would require
+an old lot to have outlived newer ones, which the consumption order makes impossible. The
+zero is correct, not a seeding failure. A `Soonest expiry · 27 Dec` line beneath the split
+carries the guardrail in this state, and the accent branch is covered by unit tests on
+`expiringWithin` rather than by the seed.
+
+This is a general property worth stating once: **under FIFO, a user who tops up regularly
+will rarely see an expiry warning.** The warning is for dormant balances, which is exactly
+who it should be for.
 
 ### 9.5 Stations — zone price, stated once
 
