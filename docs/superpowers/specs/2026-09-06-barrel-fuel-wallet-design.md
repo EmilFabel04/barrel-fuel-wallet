@@ -1,17 +1,16 @@
 # Barrel Fuel Wallet — Mobile Frontend Design
 
 **Date:** 2026-09-06
-**Status:** Approved for planning
-**Status:** Revised after strategy review — v1 is a station-agnostic card product
+**Status:** Revised twice — v1 is a station-agnostic, **unleaded-only** card product
 **Scope:** Frontend UI shell with mock data. No backend, no real payments, no station integration.
 
 ---
 
 ## 1. Context
 
-Barrel is a concept for a South African fuel wallet: motorists pre-purchase petrol and
-diesel at today's price into a wallet **denominated in litres, not rand**, then redeem
-those litres at partner filling stations. The business rationale, revenue model, and
+Barrel is a concept for a South African fuel wallet: motorists pre-purchase petrol at
+today's price into a wallet **denominated in litres, not rand**, then spend those litres
+at any filling station using a prepaid card. The business rationale, revenue model, and
 regulatory analysis live in `Barrel_Business_Overview.docx`. This document covers only
 the mobile frontend.
 
@@ -53,7 +52,18 @@ users and habit.
 stations and sells that steering as a per-litre rebate. Stations sign because the volume
 is already moving and they want it pointed at them.
 
-Three consequences that shape v1, and one of them inverts an assumption:
+**v1 is petrol 95 only.** Diesel is excluded deliberately, not deferred for capacity.
+Petrol's retail price is fixed by regulation at one number per pricing zone, so Barrel
+knows exactly what a litre costs at every station in the country without a single
+agreement. Diesel's retail price is set freely by each station, so the same card would
+expose Barrel to whatever a premium highway station chooses to charge.
+
+This is the fact the whole station-agnostic strategy rests on, and it is worth stating
+plainly: **Barrel does not need partner price agreements in v1 because the government
+already sets the price.** Regulation is doing the work that contracts would otherwise
+have to. It is also why the litre conversion can be exact rather than estimated (§7.3).
+
+Three further consequences shape v1, and one of them inverts an assumption:
 
 1. **No QR flow, no partner network, no redemption screens.** There is nothing to redeem
    against. The card *is* the mechanic. This removes three screens from the original spec.
@@ -82,7 +92,8 @@ Three consequences that shape v1, and one of them inverts an assumption:
 3. Make the core loop work against local state: top up adds litres, a card fill deducts
    them, both write to a ledger the user can inspect and audit.
 4. Model the card honestly — a card transaction carries rand, not litres, so the litre
-   deduction is an inference and the UI must show its arithmetic (§8.4).
+   figure is always derived. For regulated petrol the derivation is exact, but the UI
+   still shows its arithmetic openly (§8.4).
 5. Full light/dark theming, dark by default.
 6. Keep the pure logic unit-tested and independent of React, so it can later be validated
    against the real backend ledger.
@@ -95,7 +106,7 @@ Three consequences that shape v1, and one of them inverts an assumption:
 - Real subscription billing. The paywall is UI only; nothing charges.
 - Authentication, FICA onboarding, or KYC flows.
 - Maps. The Stations screen's "VIEW ON MAP" is inert.
-- Accessibility audit beyond baseline (see §9.3).
+- Accessibility audit beyond baseline (see §10.1).
 - Android/iOS store submission.
 
 ---
@@ -191,25 +202,35 @@ is satisfied by §6.
 
 Mock content is copied exactly so the build is comparable to the canvas side by side.
 
-- Prices: Petrol 95 `R21.87/L` (+0.55%), Diesel 0.05% `R20.14/L` (-0.19%), Gauteng.
-- Opening balance: `42.6 L` — 31.2 L petrol 95, 11.4 L diesel.
+- Price: Petrol 95 `R21.87/L` (+0.55%), Gauteng inland zone. The design's second
+  ticker row, Diesel 0.05% `R20.14/L` (-0.19%), is **removed** — see §1.3.
+- Opening balance: `42.6 L`, all petrol 95. The design's 31.2 / 11.4 grade split on the
+  Balance screen is replaced by an expiry split (§9.4), which is the more useful cut in a
+  single-grade product and serves the §8.1 guardrail.
 - Holder: Thabo Makhubela, initials TM, `+27 82 441 0912`, card `•••• 4127`,
   vehicle `CA 418 921`, payment method `FNB ••4127`.
 - Network: the design's `412 stations · 9 provinces` is **replaced**. A station-agnostic
   card has no network to count, and quoting one understates the product. The Stations
   screen leads with `Works at any fuel station in South Africa` and the list becomes a
   price-comparison and locator surface, not a coverage list.
-- Five stations: Engen William Nicol (Bryanston, 24h, 1.2km, R21.87), Sasol Rivonia
-  (Rivonia, 05:00-23:00, 2.8km, R21.87), Shell Grayston (Sandton, 24h, 4.1km, R21.91),
-  Astron Energy Fourways (Fourways, 24h, 5.6km, R21.84), Total Sunninghill
-  (Sunninghill, 06:00-22:00, 6.3km, R21.89).
+- Five stations: Engen William Nicol (Bryanston, 24h, 1.2km), Sasol Rivonia (Rivonia,
+  05:00-23:00, 2.8km), Shell Grayston (Sandton, 24h, 4.1km), Astron Energy Fourways
+  (Fourways, 24h, 5.6km), Total Sunninghill (Sunninghill, 06:00-22:00, 6.3km).
+
+  **The per-station price column is removed.** The design shows five stations within
+  6km of each other at R21.84, R21.87, R21.89 and R21.91. Regulated petrol does not vary
+  between stations inside a pricing zone — those five would all be R21.87. A varying price
+  column is not just inaccurate, it teaches the user to shop on a number that cannot
+  differ, and quietly contradicts the reason the card works everywhere. The zone price is
+  stated once at the top of the screen instead (§9.5).
 - Savings: `R1,284` since March, `58.7 L` bought below pump price, average buy price
   `R21.24/L`. Bars: APR R128 (42%), MAY R186 (61%), JUN R104 (34%), JUL R271 (88%),
   AUG R221 (72%), SEP R374 (100%, lime).
 - Ledger, five entries: Top up 95 (28 Sep, R1 500, +68.6 L, after 74.0 L); Fill Sasol
-  Rivonia (24 Sep, pump 3, -31.4 L, after 42.6 L); Top up Diesel (18 Sep, R800,
-  +39.7 L, after 73.9 L); Fill Engen William Nicol (11 Sep, pump 4, -28.3 L, after
-  34.2 L); Referral bonus (04 Sep, Lerato M., +2.0 L, after 62.5 L).
+  Rivonia (24 Sep, -31.4 L); Top up (18 Sep, R800, at 95 rather than diesel, so +36.6 L
+  not +39.7 L); Fill Engen William Nicol (11 Sep, -28.3 L); Referral bonus (04 Sep,
+  Lerato M., +2.0 L). Pump numbers are dropped — a card transaction does not carry one
+  (§7.3). `balanceAfter` values are computed, not copied (§4.2).
 - Alert copy: "Petrol price rising 12c on the 2nd — top up now", R21.87 → R21.99/L,
   `2.4 L saved`, "Topping up R2 000 before the increase buys you 2.4 litres more than it
   will on Wednesday." Threshold: alert when 95 moves by ≥ 10c.
@@ -231,15 +252,33 @@ The design's ledger does not balance. Verified chronologically:
 
 Two separate problems. The 24 Sep row is a rounding artifact. The 28 Sep row is
 structural: it is the newest entry, yet the Wallet hero shows `42.6 L`, which is the
-balance *before* that top-up. Removing the 28 Sep entry makes the history chain cleanly
-to 42.6 L and agree with the headline balance and the 31.2 + 11.4 grade split.
+balance *before* that top-up. No reordering of the design's own five entries reaches
+42.6 L — the arithmetic is short by 26 litres.
 
 **Resolution.** `balanceAfter` is always computed from the lot store, never hardcoded.
-The seed is constructed so the chain terminates at 42.6 L, preserving the headline
-balance and the grade split, which appear on more screens than the ledger does. The
-28 Sep top-up is retained with a corrected `after` value rather than deleted, since a
-top-up entry is needed for the §8.2 cap meter to read `68.6 / 150 L this month`. Dates,
-descriptions, and deltas are otherwise preserved verbatim.
+The hero balance of 42.6 L is fixed, because it appears on four screens against the
+ledger's one. The seed is then built to terminate there. Converting the 18 Sep top-up
+from diesel to petrol (R800 buys 36.6 L at R21.87, not 39.7 L at R20.14) and adding one
+fill after the 28 Sep top-up — which is what a real user would do — makes it chain:
+
+| Date | Entry | Delta | Balance |
+|---|---|---|---|
+| — | *opening* | | 33.1 |
+| 04 Sep | Referral bonus · Lerato M. | +2.0 | 35.1 |
+| 11 Sep | Fill · Engen William Nicol | −28.3 | 6.8 |
+| 18 Sep | Top up · R800 | +36.6 | 43.4 |
+| 24 Sep | Fill · Sasol Rivonia | −31.4 | 12.0 |
+| 28 Sep | Top up · R1 500 | +68.6 | 80.6 |
+| 30 Sep | Fill · Shell Grayston | −38.0 | **42.6** |
+
+Every intermediate balance is positive, and the opening 33.1 L is carried by
+pre-September lots that also feed the Savings screen (§4.3) and the expiry split (§9.4).
+
+Two figures follow from this rather than being invented. September top-ups total
+**105.2 L**, so the §8.2 cap meter reads `105.2 / 150 L this month` — 70%, just below the
+80% accent threshold, which is a better demo state than a near-empty meter. And app
+"today" is **30 September 2026**, which the design already implies: artboard 04 warns of
+a 2 October increase and says `TOP UP BEFORE 01 OCT`.
 
 ### 4.3 Seeding history for the Savings screen
 
@@ -250,7 +289,10 @@ computing every other number from the store would mean the screen silently stops
 agreeing with itself after the first redemption.
 
 The seed therefore includes **historical lots back to March**, chosen so the computed
-outputs land on the design's published figures. The bar heights follow from the same
+outputs land on the design's published figures. Where the three targets cannot all be hit
+exactly, `R1,284` saved and `58.7 L` bought below pump are matched, and the average buy
+price is displayed from whatever the data yields rather than forced to `R21.24` — a
+derived figure that disagrees with its own inputs is worse than one that reads R21.26. The bar heights follow from the same
 data: APR R128, MAY R186, JUN R104, JUL R271, AUG R221, SEP R374, with September at 100%
 in `positive` as the tallest bar. Historical lots are seeded already fully consumed, so
 they contribute to savings and to the chart without inflating the current balance.
@@ -315,7 +357,8 @@ inversion in the source design and is preserved as a special case.
 Litres are held as **lots**, not a scalar balance:
 
 ```ts
-type Grade = '95' | 'diesel';
+type Grade = '95';               // single-member union: diesel is v-next, not never
+type Zone = 'inland' | 'coastal';// DMPR prices by zone, not nationally
 
 type Lot = {
   id: string;
@@ -354,14 +397,13 @@ type LedgerEntry = {
 
 Append-only. Entries are never mutated or deleted.
 
-### 7.3 Card fills — rand in, litres inferred
+### 7.3 Card fills — rand in, litres derived
 
-A card transaction is the only way litres leave the wallet in v1, and it is the single
-most consequential modelling decision in this spec.
+A card transaction is the only way litres leave the wallet in v1.
 
 The card rail gives an issuer the merchant descriptor, MCC, location, rand amount and
-timestamp. It gives **no litres, no grade, and no pump number**. Every litre deduction is
-therefore an *inference*, not a measurement:
+timestamp. It gives **no litres and no pump number**. Litres are therefore always
+derived, never measured:
 
 ```ts
 type CardFill = {
@@ -369,28 +411,41 @@ type CardFill = {
   stationId: string | null;    // resolved by normalisation, null when unmatched
   mcc: '5541' | '5542';
   randAmount: number;          // the only figure the rail actually gives us
-  assumedPricePerLitre: number;// from the pricing service
-  litres: number;              // randAmount / assumedPricePerLitre
-  gradeSource: 'vehicle' | 'user';
+  zone: Zone;                  // from station, else transaction location
+  pricePerLitre: number;       // the regulated price for that zone and date
+  litres: number;              // randAmount / pricePerLitre
   disputed: boolean;
 };
 ```
 
-Three consequences carry into the build:
+**The derivation is exact, not estimated — and only because v1 is petrol-only.** Petrol's
+retail price is set by regulation at one figure per zone per month, so `pricePerLitre` is
+a known constant rather than a guess. Given the right zone and the right date, the litre
+figure is arithmetically correct.
+
+That removes two problems the previous revision had to carry, and they are worth naming
+because their absence is what makes v1 tractable:
+
+- **No grade inference.** With one grade there is nothing to infer, no ambiguity prompt,
+  and no dependency on the linked vehicle's fuel type for correctness. A whole class of
+  wrong-balance bug does not exist.
+- **No station price dispersion.** Every station in a zone charges the same, so which
+  station the driver picks cannot cost Barrel money.
+
+Two residual failure modes remain, and they are the reason §8.4 still exists:
+
+1. **Wrong zone.** Inland and coastal prices differ by roughly R0.60/L. A station near a
+   zone boundary, or one resolved only from a coarse transaction location, can be
+   assigned the wrong price. Bounded, but not rare.
+2. **Wrong date.** Prices change at midnight on the first Wednesday of the month. A fill
+   timestamped either side of that boundary — or settled a day after it was authorised —
+   can be priced against the wrong month.
+
+Both produce a visibly wrong litre balance, and the user has the receipt.
 
 **The pricing service is load-bearing, not decorative.** In the original spec, CEF/DMPR
-data powered price-timing nudges — a feature. Here, it determines every litre deduction.
-If the assumed price is wrong, the user's litre balance is wrong, and that is the one
-number the entire product is denominated in.
-
-**Grade must be inferred.** Balances are held per grade but the rail does not say which
-was pumped. Resolution order: (a) the linked vehicle's fuel type, which covers a driver
-with one car and one grade — nearly everyone; (b) if the driver holds balances in both
-grades *and* the vehicle type is unset or ambiguous, an in-app prompt on the fill, which
-stays actionable from the ledger until answered. Never silently guess between two
-non-zero balances.
-
-**Inference error is user-visible and must be surfaced, not hidden** — see §8.4.
+data powered price-timing nudges — a feature. Here it determines every litre deduction.
+It must be keyed by zone *and* effective date, not by a single current national number.
 
 ### 7.4 Store
 
@@ -399,8 +454,7 @@ Zustand, in memory, seeded from `src/data/seed.ts` so the app opens on the desig
 | Action | Behaviour |
 |---|---|
 | `topUp(grade, rand)` | Rejects if over the monthly cap (§8.2). Creates a lot at the current price, appends a `topup` entry. |
-| `cardFill(descriptor, randAmount, grade?)` | Resolves station and price, infers litres, consumes lots FIFO skipping expired, appends a `fill` entry with its `CardFill` record. |
-| `resolveGrade(entryId, grade)` | Answers a pending grade prompt and re-runs the deduction. |
+| `cardFill(descriptor, randAmount, at)` | Resolves station, zone and effective price, derives litres, consumes lots FIFO skipping expired, appends a `fill` entry with its `CardFill` record. |
 | `disputeFill(entryId)` | Flags a fill; UI only, no resolution flow. |
 | `setAppearance(mode)` | Dark / Light / System. |
 | `setSubscription(state)` | `trial` / `active` / `lapsed`. UI only, nothing bills. |
@@ -417,7 +471,7 @@ store imports:
 - `lots.ts` — `consumeFifo`, `activeLots`, `expiringSoon`, `balanceOf`
 - `savings.ts` — `savingsToDate`, `averageBuyPrice`
 - `caps.ts` — `litresThisMonth`, `capRemaining`, `withinCap`
-- `cardfill.ts` — `inferLitres`, `resolveGradeFor`, `normaliseDescriptor`
+- `cardfill.ts` — `deriveLitres`, `resolveZone`, `priceFor`, `normaliseDescriptor`
 - `format.ts` — `litres`, `rand`, `randCompact`, `pricePerLitre`, `relativeDate`
 
 The design's own formatter is ported exactly: fixed decimal places, then thousands
@@ -464,27 +518,28 @@ business overview and must not be softened in copy.
 A single line of body copy beneath the Top up confirm button:
 *"Litres you don't use convert back to the rand you paid. No cash-out above purchase price."*
 
-### 8.4 Conversion transparency — new, and the most important one
+### 8.4 Conversion transparency
 
-Per §7.3, litres deducted on a card fill are inferred from a rand amount and an assumed
-price. A driver who pumps 40.0 L and sees 40.1 L leave their wallet will notice, and will
-be right to. On diesel — retail pricing unregulated, real dispersion between stations —
-this is routine, not an edge case.
+Per §7.3, litres are derived from a rand amount and a regulated price. For petrol that
+derivation is exact, which is a much stronger position than the previous revision had —
+but it is exact *conditional on* the right zone and the right effective date, and both
+can be wrong (§7.3, residual failure modes 1 and 2). A wrong zone is a ~R0.60/L error,
+which on a R900 fill is roughly 1.2 litres. The driver has the receipt and will see it.
 
-Concealing the conversion would trade a small UI simplification for the product's central
-claim. The requirement is therefore the opposite of hiding it:
+Showing the arithmetic costs a screen and buys the product's central claim:
 
 - Every `fill` row in the ledger is tappable, opening `fill/[id]`.
-- That screen shows the arithmetic as an equation in the numeric treatment:
-  `R873.60  ÷  R21.84/L  =  40.0 L`, with the assumed price labelled
-  `Shell Grayston · 95 · 24 Sep`.
-- A `THIS DOESN'T MATCH MY RECEIPT` button in `border` style flags the entry. In the
-  mock it sets `disputed` and shows a confirmation; no resolution flow is built.
+- That screen shows the sum as an equation in the numeric treatment:
+  `R873.60  ÷  R21.84/L  =  40.0 L`, with the price labelled by what determined it —
+  `Gauteng inland · 95 · effective 03 Sep`. Naming the zone and the effective date is the
+  point: those are the two things that can be wrong, so they are the two things shown.
+- A `THIS DOESN'T MATCH MY RECEIPT` button in `border` style flags the entry. In the mock
+  it sets `disputed` and shows a confirmation; no resolution flow is built.
 - A disputed row carries a 2px `accent` left rule in the ledger.
 
-The dispute affordance is not a nicety. It is the mechanism by which pricing-service
-error becomes visible to the operator instead of silently eroding trust, and it is the
-only place in v1 where a user can tell Barrel its own data is wrong.
+The dispute affordance is the only place in v1 where a user can tell Barrel its own
+pricing data is wrong. Zone misassignment is silent, systematic, and invisible from the
+inside — it will only ever surface through a user with a receipt.
 
 ---
 
@@ -503,8 +558,8 @@ Four changes:
   the card will authorise.
 - **`412 stations` becomes `Works at any fuel station`.** The design's accepted-at row is
   kept; only the claim changes.
-- **Grade.** When both balances are non-zero the card shows which grade is active, tapping
-  to switch. With one balance it shows nothing — no chrome for a choice that doesn't exist.
+- **Grade.** A static `PETROL 95` label. v1 has one grade, so there is no switcher and no
+  chrome for a choice that does not exist.
 - **Freeze card.** A `border`-style button beside the wallet buttons. Sets a flag, greys
   the pass to `surface`, stamps `FROZEN` across it in `accent`. Cheap to build and the
   first thing anyone looks for in a card app.
@@ -518,8 +573,8 @@ The §8.4 conversion-transparency screen. Station, grade, date, the equation in 
 treatment, resulting balance, lots consumed, and the dispute button. Reached by tapping
 any `fill` row in the ledger.
 
-Where a fill has an unresolved grade prompt (§7.3), this screen carries it: a two-option
-selector and `CONFIRM GRADE`, which re-runs the deduction and rewrites the entry.
+The price line names the zone and effective date that produced it, because those are the
+two inputs that can be wrong (§8.4).
 
 ### 9.3 Subscribe — `subscribe`
 
@@ -545,6 +600,32 @@ shows `RESUME SUBSCRIPTION`; **it never blocks the card or the existing balance*
 litres already bought are the user's property and withholding them would be precisely the
 cash-out-restriction problem in §8.3 wearing a different hat.
 
+### 9.4 Balance — expiry split replaces the grade split
+
+Artboard 08's two-column `PETROL 95 / DIESEL` split has nothing to divide in a
+single-grade product. The columns are kept — the layout is good — and repurposed to the
+cut that now matters:
+
+`EXPIRES WITHIN 30 DAYS · 12.4 L`  |  `LATER · 30.2 L`
+
+The left column takes `accent` when non-zero. This serves §8.1 directly and puts the one
+genuinely time-sensitive fact about a litre balance on the screen built to hold it.
+
+### 9.5 Stations — zone price, stated once
+
+Per §4.1 the per-station price column is removed. The screen leads with the zone price as
+a single statement:
+
+`R21.87 / L` in numeric hero, labelled `PETROL 95 · GAUTENG INLAND`, and beneath it in
+`textMuted`: *"Regulated. The same at every station in this zone."*
+
+The list below shows brand, suburb, hours and distance — no price. The `DIESEL` filter
+chip is removed; `NEAR ME` and `24 HOURS` remain.
+
+This is a stronger screen than the design's coverage list. It answers the question a
+driver actually has (where is fuel, is it open) and it quietly explains why the card
+works everywhere, which is the thing that makes Barrel believable without partners.
+
 ## 10. Testing
 
 `jest` + `jest-expo`, unit tests over `src/lib/` only.
@@ -552,8 +633,10 @@ cash-out-restriction problem in §8.3 wearing a different hat.
 | Module | Cases |
 |---|---|
 | `lots.consumeFifo` | Oldest first; spans multiple lots; skips expired; exact-drain removes lot; insufficient balance rejects; partial consumption leaves remainder |
-| `cardfill.inferLitres` | Rand ÷ assumed price; rounds to 1dp; unmatched station falls back to regional price; zero and negative amounts reject |
-| `cardfill.resolveGradeFor` | Vehicle type wins; both balances non-zero with no vehicle type returns a prompt, never a guess; one non-zero balance resolves without prompting |
+| `cardfill.deriveLitres` | Rand ÷ zone price; rounds to 1dp; zero and negative amounts reject |
+| `cardfill.resolveZone` | Station zone wins; unmatched station falls back to the zone implied by transaction location, never to a national constant; unresolvable location rejects rather than guessing |
+| `cardfill.priceFor` | Correct price either side of a first-Wednesday change; a fill authorised before and settled after a change uses the authorisation date |
+| `seed` | Ledger chains exactly; terminates at 42.6 L; savings total and litres-below-pump match §4.3 |
 | `lots.activeLots` | Excludes expired at boundary; same-day expiry is still active |
 | `caps` | Under, at, and over cap; month boundary; cap counts top-ups only, not bonuses |
 | `savings` | Positive when bought below pump; negative when above; zero balance does not divide by zero |
@@ -591,7 +674,7 @@ expensive to retrofit:
 | `stationId` (normalised) | The unit a rebate is negotiated over |
 | `merchantDescriptor` (raw) | Normalisation will be imperfect; keep the source |
 | Geo / suburb | Defines the catchment a station competes in |
-| Grade, litres, rand, assumed price | Volume and value, split by the regulated/unregulated divide |
+| Litres, rand, zone price, effective date | Volume and value, and the inputs that produced them |
 | Timestamp | Day-of-week and time-of-day patterns |
 | Driver's prior fills | Baseline station choice — the counterfactual |
 
@@ -602,9 +685,19 @@ is a stub in v1 that matches against the seeded station list and returns `null` 
 match, but it is flagged here as real backend work, not a formality.
 
 Unmatched fills must still succeed. A driver whose station cannot be resolved still gets
-their litres, at the regional reference price, and the fill is recorded with
-`stationId: null`. Losing an attribution is acceptable; failing a transaction at a
-forecourt is not.
+their litres, priced at the zone implied by the transaction's own location data, and the
+fill is recorded with `stationId: null`.
+
+**Zone, never a national number.** DMPR prices petrol by zone — inland and coastal, with
+finer splits by distance from the coast — so there is no single countrywide price to fall
+back to. Falling back to a national constant would put a systematic error into every
+unattributed fill, and it would be invisible: the balance would simply be quietly wrong
+for everyone near a boundary. The fallback is the zone, resolved from location or BIN
+data, and if even that cannot be established the fill is queued for manual pricing rather
+than priced with a guess.
+
+Fail open on attribution; never fail the card at the pump; but never fail *silently* on
+price.
 
 ---
 
@@ -630,8 +723,8 @@ operations needed (add days, diff days, month boundary, format) are a dozen line
 Deferred, in the order they would matter:
 
 1. Persistence — the store is in memory and resets on reload.
-2. Onboarding, FICA capture, vehicle linking. Vehicle fuel type is seeded, but §7.3 makes
-   it load-bearing for grade inference, so onboarding must capture it before any pilot.
+2. Onboarding, FICA capture, vehicle linking. Vehicle registration is seeded; onboarding
+   must capture it before a pilot because the §8.2 monthly cap is per vehicle.
 3. Real subscription billing. The paywall is UI only.
 4. Station map (`VIEW ON MAP` is inert).
 5. Real push notifications — artboard 04's lock screen is a static mock.
@@ -656,19 +749,51 @@ Three items from the first draft are now closed:
 
 ### 13.2 Open risks carried forward
 
-Recorded so they are not lost between this spec and a legal opinion:
+Recorded so they are not lost between this spec and a legal opinion.
 
-- **The FSCA/FAIS argument is weaker than in the first draft.** Business overview §7 rests
-  the non-derivative case on a voucher "redeemable only for physical fuel". An open-loop
-  card converting litres to rand at a floating price is closer to cash settlement.
-  MCC-locking to 5541/5542 preserves the *fuel-only* half of that sentence, which is the
-  load-bearing half, but the floating conversion remains the exposed edge and should be
-  put to counsel explicitly rather than assumed to be covered.
-- **The station rebate — one of four revenue streams — does not exist in phase 1.**
-  Issuer interchange partially backfills it. SA fuel-MCC interchange rates should be
-  confirmed with a prospective sponsor bank before the model relies on the figure.
-- **Diesel price dispersion is an uncapped exposure.** Petrol retail price is regulated,
-  so that half is bounded by law. Diesel is not: a driver filling at a premium station
-  costs Barrel the difference, with no partner agreement to cap it. No conversion cap is
-  implemented in v1; this is a deliberate deferral, not an oversight, and it needs a
-  decision before real money moves.
+**1. The FSCA/FAIS question, and how to ask it.**
+
+Business overview §7 rests the non-derivative case on a voucher "redeemable only for
+physical fuel". MCC-locking to 5541/5542 preserves that, and it is the load-bearing half
+of the sentence. It does not close the question.
+
+Put **two separate questions** to counsel rather than one:
+
+- *Is a prepaid, litre-denominated instrument redeemable only for fuel a voucher rather
+  than a regulated financial product?* — the original framing, and the easier question.
+- *Does converting a litre balance into rand at a floating price, and settling that rand
+  to a third-party merchant, change the answer?* — the open-loop card's specific problem,
+  and the one that is new in this revision.
+
+Asking only the first and receiving a yes would be a false comfort. The second is where
+the exposure actually sits, and it should be asked in its own words.
+
+**2. Interchange must partly replace the rebate, and the size of it is unknown.**
+
+What is known: SA fuel retailers pay a total merchant service fee of roughly **1.75%**
+per card transaction. This figure is public — the Fuel Retailers Association has
+campaigned on it — but it is the **whole pie**: card scheme fees, acquirer margin, and
+issuer interchange combined. Barrel's slice as issuer is some fraction of it and can only
+come from a sponsor bank. Treat 1.75% as a ceiling to reason against, never as revenue.
+
+That ceiling is worth sizing, because it reframes the phase-1 model. On a 40-litre fill
+at R21.87 (R874.80), the entire 1.75% is **R15.31**. The station rebate the same fill
+would have earned in the partner model, at R0.40/litre, is **R16.00**.
+
+So the full merchant fee — every participant's share combined — is roughly the size of
+the rebate on its own. Barrel receives a fraction of that. Interchange therefore does not
+replace the station rebate; it softens its absence. This is not an argument against the
+strategy, but it does mean **subscription carries phase 1 more completely than the
+business overview's four-stream model implies**, and the plan should not assume otherwise.
+
+**3. Diesel — resolved by exclusion, not by mitigation.**
+
+The previous revision carried diesel price dispersion as an uncapped exposure. v1 is
+petrol 95 only, so the exposure does not exist: petrol has one regulated price per zone
+and a station cannot charge more. This is designed out, not accepted.
+
+It returns the moment diesel does, and it returns *first* rather than gradually — the
+delivery and ride-hail drivers in the target segment are disproportionately diesel, so
+adding diesel means adding the most price-exposed grade to the most fuel-intensive users.
+A conversion cap, or a wholesale partner carrying the price risk, needs to be in place
+before diesel ships, not after.
