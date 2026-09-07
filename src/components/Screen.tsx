@@ -8,7 +8,7 @@ export function Screen({ children, scroll = false }: { children: React.ReactNode
   const insets = useSafeAreaInsets();
   const Body = scroll ? ScrollView : View;
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg, paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: t.bg, paddingTop: insets.top, paddingBottom: insets.bottom }}>
       <Body style={{ flex: 1, paddingHorizontal: 26 }}>{children}</Body>
     </View>
   );
