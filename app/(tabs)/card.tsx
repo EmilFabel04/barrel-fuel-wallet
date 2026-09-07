@@ -33,14 +33,14 @@ export default function Card() {
 
       {/* The pass is always light-on-white — it is a physical object, not a themed
           surface (Ruling C1). Its colours come from the theme-invariant PASS group,
-          never from useTheme() or raw hex. A permanent 1px PASS.hairline border
-          defines its edge: invisible against a dark screen, but load-bearing on a
-          light screen where the pass's white would otherwise fuse with a white
-          screen background. */}
+          never from useTheme() or raw hex. A permanent 1px PASS.strataA border
+          defines its edge — the same grey the strata beneath the card already
+          use, so the border reads as that edge continuing around the top and
+          sides rather than as a new, unrelated line. */}
       <View style={{ marginTop: 26 }}>
         <View style={{
           backgroundColor: frozen ? PASS.bgFrozen : PASS.bg, padding: 24,
-          borderWidth: 1, borderColor: PASS.hairline,
+          borderWidth: 1, borderColor: PASS.strataA,
         }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -80,7 +80,7 @@ export default function Card() {
       <View style={{ marginTop: 'auto', paddingBottom: 12, gap: 10 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 14 }}>
           <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 13, color: t.textMuted }}>Accepted at</Text>
-          <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 13, letterSpacing: 0.26, color: t.text }}>Any fuel station</Text>
+          <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 13, letterSpacing: 0.26, color: t.text }}>Works at any fuel station</Text>
         </View>
         <Button label="ADD TO APPLE WALLET" variant="white" height={58} />
         <Button label="ADD TO GOOGLE PAY" variant="secondary" height={58} />

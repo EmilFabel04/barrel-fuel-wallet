@@ -8,6 +8,7 @@ import { Rule } from '../../src/components/Rule';
 import { Button } from '../../src/components/Button';
 import { BarrelMark } from '../../src/components/BarrelMark';
 import { useTheme } from '../../src/theme/ThemeProvider';
+import { DARK, LIGHT } from '../../src/theme/tokens';
 import { useWallet, selectBalance } from '../../src/store/wallet';
 import { formatLitres, formatRand } from '../../src/lib/format';
 import { priceOn } from '../../src/data/prices';
@@ -15,6 +16,11 @@ import { TODAY } from '../../src/data/seed';
 
 export default function Wallet() {
   const t = useTheme();
+  // ThemeProvider hands out the DARK/LIGHT token objects themselves (never a
+  // copy), so identity comparison is a clean, hex-free way to know which
+  // theme is active — needed below because the price-watch block is the one
+  // place light mode isn't a mechanical token swap (spec §6).
+  const isLight = t === LIGHT;
   const router = useRouter();
   const balance = useWallet(selectBalance);
   const price = priceOn('inland', TODAY);
@@ -48,20 +54,30 @@ export default function Wallet() {
         </Text>
       </Pressable>
 
-      <View style={{ marginTop: 34 }}><Rule /></View>
+      {/* Spec §6: this is the one block where light mode is not a mechanical
+          token swap — the source design inverts it to a black card on white.
+          Dark mode is untouched (its content already renders in DARK's own
+          colours); in light mode the container gains DARK's fill and the
+          two elements that would otherwise flip to LIGHT.text / LIGHT.hairline
+          are pinned to DARK's instead, so the card reads exactly as it does
+          on the black screen. textMuted/accent are identical in both token
+          sets, so they need no override. */}
+      {!isLight && <View style={{ marginTop: 34 }}><Rule /></View>}
 
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Price watch. View price alerts."
         onPress={() => router.push('/alerts')}
-        style={{ paddingTop: 20, gap: 16 }}
+        style={isLight
+          ? { marginTop: 34, backgroundColor: DARK.bg, paddingVertical: 22, paddingHorizontal: 24, gap: 16 }
+          : { paddingTop: 20, gap: 16 }}
       >
         <SectionLabel>Price watch · Gauteng</SectionLabel>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <View>
-            <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 12, letterSpacing: 0.24, color: t.text }}>PETROL 95</Text>
+            <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 12, letterSpacing: 0.24, color: DARK.text }}>PETROL 95</Text>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 7 }}>
-              <Num size={26}>R21.87</Num>
+              <Num size={26} color={DARK.text}>R21.87</Num>
               <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 13, color: t.textMuted }}>/L</Text>
             </View>
           </View>
@@ -73,7 +89,7 @@ export default function Wallet() {
             <Num size={15} color={t.accent}>+0.55%</Num>
           </View>
         </View>
-        <Rule />
+        <View style={{ height: 1, backgroundColor: DARK.hairline }} />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 13, color: t.textMuted }}>Next change · 02 Oct</Text>
           <Num size={14} color={t.accent}>+12c expected</Num>
