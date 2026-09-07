@@ -9,9 +9,10 @@ import { Button } from '../../src/components/Button';
 import { BarrelMark } from '../../src/components/BarrelMark';
 import { useTheme, useIsLight, useElevation } from '../../src/theme/ThemeProvider';
 import { DARK, RADIUS } from '../../src/theme/tokens';
-import { useWallet, selectBalance } from '../../src/store/wallet';
+import { useWallet, selectBalance, selectLastFill } from '../../src/store/wallet';
 import { formatLitres, formatRand, formatPrice } from '../../src/lib/format';
 import { priceOn, nextPriceChange } from '../../src/data/prices';
+import { STATIONS } from '../../src/data/stations';
 import { TODAY } from '../../src/data/seed';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -35,6 +36,17 @@ export default function Wallet() {
   const blockShadow = useElevation('low');
   const router = useRouter();
   const balance = useWallet(selectBalance);
+  // Was hardcoded as "Shell Grayston" and "−38.0 L" — literals that happened to
+  // match the seed and went stale the moment any fill was recorded (rule 5).
+  // Both now come from the newest fill in the ledger.
+  const lastFill = useWallet(selectLastFill);
+  // Prefer the resolved station's own name over the raw card descriptor, which
+  // arrives shouty and dirty off the rail ('SHELL GRAYSTON SANDTON'). Falls
+  // back to the descriptor when normalisation found no match, since spec §11
+  // requires an unattributed fill to still be a first-class entry.
+  const lastFillName = lastFill?.card
+    ? STATIONS.find(s => s.id === lastFill.card!.stationId)?.name ?? lastFill.card.merchantDescriptor
+    : null;
   const price = priceOn('inland', TODAY);
   // The preceding month's price is always readable as "the price in effect
   // the day before this month's change" — day 0 of the current month is a
@@ -139,10 +151,14 @@ export default function Wallet() {
 
       <View style={{ marginTop: 'auto', paddingBottom: 12, gap: 12 }}>
         <Rule />
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textDim }}>Last fill · Shell Grayston</Text>
-          <Num size={14}>−38.0 L</Num>
-        </View>
+        {lastFill ? (
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textDim }}>
+              {`Last fill · ${lastFillName}`}
+            </Text>
+            <Num size={14}>{`−${formatLitres(Math.abs(lastFill.deltaLitres))} L`}</Num>
+          </View>
+        ) : null}
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
           <Button label="TOP UP" flex={1} onPress={() => router.push('/top-up')} />
           <Button label="CARD" variant="secondary" onPress={() => router.push('/card')} />

@@ -6,7 +6,9 @@ import {
   selectTopUpCapRemaining,
   selectRedemptionRemaining,
   selectSpendable,
+  selectLastFill,
 } from '../wallet';
+import { LedgerEntry } from '../../data/types';
 
 const initial = useWallet.getState();
 
@@ -169,6 +171,60 @@ describe('cardFill — weekly redemption cap (spec §8.5)', () => {
     const before = selectRedemptionRemaining(useWallet.getState());
     useWallet.getState().cardFill('SASOL RIVONIA', 200, null);
     expect(selectRedemptionRemaining(useWallet.getState())).toBeLessThan(before);
+  });
+});
+
+describe('selectLastFill', () => {
+  const fill = (when: Date, delta: number, id: string): LedgerEntry => ({
+    id, kind: 'fill', what: '', when, detail: '', grade: '95',
+    deltaLitres: delta, balanceAfter: 0,
+  });
+
+  test('is the seed\'s newest fill — Shell Grayston, 38.0 L on 30 September', () => {
+    const e = selectLastFill(useWallet.getState());
+    expect(e).not.toBeNull();
+    expect(e!.what).toBe('Fill · Shell Grayston');
+    expect(Math.abs(e!.deltaLitres)).toBeCloseTo(38.0, 1);
+    expect(e!.when.getDate()).toBe(30);
+  });
+
+  test('is null when nothing has been spent', () => {
+    useWallet.setState({ ledger: [] });
+    expect(selectLastFill(useWallet.getState())).toBeNull();
+  });
+
+  test('ignores entries that are not fills', () => {
+    useWallet.setState({ ledger: [
+      { id: 'a', kind: 'topup', what: '', when: new Date(2026, 8, 29), detail: '',
+        grade: '95', deltaLitres: 10, balanceAfter: 0 },
+    ] });
+    expect(selectLastFill(useWallet.getState())).toBeNull();
+  });
+
+  // The reason this is a reduce over dates rather than a reverse().find():
+  // array order is not guaranteed to be chronological.
+  test('picks by date, not by position in the ledger', () => {
+    useWallet.setState({ ledger: [
+      fill(new Date(2026, 8, 30), -38, 'newest'),
+      fill(new Date(2026, 8, 11), -28, 'older'),
+    ] });
+    expect(selectLastFill(useWallet.getState())!.id).toBe('newest');
+  });
+
+  // Every store-created fill is dated TODAY, so a second simulated fill shares
+  // its date with the first and the later one must win.
+  test('breaks a same-day tie toward the later entry', () => {
+    const d = new Date(2026, 8, 30);
+    useWallet.setState({ ledger: [fill(d, -10, 'first'), fill(d, -12, 'second')] });
+    expect(selectLastFill(useWallet.getState())!.id).toBe('second');
+  });
+
+  test('follows a new card fill', () => {
+    const before = selectLastFill(useWallet.getState());
+    useWallet.getState().cardFill('SASOL RIVONIA', 200, null);
+    const after = selectLastFill(useWallet.getState());
+    expect(after!.id).not.toBe(before!.id);
+    expect(after!.card?.stationId).toBe('sasol-rivonia');
   });
 });
 

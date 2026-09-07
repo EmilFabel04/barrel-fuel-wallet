@@ -280,3 +280,24 @@ Tab bar goes five to four. Card had the centre position *and* the accent; four t
 centre, so the accent carries it alone and Card sits second.
 — Cost if wrong: the screen is one file and one TABS entry to restore, and the station data
 never left.
+
+### 55. The Wallet's "last fill" derived from the ledger
+The Wallet's footer read `Last fill · Shell Grayston` and `−38.0 L` as JSX literals. They
+matched the seed, so every review compared them against a correct-looking screen — the
+same reason the `+0.55%` and `02 Oct` literals survived (rulings 29 and 34). They went
+stale the moment any fill was recorded, which `SIMULATE A FILL` makes reachable in two
+taps: the Wallet kept claiming Shell Grayston while the ledger showed something else.
+
+Both now come from `selectLastFill`, a store selector rather than inline screen logic, so
+the rule holds where the handover says logic belongs and the behaviour is testable. It
+picks by date rather than array position — the seed happens to append chronologically and
+the store appends at the end, but neither is guaranteed — and breaks same-day ties toward
+the later entry, which matters because every store-created fill is dated `TODAY`, so a
+second simulated fill shares its date with the first.
+
+The station name resolves through `stationId` against `STATIONS`, falling back to the raw
+`merchantDescriptor`. Descriptors arrive shouty off the rail (`ASTRON ENERGY FOURWAYS`),
+and the fallback matters because spec §11 requires an unattributed fill to remain a
+first-class entry rather than render blank.
+— Cost if wrong: an unmatched merchant shows its raw descriptor in the Wallet footer,
+which is honest but ugly. The alternative — hiding the row — would hide a real fill.

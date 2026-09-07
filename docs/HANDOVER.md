@@ -19,7 +19,7 @@ no bank, and no station agreements.
 | | |
 |---|---|
 | `docs/superpowers/specs/2026-09-06-barrel-fuel-wallet-design.md` | **The binding authority.** Design system, screens, data model, guardrails. |
-| `docs/DECISIONS.md` | 54 rulings — 46 from the build, then 47+ made after it. Each records reasoning and cost-if-wrong. |
+| `docs/DECISIONS.md` | 55 rulings — 46 from the build, then 47+ made after it. Each records reasoning and cost-if-wrong. |
 | `docs/superpowers/plans/2026-09-07-barrel-fuel-wallet-ui.md` | The build plan. **Historical — it was wrong in ~15 places.** Do not treat as current. |
 
 **When anything disagrees with the spec, the spec wins.** This was true seven times during
@@ -38,7 +38,7 @@ app/         11 screens, expo-router
 ```
 
 `src/lib` and `src/data` are the good part: pure functions over plain data, one definition
-of each operation, 161 tests. If you keep only `src/`, you have a portable model ready to
+of each operation, 167 tests. If you keep only `src/`, you have a portable model ready to
 validate against a real backend. Change logic there and let the screens follow.
 
 **Litres are held as dated `Lot`s**, each carrying the price paid and a 90-day expiry — not
@@ -130,9 +130,6 @@ is for.
   explicit: litres already bought are the user's property. Gating them would be the
   cash-out restriction 8.3 forbids, triggered by a billing failure.
 - `SIMULATE A FILL` on the Card screen is a debug control. Remove it before any real build.
-- The Wallet's `Last fill · Shell Grayston` / `−38.0 L` is still hardcoded — rule 5's own
-  violation, derivable from the newest `fill` ledger entry. Visible in-app the moment
-  `SIMULATE A FILL` is used.
 - `textDim` `#A8A8A8` on white measures 2.38:1 — below AA, used for body copy. Recorded
   debt, not fixed, because it is a design-fidelity decision.
 - No persistence, no onboarding, no map, no real push, no billing.
@@ -155,6 +152,6 @@ is for.
 npx expo start --tunnel     # phone, any network
 npx expo start              # phone, same wifi, faster
 npx expo start --web        # browser
-npm test                    # 161 tests
+npm test                    # 167 tests
 npx tsc --noEmit
 ```

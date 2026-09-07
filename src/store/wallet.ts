@@ -148,6 +148,22 @@ export const useWallet = create<WalletState>((set, get) => ({
 }));
 
 export const selectBalance = (s: WalletState): number => balanceOf(s.lots, TODAY);
+
+/**
+ * The most recent `fill`, or null if nothing has been spent yet.
+ *
+ * Picks by date rather than trusting array order — the seed happens to append
+ * chronologically and the store appends at the end, but neither is guaranteed
+ * and the Wallet quotes this as "last fill". `>=` breaks same-day ties toward
+ * the later entry, which matters because every store-created fill is dated
+ * TODAY, so a second simulated fill shares its date with the first.
+ */
+export const selectLastFill = (s: WalletState): LedgerEntry | null =>
+  s.ledger.reduce<LedgerEntry | null>(
+    (best, e) =>
+      e.kind === 'fill' && (best === null || e.when.getTime() >= best.when.getTime()) ? e : best,
+    null
+  );
 export const selectExpiringSoon = (s: WalletState): number => expiringWithin(s.lots, TODAY, 30);
 export const selectLitresThisMonth = (s: WalletState): number => litresThisMonth(s.ledger, TODAY);
 export const selectTopUpCapRemaining = (s: WalletState): number => topUpCapRemaining(s.ledger, TODAY);
