@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '../src/components/Screen';
 import { ScreenHeader } from '../src/components/ScreenHeader';
@@ -27,6 +27,13 @@ export default function TopUp() {
   const topUp = useWallet(s => s.topUp);
   const used = useWallet(selectLitresThisMonth);
   const remaining = useWallet(selectCapRemaining);
+  const subscription = useWallet(s => s.subscription);
+  // spec §9.3: "A lapsed subscription greys the Top up button and shows
+  // RESUME SUBSCRIPTION; it never blocks the card or the existing balance."
+  // So this button alone changes — litres already bought stay fully usable,
+  // and the button still routes somewhere (to resolve the lapse) rather than
+  // going inert.
+  const lapsed = subscription === 'lapsed';
 
   const price = priceOn('inland', TODAY);
   const rand = parseInt(raw || '0', 10);
@@ -79,11 +86,29 @@ export default function TopUp() {
       <View style={{ marginTop: 'auto', paddingBottom: 12 }}>
         <Keypad value={raw} onChange={setRaw} />
         <View style={{ marginTop: 14 }}>
-          <Button
-            label={wouldExceed ? 'MONTHLY CAP REACHED' : rand > 0 ? `BUY ${formatLitres(litres)} L` : 'ENTER AMOUNT'}
-            disabled={wouldExceed || rand <= 0}
-            onPress={() => { topUp(rand); router.back(); }}
-          />
+          {lapsed ? (
+            // Greyed like Button's `disabled` look, but deliberately still
+            // tappable — this is a route to resolve the lapse, not a lock.
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="RESUME SUBSCRIPTION"
+              onPress={() => router.push('/subscribe')}
+              style={{
+                height: 58, borderRadius: 3, backgroundColor: t.surface,
+                alignItems: 'center', justifyContent: 'center', minHeight: 44, minWidth: 44,
+              }}
+            >
+              <Text style={{ fontFamily: 'Outfit_800ExtraBold', fontSize: 15, letterSpacing: 0.45, color: t.textMuted }}>
+                RESUME SUBSCRIPTION
+              </Text>
+            </Pressable>
+          ) : (
+            <Button
+              label={wouldExceed ? 'MONTHLY CAP REACHED' : rand > 0 ? `BUY ${formatLitres(litres)} L` : 'ENTER AMOUNT'}
+              disabled={wouldExceed || rand <= 0}
+              onPress={() => { topUp(rand); router.back(); }}
+            />
+          )}
         </View>
         <Text style={{ marginTop: 12, fontFamily: 'Outfit_400Regular', fontSize: 12, lineHeight: 18, color: t.textMuted }}>
           Litres you don&apos;t use convert back to the rand you paid. No cash-out above purchase price.

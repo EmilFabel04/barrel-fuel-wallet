@@ -29,6 +29,14 @@ export default function Settings() {
   const appearance = useWallet(s => s.appearance);
   const setAppearance = useWallet(s => s.setAppearance);
   const trialDaysLeft = useWallet(s => s.trialDaysLeft);
+  const subscription = useWallet(s => s.subscription);
+  // spec §9.3: "Subscription · Trial · 24 days left" while trialling; once
+  // resolved one way or the other there's no day count to show, just the
+  // state itself — this was hardcoded to the literal word "Trial" before,
+  // so `active` and `lapsed` never rendered.
+  const subscriptionValue = subscription === 'trial'
+    ? `Trial · ${trialDaysLeft} days left`
+    : capitalise(subscription);
 
   return (
     <Screen insetBottom={false}>
@@ -58,7 +66,7 @@ export default function Settings() {
         <View style={{ paddingTop: 28 }}>
           <SectionLabel>Account</SectionLabel>
           <View style={{ marginTop: 8 }}>
-            <Row label="Subscription" value={`Trial · ${trialDaysLeft} days left`} onPress={() => router.push('/subscribe')} />
+            <Row label="Subscription" value={subscriptionValue} onPress={() => router.push('/subscribe')} />
             <Row label="Payment methods" value="FNB ••4127" />
             <Row label="Linked vehicle" value="CA 418 921" />
             <Row label="Monthly cap" value={`${MONTHLY_CAP_LITRES} L`} />
