@@ -33,9 +33,15 @@ export default function Card() {
 
       {/* The pass is always light-on-white — it is a physical object, not a themed
           surface (Ruling C1). Its colours come from the theme-invariant PASS group,
-          never from useTheme() or raw hex. */}
+          never from useTheme() or raw hex. A permanent 1px PASS.hairline border
+          defines its edge: invisible against a dark screen, but load-bearing on a
+          light screen where the pass's white would otherwise fuse with a white
+          screen background. */}
       <View style={{ marginTop: 26 }}>
-        <View style={{ backgroundColor: frozen ? PASS.bgFrozen : PASS.bg, padding: 24 }}>
+        <View style={{
+          backgroundColor: frozen ? PASS.bgFrozen : PASS.bg, padding: 24,
+          borderWidth: 1, borderColor: PASS.hairline,
+        }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <BarrelMark size={17} color={PASS.text} />
