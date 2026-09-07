@@ -6,6 +6,7 @@ import { Num } from '../../src/components/Num';
 import { SectionLabel } from '../../src/components/SectionLabel';
 import { Rule } from '../../src/components/Rule';
 import { useTheme } from '../../src/theme/ThemeProvider';
+import { RADIUS } from '../../src/theme/tokens';
 import { useWallet } from '../../src/store/wallet';
 import { savingsToDate, litresBelowPump, averageBuyPrice, monthlySavings } from '../../src/lib/savings';
 import { formatRand, formatLitres, formatPrice, spokenRand } from '../../src/lib/format';
@@ -47,7 +48,7 @@ export default function Savings() {
             width: 0, height: 0, borderLeftWidth: 6, borderRightWidth: 6, borderBottomWidth: 9,
             borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: t.positiveText,
           }} />
-          <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 15, color: t.textDim }}>
+          <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 15, color: t.textDim }}>
             {formatLitres(below)} L bought below the pump price
           </Text>
         </View>
@@ -68,7 +69,13 @@ export default function Savings() {
             return (
               <View key={m.month} style={{ flex: 1, height: '100%', alignItems: 'center', justifyContent: 'flex-end', gap: 10 }}>
                 <Num size={11} weight="600" color={t.textDim}>{label}</Num>
-                <View style={{ width: '100%', height: barHeight, backgroundColor: isTallest ? t.positive : t.border }} />
+                <View style={{
+                  width: '100%', height: barHeight,
+                  // Top corners only: a bar sits on the chart's baseline, so
+                  // rounding the bottom would lift it off its own axis.
+                  borderTopLeftRadius: RADIUS.xs, borderTopRightRadius: RADIUS.xs,
+                  backgroundColor: isTallest ? t.positive : t.border,
+                }} />
                 <Num size={10} weight="500" color={t.textMuted}>{m.month}</Num>
               </View>
             );
@@ -79,16 +86,16 @@ export default function Savings() {
       <View style={{ marginTop: 'auto', paddingBottom: 12, gap: 15 }}>
         <Rule />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 13, color: t.textDim }}>Average buy price</Text>
+          <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textDim }}>Average buy price</Text>
           <Num size={15}>{`R${formatPrice(avg)}/L`}</Num>
         </View>
         <Rule />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 13, color: t.textDim }}>Pump price today</Text>
+          <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textDim }}>Pump price today</Text>
           <Num size={15}>{`R${formatPrice(pump)}/L`}</Num>
         </View>
         <Rule />
-        <Text style={{ fontFamily: 'Outfit_400Regular', fontSize: 12, lineHeight: 18.6, color: t.textMuted }}>
+        <Text style={{ fontFamily: 'Figtree_400Regular', fontSize: 12, lineHeight: 18.6, color: t.textMuted }}>
           Savings are the difference between what you paid per litre and the pump price on the day you fuelled.
         </Text>
       </View>

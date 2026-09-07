@@ -19,7 +19,7 @@ no bank, and no station agreements.
 | | |
 |---|---|
 | `docs/superpowers/specs/2026-09-06-barrel-fuel-wallet-design.md` | **The binding authority.** Design system, screens, data model, guardrails. |
-| `docs/DECISIONS.md` | 51 rulings — 46 from the build, then 47+ made after it. Each records reasoning and cost-if-wrong. |
+| `docs/DECISIONS.md` | 54 rulings — 46 from the build, then 47+ made after it. Each records reasoning and cost-if-wrong. |
 | `docs/superpowers/plans/2026-09-07-barrel-fuel-wallet-ui.md` | The build plan. **Historical — it was wrong in ~15 places.** Do not treat as current. |
 
 **When anything disagrees with the spec, the spec wins.** This was true seven times during
@@ -34,11 +34,11 @@ src/data/    types, zone price table, stations, the seed
 src/store/   zustand wrapping src/lib
 src/theme/   tokens + provider (the ONLY file containing hex)
 src/components/  10 shared components
-app/         12 screens, expo-router
+app/         11 screens, expo-router
 ```
 
 `src/lib` and `src/data` are the good part: pure functions over plain data, one definition
-of each operation, 153 tests. If you keep only `src/`, you have a portable model ready to
+of each operation, 161 tests. If you keep only `src/`, you have a portable model ready to
 validate against a real backend. Change logic there and let the screens follow.
 
 **Litres are held as dated `Lot`s**, each carrying the price paid and a 90-day expiry — not
@@ -53,10 +53,16 @@ savings (what a litre cost vs the pump price the day it was burned).
 2. **`positive` (`#C6F24E`) is a FILL colour. `positiveText` is for text and glyphs.**
    Lime on white measures 1.30:1 and is invisible; `positiveText` is `#5A7A0A` in light
    (4.97:1). Putting `positive` on text is the single easiest way to break light mode.
-3. **Never set `fontWeight` against an Outfit family.** Each weight is a *separate family*
-   (`Outfit_400Regular` … `Outfit_800ExtraBold`). Use `<Num weight="500">`, which maps to
+   The same shape of trap runs the other way for **elevation**: a shadow on `#000000` is
+   invisible, so `useElevation()` returns a real shadow in light and nothing in dark.
+   Spread it unconditionally; never branch on the theme yourself.
+3. **Never set `fontWeight` against a Figtree family.** Each weight is a *separate family*
+   (`Figtree_400Regular` … `Figtree_800ExtraBold`). Use `<Num weight="500">`, which maps to
    the family. Setting `fontWeight` on a *system* monospace font is fine — `SectionLabel`
    is correct as written.
+   **And check `tnum` before swapping the family.** Figtree replaced Outfit; DM Sans was
+   rejected because it ships no `tnum`, which would silently turn every
+   `fontVariant: ['tabular-nums']` into a no-op and set the heroes jittering.
 4. **Tab screens pass `insetBottom={false}` to `<Screen>`; pushed screens do not.** The tab
    bar already clears the safe area; padding twice leaves dead space.
 5. **Never hardcode a number a function can derive.** Prices, deltas, dates, litres all come
@@ -124,6 +130,9 @@ is for.
   explicit: litres already bought are the user's property. Gating them would be the
   cash-out restriction 8.3 forbids, triggered by a billing failure.
 - `SIMULATE A FILL` on the Card screen is a debug control. Remove it before any real build.
+- The Wallet's `Last fill · Shell Grayston` / `−38.0 L` is still hardcoded — rule 5's own
+  violation, derivable from the newest `fill` ledger entry. Visible in-app the moment
+  `SIMULATE A FILL` is used.
 - `textDim` `#A8A8A8` on white measures 2.38:1 — below AA, used for body copy. Recorded
   debt, not fixed, because it is a design-fidelity decision.
 - No persistence, no onboarding, no map, no real push, no billing.
@@ -146,6 +155,6 @@ is for.
 npx expo start --tunnel     # phone, any network
 npx expo start              # phone, same wifi, faster
 npx expo start --web        # browser
-npm test                    # 153 tests
+npm test                    # 161 tests
 npx tsc --noEmit
 ```

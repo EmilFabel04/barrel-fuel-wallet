@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, Text } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeProvider';
+import { RADIUS } from '../theme/tokens';
 
 type Variant = 'primary' | 'secondary' | 'white';
 
@@ -27,14 +28,14 @@ export function Button({
       disabled={disabled}
       onPress={() => { Haptics.selectionAsync(); onPress?.(); }}
       style={{
-        height, flex, borderRadius: 3, backgroundColor: bg,
+        height, flex, borderRadius: RADIUS.md, backgroundColor: bg,
         borderWidth: variant === 'secondary' ? 1 : 0, borderColor: t.border,
         alignItems: 'center', justifyContent: 'center',
         minHeight: 44, minWidth: 44,
       }}
     >
       <Text style={{
-        fontFamily: 'Outfit_800ExtraBold', fontSize: 15,
+        fontFamily: 'Figtree_800ExtraBold', fontSize: 15,
         letterSpacing: 0.45, color: fg,
       }}>{label}</Text>
     </Pressable>

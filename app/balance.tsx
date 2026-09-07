@@ -41,17 +41,17 @@ export default function Balance() {
 
         <View style={{ flexDirection: 'row', marginTop: 26, borderTopWidth: 1, borderBottomWidth: 1, borderColor: t.hairline }}>
           <View style={{ flex: 1, paddingVertical: 16 }}>
-            <Text style={{ fontFamily: 'Outfit_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: t.textMuted }}>EXPIRES WITHIN 30 DAYS</Text>
+            <Text style={{ fontFamily: 'Figtree_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: t.textMuted }}>EXPIRES WITHIN 30 DAYS</Text>
             <Num size={22} color={soon > 0 ? t.accent : t.text} style={{ marginTop: 9 }}>{formatLitres(soon)} L</Num>
           </View>
           <View style={{ width: 1, backgroundColor: t.hairline }} />
           <View style={{ flex: 1, paddingVertical: 16, paddingLeft: 20 }}>
-            <Text style={{ fontFamily: 'Outfit_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: t.textMuted }}>LATER</Text>
+            <Text style={{ fontFamily: 'Figtree_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: t.textMuted }}>LATER</Text>
             <Num size={22} style={{ marginTop: 9 }}>{formatLitres(later)} L</Num>
           </View>
         </View>
 
-        <Text style={{ marginTop: 14, fontFamily: 'Outfit_400Regular', fontSize: 12, lineHeight: 18, color: t.textMuted }}>
+        <Text style={{ marginTop: 14, fontFamily: 'Figtree_400Regular', fontSize: 12, lineHeight: 18, color: t.textMuted }}>
           {soonestExpiry
             ? `Soonest expiry · ${formatDayMonth(soonestExpiry)}. Unused litres convert back to the rand you paid for them. They never expire to zero.`
             : 'Unused litres convert back to the rand you paid for them. They never expire to zero.'}
@@ -92,8 +92,8 @@ export default function Balance() {
                 }}
               >
                 <View>
-                  <Text style={{ fontFamily: 'Outfit_600SemiBold', fontSize: 14, color: t.text }}>{e.what}</Text>
-                  <Text style={{ fontFamily: 'Outfit_400Regular', fontSize: 11, color: t.textMuted, marginTop: 7 }}>
+                  <Text style={{ fontFamily: 'Figtree_600SemiBold', fontSize: 14, color: t.text }}>{e.what}</Text>
+                  <Text style={{ fontFamily: 'Figtree_400Regular', fontSize: 11, color: t.textMuted, marginTop: 7 }}>
                     {formatDayMonth(e.when)} · {e.detail}
                     {exp ? (
                       <Text style={{ color: soonish ? t.accent : t.textMuted }}>

@@ -169,8 +169,26 @@ themes, since a dark knob reads correctly against the lime track regardless of t
 
 ### 3.2 Typography
 
-**Outfit** (Google Fonts), weights 300-900, via `@expo-google-fonts/outfit`.
-Monospace labels use the platform UI monospace stack.
+**Amended — Figtree replaces Outfit.** The build shipped **Outfit**; the project owner
+asked for something smoother and more elegant, "like Google Sans". Google Sans is Google's
+proprietary brand typeface — not on Google Fonts and not licensable in a third-party
+product — so this is a closest-open-equivalent choice.
+
+**Figtree** (Google Fonts), weights 400-800, via `@expo-google-fonts/figtree`. Monospace
+labels use the platform UI monospace stack, unchanged.
+
+DM Sans was the first choice and was rejected on measurement, which is worth recording
+because the failure would have been silent. **DM Sans ships no `tnum` OpenType feature**,
+so the `fontVariant: ['tabular-nums']` this design depends on would have become a no-op
+that React Native ignores without erroring. Its digits are also the least uniform of the
+candidates — the `1` is 52% the width of the `0` — which at the Wallet's 92px hero is a
+~34px horizontal shift every time a digit changes width, and worst of all on the Top up
+keypad where the value moves under the user's finger on every press. Figtree has `tnum`,
+is the closest surviving match in character, and its rounder letterforms suit §3.3's
+rounded geometry. **Verify `tnum` before ever swapping this family again.**
+
+The swap was otherwise 1:1: Figtree ships the same five weights under the same naming, so
+§3.2's roles and the `<Num>` weight-to-family map carry across unchanged.
 
 | Role | Spec |
 |---|---|
@@ -189,9 +207,42 @@ em to points at the call site.
 
 ### 3.3 Geometry
 
-- Border radius: **3px** on buttons only. Cards, chips, tabs, and inputs are square.
+**Amended — the system is rounded and softened.** It was previously square everywhere
+with a single 3px radius on buttons, and shadows were banned outright. Both rules are
+replaced at the project owner's direction.
+
+Radii come from one scale in `tokens.ts`, so surfaces round together rather than each
+screen picking a number:
+
+| Token | Value | Applied to |
+|---|---|---|
+| `xs` | 4 | savings bars (top corners only), the cap-meter fill |
+| `sm` | 10 | small boxes: avatar squares, the grade selector |
+| `md` | 14 | buttons, the keypad's outer bounds, bordered cards |
+| `lg` | 18 | the card pass, the inverted price-watch block |
+| `pill` | 999 | the Toggle track and knob |
+
+**Shadows are now permitted, but only in light mode.** This is the load-bearing half of
+the rule. A shadow is a dark blur and `DARK.bg` is `#000000`, so in dark mode a shadow is
+not subtle — it is invisible. Shipping one anyway would repeat Ruling C1's defect in
+mirror image: a treatment that looks right in whichever theme you happen to be viewing and
+does nothing in the other.
+
+Dark mode does not need the affordance. Every surface that takes elevation is one that
+would otherwise be white-on-white or near-groundless in light mode — the card pass, the
+inverted price-watch block, the alert cards — and in dark mode each is already separated
+from the ground by luminance. Elevation is therefore served by `useElevation('low' |
+'high')`, which resolves to a real shadow in light and a zeroed style in dark. Callers
+spread it unconditionally and never branch on the theme themselves. A test pins the dark
+set to zero opacity, because this failure is silent.
+
+**Consequence: Ruling C1113-c is withdrawn.** It had escalated the card pass's border to
+the heavy `PASS.strataA` purely because a white card on a white ground had no other way to
+show an edge and shadows were banned. A light-mode shadow does that properly, so the
+border relaxes back to `PASS.hairline`.
+
 - Borders: **1px**, never thicker.
-- **No shadows, no gradients, no blur** anywhere in the system.
+- **No gradients, no blur** anywhere in the system.
 - Screen horizontal padding: **26px**. Alert screen and keypad use 20px and 18px.
 - Primary button height: **58px**. Secondary CTA in cards: **54px**.
 - Grade tab height: **50px**. Keypad key height: **62px**.
@@ -239,7 +290,6 @@ Nine designed artboards plus three new screens.
 | 02 | Top up | `top-up` | Artboard 02 — has live logic |
 | 03 | Barrel card | `card` | Artboard 03 |
 | 04 | Price alerts | `alerts` | Artboard 04 |
-| 06 | Stations | `(tabs)/stations` | Artboard 06 |
 | 07 | Savings | `(tabs)/savings` | Artboard 07 |
 | 08 | Balance / ledger | `balance` | Artboard 08 |
 | 09 | Settings | `(tabs)/settings` | Artboard 09 |
@@ -248,6 +298,19 @@ Nine designed artboards plus three new screens.
 
 Artboard 05 is not a separate screen. It is artboard 01 rendered in the light theme, and
 is satisfied by §6.
+
+**Amended — the Stations screen is removed.** Artboard 06 shipped as a tab and has been
+deleted at the project owner's direction: v1 partners with no stations, and the card runs
+on Mastercard/Visa rails at any merchant's terminal. The screen's own rationale did not
+survive its earlier edits either — §4.1 had already removed the per-station price column
+(regulated petrol cannot vary inside a zone) and maps are a stated non-goal, which left a
+static list of five hardcoded stations with no price, no map and no interaction.
+
+Its one load-bearing element, the §9.5 zone-price statement, moves to the Wallet's
+price-watch block, which already states the price and the next change. `src/data/stations.ts`
+**stays**: it is not a partner list but the lookup behind `normaliseDescriptor` and
+`resolveZone`, which is §11 instrumentation and the unit a phase-2 rebate would be priced
+in.
 
 ### 4.1 Content preserved from the design
 
@@ -390,8 +453,13 @@ v1 — it is how the product is used at a forecourt, one-handed, often at night 
 takes the centre position and the accent colour.
 
 ```
-Wallet  ·  Stations  ·  Card  ·  Savings  ·  Settings
+Wallet  ·  Card  ·  Savings  ·  Settings
 ```
+
+**Amended — four tabs, not five.** Stations is removed (§4). Card was given the centre
+position *and* the accent colour; four tabs have no centre, so the accent carries that
+emphasis alone and Card sits second, grouping the two tabs the product is used with ahead
+of the two it is reviewed with.
 
 Pushed screens, presented as stack screens over the tabs with the design's existing
 back-arrow header: `top-up`, `balance`, `alerts`, `fill/[id]`, `subscribe`.
@@ -762,7 +830,17 @@ This is a general property worth stating once: **under FIFO, a user who tops up 
 will rarely see an expiry warning.** The warning is for dormant balances, which is exactly
 who it should be for.
 
-### 9.5 Stations — zone price, stated once
+### 9.5 Stations — REMOVED; the zone price moves to the Wallet
+
+**This screen no longer exists** (§4). What follows is retained to record what the screen
+carried and why one line of it survived. That line — the zone price and its "regulated,
+the same everywhere" statement — is now the last row of the Wallet's price-watch block,
+where the price and next-change are already stated. `textMuted` is identical in both token
+sets, so it needs no override inside that block's light-mode inversion.
+
+The original text follows.
+
+#### Original §9.5
 
 Per §4.1 the per-station price column is removed. The screen leads with the zone price as
 a single statement:

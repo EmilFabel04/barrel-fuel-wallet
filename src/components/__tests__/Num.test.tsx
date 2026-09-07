@@ -15,13 +15,13 @@ test('renders its value and uses tabular numerals', async () => {
   expect(style.fontSize).toBe(92);
 });
 
-test('maps weight to the matching Outfit family instead of setting fontWeight', async () => {
+test('maps weight to the matching Figtree family instead of setting fontWeight', async () => {
   const { getByText } = await render(<Num size={20} weight="500">1.23</Num>);
   const node = getByText('1.23');
   const style = Array.isArray(node.props.style)
     ? Object.assign({}, ...node.props.style.flat())
     : node.props.style;
-  expect(style.fontFamily).toBe('Outfit_500Medium');
+  expect(style.fontFamily).toBe('Figtree_500Medium');
   expect(style.fontWeight).toBeUndefined();
 });
 
@@ -31,7 +31,7 @@ test('defaults to the ExtraBold family when no weight is given', async () => {
   const style = Array.isArray(node.props.style)
     ? Object.assign({}, ...node.props.style.flat())
     : node.props.style;
-  expect(style.fontFamily).toBe('Outfit_800ExtraBold');
+  expect(style.fontFamily).toBe('Figtree_800ExtraBold');
 });
 
 test('converts the -0.045em tracking to points at the call site', async () => {

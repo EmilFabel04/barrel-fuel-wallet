@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme/ThemeProvider';
+import { RADIUS } from '../theme/tokens';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', '←'];
 
@@ -14,7 +15,7 @@ export function Keypad({ value, onChange }: { value: string; onChange: (v: strin
     onChange(((value === '0' ? '' : value) + k).slice(0, 7));
   };
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', backgroundColor: t.surface, gap: 1 }}>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', backgroundColor: t.surface, gap: 1, borderRadius: RADIUS.md, overflow: 'hidden' }}>
       {KEYS.map(k => (
         <Pressable
           key={k}
@@ -26,7 +27,7 @@ export function Keypad({ value, onChange }: { value: string; onChange: (v: strin
             alignItems: 'center', justifyContent: 'center',
           }}
         >
-          <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 25, color: t.text, fontVariant: ['tabular-nums'] }}>{k}</Text>
+          <Text style={{ fontFamily: 'Figtree_700Bold', fontSize: 25, color: t.text, fontVariant: ['tabular-nums'] }}>{k}</Text>
         </Pressable>
       ))}
     </View>

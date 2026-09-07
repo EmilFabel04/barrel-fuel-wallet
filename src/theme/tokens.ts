@@ -40,3 +40,68 @@ export const PASS = {
   strataA: '#A8A8A8', // upper grey stratum beneath the card
   strataB: '#4A4A4A', // lower grey stratum
 } as const;
+
+/**
+ * Corner radii (spec §3.3, amended). The original system was square
+ * everywhere with a single 3px radius on buttons; this replaces it with a
+ * scale so the whole surface language rounds together rather than each screen
+ * inventing a number.
+ */
+export const RADIUS = {
+  xs: 4,     // savings bars, the cap-meter fill
+  sm: 10,    // small boxes: avatar squares, the grade selector
+  md: 14,    // buttons and bordered cards
+  lg: 18,    // large surfaces: the card pass, the inverted price-watch block
+  pill: 999, // the Toggle track and knob
+} as const;
+
+export type Elevation = {
+  shadowColor: string;
+  shadowOffset: { width: number; height: number };
+  shadowOpacity: number;
+  shadowRadius: number;
+  elevation: number; // Android reads this; iOS reads the four above
+};
+
+export type ElevationSet = { low: Elevation; high: Elevation };
+
+const NONE: Elevation = {
+  shadowColor: '#000000',
+  shadowOffset: { width: 0, height: 0 },
+  shadowOpacity: 0,
+  shadowRadius: 0,
+  elevation: 0,
+};
+
+/**
+ * Elevation is a LIGHT-MODE affordance and deliberately absent in dark.
+ *
+ * A shadow is a dark blur, and `DARK.bg` is `#000000` — so in dark mode a
+ * shadow is not subtle, it is literally invisible. Shipping one anyway would
+ * repeat Ruling C1's defect in mirror image: a treatment that looks correct on
+ * the theme you happen to be viewing and does nothing on the other.
+ *
+ * Dark mode does not need the affordance. The surfaces that take elevation are
+ * the ones that would otherwise be white-on-white or near-groundless in light
+ * mode — the card pass, the inverted price-watch block, the alert cards. In
+ * dark mode each of those is already separated from the ground by luminance,
+ * so there is nothing for a shadow to add.
+ */
+export const LIGHT_ELEVATION: ElevationSet = {
+  low: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  high: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 6,
+  },
+};
+
+export const DARK_ELEVATION: ElevationSet = { low: NONE, high: NONE };

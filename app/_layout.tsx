@@ -2,16 +2,16 @@ import React from 'react';
 import { Stack } from 'expo-router';
 import {
   useFonts,
-  Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold,
-  Outfit_700Bold, Outfit_800ExtraBold,
-} from '@expo-google-fonts/outfit';
+  Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold,
+  Figtree_700Bold, Figtree_800ExtraBold,
+} from '@expo-google-fonts/figtree';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '../src/theme/ThemeProvider';
 
 export default function RootLayout() {
   const [loaded] = useFonts({
-    Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold,
-    Outfit_700Bold, Outfit_800ExtraBold,
+    Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold,
+    Figtree_700Bold, Figtree_800ExtraBold,
   });
   if (!loaded) return null;
   return (

@@ -39,7 +39,7 @@ export default function Subscribe() {
         <View accessible accessibilityLabel={`${spokenRand(MONTHLY_PRICE)} per month`} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
           <Num size={34} color={t.textMuted}>R</Num>
           <Num size={82}>{MONTHLY_PRICE}</Num>
-          <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 17, color: t.textDim }}>/ month</Text>
+          <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 17, color: t.textDim }}>/ month</Text>
         </View>
       </View>
 
@@ -48,8 +48,8 @@ export default function Subscribe() {
         {INCLUDED.map(line => (
           <View key={line}>
             <View style={{ paddingVertical: 17, flexDirection: 'row', gap: 12 }}>
-              <Text style={{ fontFamily: 'Outfit_800ExtraBold', fontSize: 14, color: t.positiveText }}>—</Text>
-              <Text style={{ flex: 1, fontFamily: 'Outfit_500Medium', fontSize: 14, lineHeight: 20, color: t.text }}>{line}</Text>
+              <Text style={{ fontFamily: 'Figtree_800ExtraBold', fontSize: 14, color: t.positiveText }}>—</Text>
+              <Text style={{ flex: 1, fontFamily: 'Figtree_500Medium', fontSize: 14, lineHeight: 20, color: t.text }}>{line}</Text>
             </View>
             <Rule />
           </View>
@@ -62,7 +62,7 @@ export default function Subscribe() {
           onPress={() => { setSubscription('trial'); router.back(); }}
         />
         {/* CPA s14 doing product work (spec §9.3) — reproduced verbatim. */}
-        <Text style={{ textAlign: 'center', fontFamily: 'Outfit_400Regular', fontSize: 12, color: t.textMuted }}>
+        <Text style={{ textAlign: 'center', fontFamily: 'Figtree_400Regular', fontSize: 12, color: t.textMuted }}>
           Cancel any time. Your litres stay yours.
         </Text>
       </View>

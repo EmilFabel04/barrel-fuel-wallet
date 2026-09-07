@@ -1,6 +1,9 @@
 import React, { createContext, useContext } from 'react';
 import { useColorScheme } from 'react-native';
-import { DARK, LIGHT, Tokens } from './tokens';
+import {
+  DARK, LIGHT, Tokens,
+  DARK_ELEVATION, LIGHT_ELEVATION, Elevation, ElevationSet,
+} from './tokens';
 import { useWallet } from '../store/wallet';
 
 // A single context carries both the resolved tokens and the light/dark
@@ -9,16 +12,22 @@ import { useWallet } from '../store/wallet';
 // disagreeing with) it elsewhere — e.g. by comparing against `LIGHT`
 // identity, which would silently break the moment any consumer is handed a
 // derived or overridden token object instead of the module-level singleton.
-type ThemeState = { tokens: Tokens; isLight: boolean };
+type ThemeState = { tokens: Tokens; isLight: boolean; elevation: ElevationSet };
 
-const ThemeContext = createContext<ThemeState>({ tokens: DARK, isLight: false });
+const ThemeContext = createContext<ThemeState>({
+  tokens: DARK, isLight: false, elevation: DARK_ELEVATION,
+});
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const appearance = useWallet(s => s.appearance);
   const system = useColorScheme();
   const isDark = appearance === 'system' ? system !== 'light' : appearance === 'dark';
   return (
-    <ThemeContext.Provider value={{ tokens: isDark ? DARK : LIGHT, isLight: !isDark }}>
+    <ThemeContext.Provider value={{
+      tokens: isDark ? DARK : LIGHT,
+      isLight: !isDark,
+      elevation: isDark ? DARK_ELEVATION : LIGHT_ELEVATION,
+    }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -26,3 +35,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 export const useTheme = (): Tokens => useContext(ThemeContext).tokens;
 export const useIsLight = (): boolean => useContext(ThemeContext).isLight;
+
+/**
+ * The shadow style for a raised surface, resolved for the current theme. Read
+ * from the same computation ThemeProvider already did, so it cannot disagree
+ * with `useTheme()` about which theme is active.
+ *
+ * In dark mode this returns a zeroed style rather than a shadow — see the note
+ * on `DARK_ELEVATION` in tokens.ts. Callers should not branch on the theme
+ * themselves; spreading this is correct in both.
+ */
+export const useElevation = (level: keyof ElevationSet = 'low'): Elevation =>
+  useContext(ThemeContext).elevation[level];

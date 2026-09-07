@@ -7,8 +7,8 @@ import { SectionLabel } from '../../src/components/SectionLabel';
 import { Rule } from '../../src/components/Rule';
 import { Button } from '../../src/components/Button';
 import { BarrelMark } from '../../src/components/BarrelMark';
-import { useTheme, useIsLight } from '../../src/theme/ThemeProvider';
-import { DARK } from '../../src/theme/tokens';
+import { useTheme, useIsLight, useElevation } from '../../src/theme/ThemeProvider';
+import { DARK, RADIUS } from '../../src/theme/tokens';
 import { useWallet, selectBalance } from '../../src/store/wallet';
 import { formatLitres, formatRand, formatPrice } from '../../src/lib/format';
 import { priceOn, nextPriceChange } from '../../src/data/prices';
@@ -30,6 +30,9 @@ export default function Wallet() {
   // isn't a mechanical token swap (spec §6). Sourced from ThemeProvider's own
   // light/dark computation rather than re-derived here.
   const isLight = useIsLight();
+  // Only meaningful in light mode, where this block becomes a black card on a
+  // white ground; in dark mode it is inline and the hook returns no shadow.
+  const blockShadow = useElevation('low');
   const router = useRouter();
   const balance = useWallet(selectBalance);
   const price = priceOn('inland', TODAY);
@@ -54,10 +57,10 @@ export default function Wallet() {
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 6 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <BarrelMark size={17} />
-          <Text style={{ fontFamily: 'Outfit_800ExtraBold', fontSize: 16, letterSpacing: -0.56, color: t.text }}>BARREL</Text>
+          <Text style={{ fontFamily: 'Figtree_800ExtraBold', fontSize: 16, letterSpacing: -0.56, color: t.text }}>BARREL</Text>
         </View>
-        <View style={{ width: 30, height: 30, borderWidth: 1, borderColor: t.border, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 11, color: t.textDim }}>TM</Text>
+        <View style={{ width: 30, height: 30, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: t.border, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontFamily: 'Figtree_700Bold', fontSize: 11, color: t.textDim }}>TM</Text>
         </View>
       </View>
 
@@ -72,7 +75,7 @@ export default function Wallet() {
           <Num size={92}>{formatLitres(balance)}</Num>
           <Num size={34} color={t.textDim}>L</Num>
         </View>
-        <Text style={{ marginTop: 16, fontFamily: 'Outfit_500Medium', fontSize: 17, color: t.textDim, fontVariant: ['tabular-nums'] }}>
+        <Text style={{ marginTop: 16, fontFamily: 'Figtree_500Medium', fontSize: 17, color: t.textDim, fontVariant: ['tabular-nums'] }}>
           R {formatRand(balance * price)}
           <Text style={{ color: t.textMuted }}>  · at today's 95</Text>
         </Text>
@@ -93,16 +96,16 @@ export default function Wallet() {
         accessibilityLabel="Price watch. View price alerts."
         onPress={() => router.push('/alerts')}
         style={isLight
-          ? { marginTop: 34, backgroundColor: DARK.bg, paddingVertical: 22, paddingHorizontal: 24, gap: 16 }
+          ? { marginTop: 34, backgroundColor: DARK.bg, paddingVertical: 22, paddingHorizontal: 24, gap: 16, borderRadius: RADIUS.lg, ...blockShadow }
           : { paddingTop: 20, gap: 16 }}
       >
         <SectionLabel>Price watch · Gauteng</SectionLabel>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <View>
-            <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 12, letterSpacing: 0.24, color: DARK.text }}>PETROL 95</Text>
+            <Text style={{ fontFamily: 'Figtree_700Bold', fontSize: 12, letterSpacing: 0.24, color: DARK.text }}>PETROL 95</Text>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 7 }}>
               <Num size={26} color={DARK.text}>{`R${formatPrice(price)}`}</Num>
-              <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 13, color: t.textMuted }}>/L</Text>
+              <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textMuted }}>/L</Text>
             </View>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
@@ -115,19 +118,29 @@ export default function Wallet() {
         </View>
         <View style={{ height: 1, backgroundColor: DARK.hairline }} />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 13, color: t.textMuted }}>
+          <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textMuted }}>
             {nextChange ? `Next change · ${ddMon(nextChange.effectiveFrom)}` : 'No change scheduled'}
           </Text>
           {nextChange ? (
             <Num size={14} color={t.accent}>{`+${nextChangeCents}c expected`}</Num>
           ) : null}
         </View>
+        {/* Spec §9.5, folded in here when the Stations tab was removed. This is
+            the one line that explains why a station-agnostic card is possible
+            at all — the price is set by regulation, not negotiated per station
+            — so it belongs on the screen that already states the price rather
+            than on a screen of its own. `textMuted` is identical in both token
+            sets, so it needs no override inside this block's light-mode
+            inversion. */}
+        <Text style={{ fontFamily: 'Figtree_400Regular', fontSize: 12, lineHeight: 18, color: t.textMuted }}>
+          Regulated — the same at every station in this zone, so your card works anywhere.
+        </Text>
       </Pressable>
 
       <View style={{ marginTop: 'auto', paddingBottom: 12, gap: 12 }}>
         <Rule />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 13, color: t.textDim }}>Last fill · Shell Grayston</Text>
+          <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textDim }}>Last fill · Shell Grayston</Text>
           <Num size={14}>−38.0 L</Num>
         </View>
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>

@@ -23,7 +23,7 @@ export default function FillDetail() {
     return (
       <Screen>
         <ScreenHeader title="Fill" />
-        <Text style={{ marginTop: 34, fontFamily: 'Outfit_500Medium', fontSize: 14, color: t.text }}>Not found.</Text>
+        <Text style={{ marginTop: 34, fontFamily: 'Figtree_500Medium', fontSize: 14, color: t.text }}>Not found.</Text>
       </Screen>
     );
   }
@@ -69,7 +69,7 @@ export default function FillDetail() {
           </View>
         </View>
 
-        <Text style={{ marginTop: 18, fontFamily: 'Outfit_400Regular', fontSize: 12, lineHeight: 18, color: t.textMuted }}>
+        <Text style={{ marginTop: 18, fontFamily: 'Figtree_400Regular', fontSize: 12, lineHeight: 18, color: t.textMuted }}>
           {effective
             ? `Gauteng ${c.zone} · 95 · effective ${formatDayMonth(effective.effectiveFrom)}`
             : `Gauteng ${c.zone} · 95`}

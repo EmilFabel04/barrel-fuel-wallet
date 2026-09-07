@@ -9,6 +9,7 @@ import { Rule } from '../src/components/Rule';
 import { Button } from '../src/components/Button';
 import { Keypad } from '../src/components/Keypad';
 import { useTheme } from '../src/theme/ThemeProvider';
+import { RADIUS } from '../src/theme/tokens';
 import { useWallet, selectLitresThisMonth, selectTopUpCapRemaining } from '../src/store/wallet';
 import { MONTHLY_TOPUP_CAP_L } from '../src/lib/caps';
 import { formatLitres, formatRandWhole, formatPrice, spokenRand } from '../src/lib/format';
@@ -46,16 +47,16 @@ export default function TopUp() {
       <ScreenHeader title="Top up" />
 
       <View style={{ paddingTop: 34 }}>
-        <View style={{ borderWidth: 1, borderColor: t.border, height: 50, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontFamily: 'Outfit_800ExtraBold', fontSize: 12, letterSpacing: 1.2, color: t.text }}>PETROL 95</Text>
+        <View style={{ borderWidth: 1, borderColor: t.border, borderRadius: RADIUS.sm, height: 50, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontFamily: 'Figtree_800ExtraBold', fontSize: 12, letterSpacing: 1.2, color: t.text }}>PETROL 95</Text>
         </View>
 
         <View style={{ marginTop: 14 }}>
-          <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 12, color: t.textMuted }}>
+          <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 12, color: t.textMuted }}>
             {formatLitres(used)} / {MONTHLY_TOPUP_CAP_L} L this month
           </Text>
-          <View style={{ height: 2, backgroundColor: t.hairline, marginTop: 8 }}>
-            <View style={{ height: 2, width: `${pct * 100}%`, backgroundColor: pct > 0.8 ? t.accent : t.text }} />
+          <View style={{ height: 2, borderRadius: RADIUS.xs, backgroundColor: t.hairline, marginTop: 8 }}>
+            <View style={{ height: 2, borderRadius: RADIUS.xs, width: `${pct * 100}%`, backgroundColor: pct > 0.8 ? t.accent : t.text }} />
           </View>
         </View>
       </View>
@@ -80,7 +81,7 @@ export default function TopUp() {
             </View>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 13, color: t.textMuted }}>locked at</Text>
+            <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textMuted }}>locked at</Text>
             <Num size={15} style={{ marginTop: 4 }}>R{formatPrice(price)}/L</Num>
           </View>
         </View>
@@ -97,11 +98,11 @@ export default function TopUp() {
               accessibilityLabel="RESUME SUBSCRIPTION"
               onPress={() => router.push('/subscribe')}
               style={{
-                height: 58, borderRadius: 3, backgroundColor: t.surface,
+                height: 58, borderRadius: RADIUS.md, backgroundColor: t.surface,
                 alignItems: 'center', justifyContent: 'center', minHeight: 44, minWidth: 44,
               }}
             >
-              <Text style={{ fontFamily: 'Outfit_800ExtraBold', fontSize: 15, letterSpacing: 0.45, color: t.textMuted }}>
+              <Text style={{ fontFamily: 'Figtree_800ExtraBold', fontSize: 15, letterSpacing: 0.45, color: t.textMuted }}>
                 RESUME SUBSCRIPTION
               </Text>
             </Pressable>
@@ -113,7 +114,7 @@ export default function TopUp() {
             />
           )}
         </View>
-        <Text style={{ marginTop: 12, fontFamily: 'Outfit_400Regular', fontSize: 12, lineHeight: 18, color: t.textMuted }}>
+        <Text style={{ marginTop: 12, fontFamily: 'Figtree_400Regular', fontSize: 12, lineHeight: 18, color: t.textMuted }}>
           Litres you don&apos;t use convert back to the rand you paid. No cash-out above purchase price.
         </Text>
       </View>

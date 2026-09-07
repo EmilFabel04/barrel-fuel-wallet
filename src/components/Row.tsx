@@ -20,9 +20,9 @@ export function Row({
           alignItems: 'center', paddingVertical: 17, minHeight: 44, gap: 16,
         }}
       >
-        <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 14, color: t.text }}>{label}</Text>
+        <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 14, color: t.text }}>{label}</Text>
         {right ?? (value ? (
-          <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 13, color: t.textMuted }}>{value}</Text>
+          <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textMuted }}>{value}</Text>
         ) : null)}
       </Pressable>
       <Rule />

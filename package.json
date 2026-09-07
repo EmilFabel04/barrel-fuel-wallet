@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
-    "@expo-google-fonts/outfit": "^0.4.3",
+    "@expo-google-fonts/figtree": "^0.4.1",
     "@expo/metro-runtime": "~57.0.15",
     "expo": "~57.0.20",
     "expo-constants": "^57.0.17",

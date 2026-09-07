@@ -7,7 +7,6 @@ import { TabIcon, TabName } from '../../src/components/TabIcon';
 
 const TABS: { name: string; label: string; icon: TabName }[] = [
   { name: 'index',    label: 'Wallet',   icon: 'wallet' },
-  { name: 'stations', label: 'Stations', icon: 'stations' },
   { name: 'card',     label: 'Card',     icon: 'card' },
   { name: 'savings',  label: 'Savings',  icon: 'savings' },
   { name: 'settings', label: 'Settings', icon: 'settings' },
@@ -35,6 +34,11 @@ export default function TabsLayout() {
       {TABS.map(({ name, label, icon }) => {
         // Card is the one tab that acts in the physical world, so it alone
         // takes the accent colour when active; the rest take plain text.
+        // Spec §5 gave it the centre position of five as well, but with the
+        // Stations tab removed there is no centre of four — so the accent
+        // carries that emphasis on its own, and Card sits second, grouping
+        // the two tabs you use the product with ahead of the two you review
+        // it with.
         const tint = (focused: boolean) =>
           focused ? (name === 'card' ? t.accent : t.text) : t.textMuted;
         return (

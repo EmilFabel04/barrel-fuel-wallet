@@ -220,3 +220,63 @@ balance — and retuning data to flatter a screen is the error §4.3 exists to p
 Reported rather than engineered around.
 — Cost if wrong: the Top up meter looks emptier than it did. If that matters the fix is
 the meter's framing, not the seed.
+
+### 52. Figtree replaces Outfit; DM Sans rejected on a silent numeral defect
+The owner asked for a smoother, more elegant face "like Google Sans". Google Sans is
+Google's proprietary brand typeface — not on Google Fonts, not licensable in a third-party
+product — so this was a closest-open-equivalent choice, and the owner picked DM Sans.
+
+Measured before adopting it: **DM Sans ships no `tnum` OpenType feature.** Every other
+candidate (Figtree, Inter, Manrope, Plus Jakarta Sans) has it. Without `tnum` the
+`fontVariant: ['tabular-nums']` this design relies on becomes a no-op React Native ignores
+silently, and DM Sans has the least uniform digits of the set — its `1` is 52% the width
+of its `0`, which at the 92px Wallet hero is a ~34px shift per digit and worst on the Top
+up keypad where the value changes on every keypress. Put the measurement to the owner, who
+switched to Figtree.
+
+Same class of trap as Ruling T89-c (`fontWeight` against a fixed family): an unsupported
+font feature fails by doing nothing. Recorded in the spec and the handover as a check to
+run before any future family swap.
+— Cost if wrong: Figtree reads slightly rounder than DM Sans. The swap is a 1:1 family
+rename across 16 files if the owner prefers the other trade.
+
+### 53. Rounded and soft — with elevation as a light-mode-only affordance
+The owner asked for rounded elements and accepted shadows, retiring §3.3's flat rule. Radii
+come from one five-step scale in `tokens.ts` rather than per-screen numbers.
+
+The part that needed a ruling: **a shadow is invisible in dark mode.** `DARK.bg` is
+`#000000` and a shadow is a dark blur, so shipping one would repeat Ruling C1's defect in
+mirror image — correct in the theme you are looking at, absent in the other. Dark mode does
+not need it either: every surface taking elevation is one that would otherwise be
+white-on-white in light mode, and in dark each is already separated by luminance. So
+`useElevation()` resolves to a real shadow in light and a zeroed style in dark; callers
+spread it unconditionally and never branch on the theme. A test pins the dark set to zero,
+because the failure is silent.
+
+**Ruling C1113-c is withdrawn as a consequence.** It escalated the card pass's border to
+the heavy `PASS.strataA` only because a white card on a white ground had no edge and
+shadows were banned. The shadow does that job properly now, so the border relaxes back to
+`PASS.hairline`. Verified in the browser in both themes.
+— Cost if wrong: if dark mode should carry depth too, the answer is a raised surface fill
+(`bgRaised` exists for it), not a shadow.
+
+### 54. Stations deleted; its one load-bearing line moved to the Wallet
+The owner removed the Stations tab: v1 partners with no stations and the card runs on
+Mastercard/Visa rails at any terminal. Checked whether the screen still earned its place
+on its own terms — it did not. §4.1 had already stripped the per-station price column
+(regulated petrol cannot vary inside a zone) and maps are a stated non-goal, leaving a
+static list of five hardcoded stations with no price, no map and no interaction. Google
+Maps does that better and every driver has it.
+
+Its one load-bearing element was §9.5's zone-price statement — the only place the product
+explains *why* a station-agnostic card is possible. That line moves to the Wallet's
+price-watch block, which already states the price and the next change.
+
+**`src/data/stations.ts` stays.** It is not a partner list: it is the lookup behind
+`normaliseDescriptor` and `resolveZone`, which is §11 phase-2 instrumentation and the unit
+a rebate would eventually be priced in. Deleting the screen deletes a screen.
+
+Tab bar goes five to four. Card had the centre position *and* the accent; four tabs have no
+centre, so the accent carries it alone and Card sits second.
+— Cost if wrong: the screen is one file and one TABS entry to restore, and the station data
+never left.

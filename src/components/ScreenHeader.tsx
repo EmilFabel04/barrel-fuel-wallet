@@ -14,11 +14,11 @@ export function ScreenHeader({ title, back = true }: { title: string; back?: boo
       {back ? (
         <Pressable accessibilityRole="button" accessibilityLabel="Go back"
           onPress={() => router.back()} style={{ minWidth: 44, minHeight: 44, justifyContent: 'center' }}>
-          <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 20, color: t.textMuted }}>←</Text>
+          <Text style={{ fontFamily: 'Figtree_700Bold', fontSize: 20, color: t.textMuted }}>←</Text>
         </Pressable>
       ) : <View style={{ width: 44 }} />}
       <Text style={{
-        fontFamily: 'Outfit_700Bold', fontSize: 12,
+        fontFamily: 'Figtree_700Bold', fontSize: 12,
         letterSpacing: 1.44, textTransform: 'uppercase', color: t.text,
       }}>{title}</Text>
       <View style={{ width: 44 }} />

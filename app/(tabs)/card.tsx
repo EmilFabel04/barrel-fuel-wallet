@@ -7,17 +7,21 @@ import { SectionLabel } from '../../src/components/SectionLabel';
 import { Rule } from '../../src/components/Rule';
 import { Button } from '../../src/components/Button';
 import { BarrelMark } from '../../src/components/BarrelMark';
-import { useTheme } from '../../src/theme/ThemeProvider';
+import { useTheme, useElevation } from '../../src/theme/ThemeProvider';
 import { useWallet, selectBalance, selectSpendable, selectRedemptionRemaining } from '../../src/store/wallet';
 import { formatLitres, formatRandWhole } from '../../src/lib/format';
 import { priceOn } from '../../src/data/prices';
 import { TODAY } from '../../src/data/seed';
-import { PASS } from '../../src/theme/tokens';
+import { PASS, RADIUS } from '../../src/theme/tokens';
 import { STATIONS } from '../../src/data/stations';
 import { WEEKLY_REDEMPTION_CAP_L } from '../../src/lib/caps';
 
 export default function Card() {
   const t = useTheme();
+  // The pass is the product's primary object, so it takes the higher of the
+  // two elevations. In dark mode this resolves to no shadow at all — a white
+  // card on black needs none (see DARK_ELEVATION in tokens.ts).
+  const passShadow = useElevation('high');
   const balance = useWallet(selectBalance);
   // What the card would actually authorise: the balance, unless the weekly
   // redemption cap (spec §8.5) is the tighter of the two. Quoting the raw
@@ -51,7 +55,7 @@ export default function Card() {
 
       <View style={{ paddingTop: 36 }}>
         <SectionLabel>Your Barrel card</SectionLabel>
-        <Text style={{ marginTop: 12, fontFamily: 'Outfit_400Regular', fontSize: 13, lineHeight: 19.5, color: t.textDim }}>
+        <Text style={{ marginTop: 12, fontFamily: 'Figtree_400Regular', fontSize: 13, lineHeight: 19.5, color: t.textDim }}>
           Add it to your phone wallet and tap at any fuel station in South Africa.
         </Text>
       </View>
@@ -65,19 +69,20 @@ export default function Card() {
       <View style={{ marginTop: 26 }}>
         <View style={{
           backgroundColor: frozen ? PASS.bgFrozen : PASS.bg, padding: 24,
-          borderWidth: 1, borderColor: PASS.strataA,
+          borderWidth: 1, borderColor: PASS.hairline,
+          borderRadius: RADIUS.lg, ...passShadow,
         }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <BarrelMark size={17} color={PASS.text} />
-              <Text style={{ fontFamily: 'Outfit_800ExtraBold', fontSize: 16, letterSpacing: -0.56, color: PASS.text }}>BARREL</Text>
+              <Text style={{ fontFamily: 'Figtree_800ExtraBold', fontSize: 16, letterSpacing: -0.56, color: PASS.text }}>BARREL</Text>
             </View>
-            <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 9, letterSpacing: 1.44, color: frozen ? t.accent : PASS.muted }}>
+            <Text style={{ fontFamily: 'Figtree_700Bold', fontSize: 9, letterSpacing: 1.44, color: frozen ? t.accent : PASS.muted }}>
               {frozen ? 'FROZEN' : 'FUEL PASS'}
             </Text>
           </View>
 
-          <Text style={{ marginTop: 34, fontFamily: 'Outfit_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: PASS.muted }}>BALANCE</Text>
+          <Text style={{ marginTop: 34, fontFamily: 'Figtree_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: PASS.muted }}>BALANCE</Text>
           {/* spec §10.1: a numeric hero split across two Num nodes (value,
               unit) is announced as two separate stops by a screen reader.
               Grouped into one accessible node with a spelled-out label,
@@ -86,13 +91,13 @@ export default function Card() {
             <Num size={66} color={PASS.text}>{formatLitres(balance)}</Num>
             <Num size={26} color={PASS.dim}>L</Num>
           </View>
-          <Text style={{ marginTop: 8, fontFamily: 'Outfit_500Medium', fontSize: 13, color: PASS.dim, fontVariant: ['tabular-nums'] }}>
+          <Text style={{ marginTop: 8, fontFamily: 'Figtree_500Medium', fontSize: 13, color: PASS.dim, fontVariant: ['tabular-nums'] }}>
             R{formatRandWhole(spendable * price)} available at today's 95
           </Text>
           {/* Only shown when the weekly cap is what's binding — in the common
               case the balance is the limit and this line would be noise. */}
           {cappedByWeek ? (
-            <Text style={{ marginTop: 6, fontFamily: 'Outfit_500Medium', fontSize: 11, color: PASS.muted, fontVariant: ['tabular-nums'] }}>
+            <Text style={{ marginTop: 6, fontFamily: 'Figtree_500Medium', fontSize: 11, color: PASS.muted, fontVariant: ['tabular-nums'] }}>
               {formatLitres(weeklyLeft)} L left of your {WEEKLY_REDEMPTION_CAP_L} L weekly limit
             </Text>
           ) : null}
@@ -100,23 +105,23 @@ export default function Card() {
           <View style={{ height: 1, backgroundColor: PASS.hairline, marginTop: 22, marginBottom: 14 }} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
             <View>
-              <Text style={{ fontFamily: 'Outfit_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: PASS.muted }}>HOLDER</Text>
-              <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 13, marginTop: 8, letterSpacing: 0.26, color: PASS.text }}>T. MAKHUBELA</Text>
+              <Text style={{ fontFamily: 'Figtree_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: PASS.muted }}>HOLDER</Text>
+              <Text style={{ fontFamily: 'Figtree_700Bold', fontSize: 13, marginTop: 8, letterSpacing: 0.26, color: PASS.text }}>T. MAKHUBELA</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ fontFamily: 'Outfit_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: PASS.muted }}>CARD</Text>
+              <Text style={{ fontFamily: 'Figtree_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: PASS.muted }}>CARD</Text>
               <Num size={13} color={PASS.text} style={{ marginTop: 8 }}>•••• 4127</Num>
             </View>
           </View>
         </View>
-        <View style={{ height: 9, backgroundColor: PASS.strataA, marginHorizontal: 10 }} />
-        <View style={{ height: 9, backgroundColor: PASS.strataB, marginHorizontal: 22 }} />
+        <View style={{ height: 9, backgroundColor: PASS.strataA, marginHorizontal: 10, borderBottomLeftRadius: RADIUS.sm, borderBottomRightRadius: RADIUS.sm }} />
+        <View style={{ height: 9, backgroundColor: PASS.strataB, marginHorizontal: 22, borderBottomLeftRadius: RADIUS.sm, borderBottomRightRadius: RADIUS.sm }} />
       </View>
 
       <View style={{ marginTop: 'auto', paddingBottom: 12, gap: 10 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 14 }}>
-          <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 13, color: t.textMuted }}>Accepted at</Text>
-          <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 13, letterSpacing: 0.26, color: t.text }}>Works at any fuel station</Text>
+          <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textMuted }}>Accepted at</Text>
+          <Text style={{ fontFamily: 'Figtree_700Bold', fontSize: 13, letterSpacing: 0.26, color: t.text }}>Works at any fuel station</Text>
         </View>
         <Button label="ADD TO APPLE WALLET" variant="white" height={58} />
         <Button label="ADD TO GOOGLE PAY" variant="secondary" height={58} />
@@ -138,7 +143,7 @@ export default function Card() {
           height={54}
           onPress={simulateFill}
         />
-        <Text style={{ fontFamily: 'Outfit_400Regular', fontSize: 11, lineHeight: 16, color: t.textMuted }}>
+        <Text style={{ fontFamily: 'Figtree_400Regular', fontSize: 11, lineHeight: 16, color: t.textMuted }}>
           Fakes a card-rail fill at a random station to demo the redemption half of the
           core loop end to end. Not part of the product.
         </Text>

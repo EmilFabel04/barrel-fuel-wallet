@@ -9,6 +9,7 @@ import { Row } from '../../src/components/Row';
 import { Toggle } from '../../src/components/Toggle';
 import { Button } from '../../src/components/Button';
 import { useTheme } from '../../src/theme/ThemeProvider';
+import { RADIUS } from '../../src/theme/tokens';
 import { useWallet, Appearance } from '../../src/store/wallet';
 import { MONTHLY_TOPUP_CAP_L, WEEKLY_REDEMPTION_CAP_L } from '../../src/lib/caps';
 
@@ -43,11 +44,11 @@ export default function Settings() {
       <ScreenHeader title="Settings" back={false} />
       <ScrollView>
         <View style={{ paddingTop: 34, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-          <View style={{ width: 54, height: 54, backgroundColor: t.text, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontFamily: 'Outfit_800ExtraBold', fontSize: 20, letterSpacing: -0.4, color: t.inverse }}>TM</Text>
+          <View style={{ width: 54, height: 54, borderRadius: RADIUS.sm, backgroundColor: t.text, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontFamily: 'Figtree_800ExtraBold', fontSize: 20, letterSpacing: -0.4, color: t.inverse }}>TM</Text>
           </View>
           <View>
-            <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 20, letterSpacing: -0.4, color: t.text }}>Thabo Makhubela</Text>
+            <Text style={{ fontFamily: 'Figtree_700Bold', fontSize: 20, letterSpacing: -0.4, color: t.text }}>Thabo Makhubela</Text>
             <Num size={12} weight="500" color={t.textMuted} style={{ marginTop: 8 }}>+27 82 441 0912 · verified</Num>
           </View>
         </View>

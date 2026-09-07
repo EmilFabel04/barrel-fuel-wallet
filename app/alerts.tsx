@@ -8,7 +8,8 @@ import { SectionLabel } from '../src/components/SectionLabel';
 import { Rule } from '../src/components/Rule';
 import { Button } from '../src/components/Button';
 import { BarrelMark } from '../src/components/BarrelMark';
-import { useTheme } from '../src/theme/ThemeProvider';
+import { useTheme, useElevation } from '../src/theme/ThemeProvider';
+import { RADIUS } from '../src/theme/tokens';
 import { priceOn, nextPriceChange } from '../src/data/prices';
 import { TODAY } from '../src/data/seed';
 import { formatPrice, formatLitres } from '../src/lib/format';
@@ -32,6 +33,7 @@ function ordinal(day: number): string {
 
 export default function Alerts() {
   const t = useTheme();
+  const cardShadow = useElevation('low');
   const router = useRouter();
 
   // Derived from the same pricing table the wallet ledger deducts against,
@@ -68,11 +70,11 @@ export default function Alerts() {
 
       <View style={{ paddingTop: 24 }}>
         <SectionLabel>Lock screen</SectionLabel>
-        <View style={{ marginTop: 14, borderWidth: 1, borderColor: t.border, padding: 20 }}>
+        <View style={{ marginTop: 14, borderWidth: 1, borderColor: t.border, borderRadius: RADIUS.md, padding: 20, ...cardShadow }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
               <BarrelMark size={14} />
-              <Text style={{ fontFamily: 'Outfit_800ExtraBold', fontSize: 13, letterSpacing: -0.26, color: t.text }}>BARREL</Text>
+              <Text style={{ fontFamily: 'Figtree_800ExtraBold', fontSize: 13, letterSpacing: -0.26, color: t.text }}>BARREL</Text>
             </View>
             <Num size={11} weight="500" color={t.textMuted}>now</Num>
           </View>
@@ -82,10 +84,10 @@ export default function Alerts() {
               borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: t.accent, marginTop: 6,
             }} />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: 'Outfit_800ExtraBold', fontSize: 25, lineHeight: 26.5, letterSpacing: -0.875, color: t.text }}>
+              <Text style={{ fontFamily: 'Figtree_800ExtraBold', fontSize: 25, lineHeight: 26.5, letterSpacing: -0.875, color: t.text }}>
                 {`Petrol price rising ${deltaCents}c on the ${ordinal(nextDate.getDate())} — top up now`}
               </Text>
-              <Text style={{ marginTop: 16, fontFamily: 'Outfit_500Medium', fontSize: 13, color: t.textDim, fontVariant: ['tabular-nums'] }}>
+              <Text style={{ marginTop: 16, fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textDim, fontVariant: ['tabular-nums'] }}>
                 {`R${formatPrice(currentPrice)} `}
                 <Text style={{ color: t.textMuted }}>→</Text>
                 {' '}
@@ -99,9 +101,9 @@ export default function Alerts() {
 
       <View style={{ paddingTop: 36 }}>
         <SectionLabel>In-app card</SectionLabel>
-        <View style={{ marginTop: 14, borderWidth: 1, borderColor: t.hairline, padding: 22 }}>
+        <View style={{ marginTop: 14, borderWidth: 1, borderColor: t.hairline, borderRadius: RADIUS.md, padding: 22, ...cardShadow }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 11, letterSpacing: 1.54, color: t.textDim }}>
+            <Text style={{ fontFamily: 'Figtree_700Bold', fontSize: 11, letterSpacing: 1.54, color: t.textDim }}>
               {`PRICE ALERT · ${nextDateLabel}`}
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -116,7 +118,7 @@ export default function Alerts() {
             <Num size={54}>{formatLitres(litresSaved)}</Num>
             <Num size={18} color={t.textDim}>L saved</Num>
           </View>
-          <Text style={{ marginVertical: 14, fontFamily: 'Outfit_400Regular', fontSize: 13, lineHeight: 19.5, color: t.textDim }}>
+          <Text style={{ marginVertical: 14, fontFamily: 'Figtree_400Regular', fontSize: 13, lineHeight: 19.5, color: t.textDim }}>
             {`Topping up R2 000 before the increase buys you ${formatLitres(litresSaved)} litres more than it will on Wednesday.`}
           </Text>
           <Button label={`TOP UP BEFORE ${nextDateLabel}`} height={54} onPress={() => router.push('/top-up')} />
@@ -126,7 +128,7 @@ export default function Alerts() {
       <View style={{ marginTop: 'auto', paddingBottom: 14, gap: 14 }}>
         <Rule />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 13, color: t.textMuted }}>Alert me when 95 moves by</Text>
+          <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textMuted }}>Alert me when 95 moves by</Text>
           <Num size={14}>≥ 10c</Num>
         </View>
       </View>
