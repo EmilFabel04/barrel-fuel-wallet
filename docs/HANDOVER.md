@@ -14,11 +14,12 @@ more.
 **Anyone shown this must be told it is a prototype over mock data**, with no legal opinion,
 no bank, and no station agreements.
 
-## The three documents, in order of authority
+## The documents, in order of authority
 
 | | |
 |---|---|
-| `docs/superpowers/specs/2026-09-06-barrel-fuel-wallet-design.md` | **The binding authority.** Design system, screens, data model, guardrails. |
+| `docs/superpowers/specs/2026-09-06-barrel-fuel-wallet-design.md` | The original authority. Still binds for the data model, guardrails and product rules. |
+| `docs/superpowers/specs/2026-09-09-barrel-pump-redesign-design.md` | **Supersedes its §3 and §6** — the Pump design system, the four added features, the laddered seed. |
 | `docs/DECISIONS.md` | 58 rulings — 46 from the build, then 47+ made after it. Each records reasoning and cost-if-wrong. |
 | `docs/superpowers/plans/2026-09-07-barrel-fuel-wallet-ui.md` | The build plan. **Historical — it was wrong in ~15 places.** Do not treat as current. |
 
@@ -30,15 +31,18 @@ canvas that turned out to be arithmetically wrong.
 
 ```
 src/lib/     pure, React-free, fully tested — the model (+ the app clock)
+             round, window, lots, caps, cardfill, savings, holdings,
+             usage, pricewatch, format, clock
 src/data/    types, zone price table, stations, the seed
-src/store/   zustand wrapping src/lib
+src/store/   zustand wrapping src/lib (+ the demo-fill timer)
 src/theme/   tokens + provider (the ONLY file containing hex)
-src/components/  10 shared components
-app/         11 screens, expo-router
+src/components/  17 shared components — Readout, Panel, Chip, SegmentGauge,
+             Timeline, LineChart, BarChart, Banner, and the original set
+app/         12 screens, expo-router
 ```
 
 `src/lib` and `src/data` are the good part: pure functions over plain data, one definition
-of each operation, 183 tests. If you keep only `src/`, you have a portable model ready to
+of each operation, 262 tests. If you keep only `src/`, you have a portable model ready to
 validate against a real backend. Change logic there and let the screens follow.
 
 **Litres are held as dated `Lot`s**, each carrying the price paid and a 90-day expiry — not
@@ -50,23 +54,32 @@ savings (what a litre cost vs the pump price the day it was burned).
 1. **Hex appears only in `src/theme/tokens.ts`.** Everything else uses `useTheme()`.
    Verify: `grep -rn "#[0-9A-Fa-f]\{3,6\}" src/ app/` — hits only `tokens.ts` and its test.
    (`Toggle.tsx` matches inside a *comment*; that is fine.)
-2. **`positive` (`#C6F24E`) is a FILL colour. `positiveText` is for text and glyphs.**
-   Lime on white measures 1.30:1 and is invisible; `positiveText` is `#5A7A0A` in light
-   (4.97:1). Putting `positive` on text is the single easiest way to break light mode.
+2. **There are TWO fill/text colour pairs, and the fill half must never be text.**
+   `positive`/`positiveText` and — new — `accent`/`accentText`. Amber `#FF6A00` on white
+   measures 2.8:1, so in light mode amber is a **fill with ink set on it** (the price
+   badge, the gauge, the meter, the primary button) and `accentText` `#9A3200` carries the
+   small ▲ delta glyphs. Lime is the same shape of trap: `#7A9000` fill, `#3F5406` text.
+   A third token, `heroInk`, exists because a numeric hero cannot be amber on white and
+   stay legible — amber at night, ink in daylight.
+   **`tokens.test.ts` now measures all of this**: every light-mode text token is asserted
+   at AAA (≥7:1) and every dark one at AA, so the palette enforces itself.
    The same shape of trap runs the other way for **elevation**: a shadow on `#000000` is
    invisible, so `useElevation()` returns a real shadow in light and nothing in dark.
    Spread it unconditionally; never branch on the theme yourself.
-3. **Never set `fontWeight` against a Figtree family.** Each weight is a *separate family*
-   (`Figtree_400Regular` … `Figtree_800ExtraBold`). Use `<Num weight="500">`, which maps to
-   the family. Setting `fontWeight` on a *system* monospace font is fine — `SectionLabel`
-   is correct as written.
-   **And check `tnum` before swapping the family.** Figtree replaced Outfit; DM Sans was
-   rejected because it ships no `tnum`, which would silently turn every
-   `fontVariant: ['tabular-nums']` into a no-op and set the heroes jittering.
+3. **Never set `fontWeight` against a custom family.** Each weight is a *separate family*
+   (`Figtree_400Regular` …, `JetBrainsMono_800ExtraBold` …). Use `<Readout weight="500">`,
+   which maps to the family. **`SectionLabel` is now subject to this rule too** — it moved
+   off system Menlo onto JetBrains Mono, and its old `fontWeight: '600'` was only ever
+   correct *because* Menlo is a system font. That is the trap in this file.
+   **All numerals are monospaced now, so `tnum` is no longer a constraint on them.**
+   JetBrains Mono's digits cannot change width by construction — the fragility that
+   disqualified DM Sans no longer applies to the numeral family. It still applies to any
+   Figtree `<Text>` showing a number, which is why several still carry
+   `fontVariant: ['tabular-nums']`; do not strip those.
 4. **Tab screens pass `insetBottom={false}` to `<Screen>`; pushed screens do not.** The tab
    bar already clears the safe area; padding twice leaves dead space.
    **`<Screen>` scrolls by default.** Pass `scroll={false}` only when the screen owns its
-   own ScrollView (`balance.tsx`, `settings.tsx`) — two on one axis fight for the gesture.
+   own ScrollView (`history.tsx`, `settings.tsx`) — two on one axis fight for the gesture.
    The `flexGrow: 1` on its content container is load-bearing: it is what lets the seven
    `marginTop: 'auto'` footers stay pinned on short screens while long ones still scroll.
 5. **Never hardcode a number a function can derive.** Prices, deltas, dates, litres all come
@@ -84,6 +97,13 @@ savings (what a litre cost vs the pump price the day it was burned).
    litre's price-lock life. Three names say "redemption" and mean three things.
 8. **The Barrel card pass uses the `PASS` token group, never `useTheme()`.** It depicts a
    physical white card and must look identical in both themes.
+9. **Screens never branch on the theme.** There used to be one exception — the Wallet's
+   price block inverted itself in light mode — and it is gone. `useIsLight()` survives for
+   exactly one caller, `Button.tsx`, because the amber fill's *edge* against white is a
+   luminance relationship between two tokens rather than a colour, so no token pair can
+   express it.
+10. **The clock stays pinned.** `setClock(() => new Date())` guts the app; "live" behaviour
+   is scripted against `DEMO_NOW` instead. See `store.scheduleDemoFill`.
 
 ## The seeded state
 
@@ -92,21 +112,37 @@ these tests will tell you what you broke:
 
 | | |
 |---|---|
-| Balance | **42.6 L** (Wallet, Card, Balance all show this) |
-| Weekly redemption cap | **40.6 L** left of 110 L — the binding constraint on the Card |
-| September top-ups | **105.2 L** of the 500 L monthly top-up cap |
-| Savings | **R71.65** · 118.4 L below pump · R21.21/L average |
-| Monthly bars | APR 9.00 · MAY 18.00 · JUN 16.80 · JUL 12.00 · AUG 4.41 · **SEP 11.44** |
-| Surviving lots | exactly **one**, expiring 27 Dec |
+| Balance | **42.6 L** (Wallet, Card, Your litres all show this) |
+| Surviving lots | **five**, laddered: 12.0 @ R21.40 · 10.0 @ R21.60 · 2.0 + 8.0 + 10.6 @ R21.87 |
+| Expiring within 30 days | **12.0 L**, on 6 Oct — six days out |
+| Locked in | cost R923.32 · worth R931.66 · **R8.34 ahead** (R13.45 from 7 Oct) |
+| Savings (realised) | **R76.19** · 92.7 L below pump · R20.72/L average |
+| Monthly bars | APR 9.00 · MAY 18.00 · JUN 16.80 · JUL 12.00 · AUG 4.41 · **SEP 15.98** |
+| Edge per litre | 0.90 · 1.80 · 1.40 · 1.00 · 0.30 · 0.47 — narrowing, then recovering |
+| September top-ups | **18.6 L** of the 500 L monthly top-up cap |
+| Weekly redemption cap | 20.0 L spent, **90.0 L left** — *not* the binding constraint |
 | App "today" | **30 September 2026** (`DEMO_NOW` in `src/lib/clock.ts`) |
 
 **May is the tallest savings bar, not September.** The chart scales to the largest month in
 the data.
 
-**The Balance expiry split reads `0.0 L` / `42.6 L` and that is correct.** FIFO spends
-oldest lots first, so the survivor is always the newest purchase. A user who tops up
-regularly will rarely see an expiry warning — it is for dormant balances, which is who it
-is for.
+**The wallet is laddered on purpose, and one entry does it.** A single R984 top-up on
+8 July — 46.0 L at R21.40, someone buying ahead of an expected rise — is what leaves five
+lots standing instead of one. FIFO drains oldest first, so the 34.0 L of September fills
+take that lot down to exactly 12.0 L, expiring 6 October. Everything downstream depends on
+it: without it the expiry timeline has a single band and locked-in value is R0.00, because
+the sole survivor would have been bought at exactly today's price.
+
+**Two things got worse in exchange, deliberately.** September top-ups fell from 105.2 L to
+18.6 L, so the cap meter reads emptier; and the weekly redemption cap is no longer the
+binding constraint on the Card, so that line does not render against the seed. Both are
+structural: bigger September top-ups survive as large September lots (FIFO cannot reach
+past the July lot), which pushes the balance to ~130 L — three tanks rather than one. A
+one-tank balance is the truer product shape.
+
+**The honest ceiling.** The 90-day window caps how much price advantage anyone can hold —
+about R20 on a 42 L balance. This product sells **price certainty, not accumulated
+profit**, and no copy may imply the savings compound.
 
 ## Traps
 
@@ -148,15 +184,20 @@ is for.
 - **A lapsed subscription must never block the card or the existing balance.** Spec 9.3 is
   explicit: litres already bought are the user's property. Gating them would be the
   cash-out restriction 8.3 forbids, triggered by a billing failure.
-- `SIMULATE A FILL` on the Card screen is a debug control. Remove it before any real build.
-- `textDim` `#A8A8A8` on white measures 2.38:1 — below AA, used for body copy. Recorded
-  debt, not fixed, because it is a design-fidelity decision.
+- `SIMULATE AN ARRIVING FILL` on the **Settings** screen is a debug control (it used to sit
+  on the Card screen, under the product's primary object). Remove it before any real build.
+  It calls the real `cardFill` action, so nothing below the store is faked.
+- ~~`textDim` `#A8A8A8` on white measures 2.38:1.~~ **Paid.** Light mode now holds every
+  text token at AAA (≥7:1), asserted in `tokens.test.ts`.
 - No persistence, no onboarding, no map, no real push, no billing.
 
 ## Open product decisions
 
-1. **The Savings headline.** R71.65 is honest but thin. "R2,590 of fuel locked in below
-   today's price" is equally true and much stronger — same data, better framing.
+1. ~~**The Savings headline.**~~ **Answered: no.** "R2,590 of fuel locked in below today's
+   price" is not equally true — against the seed the locked-in position is **R8.34**, and
+   the 90-day window caps it near R20 on a one-tank balance. It cannot be the Savings hero.
+   It earns its place as a forward-looking line on Your litres instead, tied to the next
+   scheduled rise, and Savings leads with the *realised* figure labelled as such.
 2. **The legal question, asked as two.** Is a litre-denominated voucher redeemable only for
    fuel a regulated product? And *separately*: does converting it to rand at a floating
    price and settling to a third-party merchant change that answer? A yes to only the first
@@ -171,6 +212,6 @@ is for.
 npx expo start --tunnel     # phone, any network
 npx expo start              # phone, same wifi, faster
 npx expo start --web        # browser
-npm test                    # 183 tests
+npm test                    # 262 tests
 npx tsc --noEmit
 ```

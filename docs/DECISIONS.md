@@ -390,3 +390,188 @@ two on the same axis fight for the gesture. Balance in particular wants a fixed 
 scrolling ledger between, and a pinned CTA — which is what it still does.
 — Cost if wrong: a screen that fits exactly can now be dragged a few points. The
 alternative is content nobody can reach.
+
+---
+
+# Pump redesign — 2026-09-09
+
+**Spec:** `docs/superpowers/specs/2026-09-09-barrel-pump-redesign-design.md`
+**Plan:** `docs/superpowers/plans/2026-09-09-barrel-pump-redesign.md`
+**Branch:** `pump-redesign`
+
+These were made with the project owner present, choosing between options at each step.
+The ones that change what the product says to a customer are marked ★.
+
+---
+
+### Pump: the visual direction
+
+Chosen over an editorial/"statement" direction (paper ground, serif numerals) and a soft
+material fintech one (floating cards, gradients, glow). Pump commits to what the product
+actually is: monospaced numerals off a fuel-pump readout, amber on warm near-black,
+bordered panels, tight corners.
+
+It wins because it is *earned* — the seeds were already in the app (the amber accent, the
+barrel mark, the grey strata under the card pass) — and because no other South African
+fintech looks like it. The material direction was the safest to build and the most
+familiar, which is the argument against it.
+— Cost if wrong: a distinctive app that some people dislike, rather than a competent one
+nobody remembers. Recoverable — the discipline underneath (one hex file, fill/text pairs,
+no theme branching in screens) is direction-agnostic.
+
+### ★ Light mode is BRIGHT, and amber becomes a fill
+
+The first attempt gave light mode a warm concrete ground (`#EDE9E1`) and a muted burnt
+amber for text. The owner rejected it: "the faint colours won't be seen easy in daylight."
+
+That is the correct read, and it matters more than a normal theme question — this app is
+opened standing at a pump, outdoors. Glare adds a flat white veil that lifts blacks and
+crushes mid-luminance colour, and it can only ever *add* light. So the brighter the ground,
+the more of the contrast range survives it: white at full panel output beats an off-white
+at ~82%.
+
+The consequence is that **amber stops being a text colour in light mode**. You cannot have
+an orange that is both luminous and high-contrast on white — those are opposites. So amber
+becomes a *fill with ink set on it* at 7.3:1 (the price badge, the gauge, the meter, the
+primary button), which is road-sign logic, and `accentText` `#9A3200` carries the small ▲
+delta glyphs where a filled block would be absurd. Every light-mode text token is held to
+**AAA (≥7:1)**, not the 4.5:1 AA floor, because under a veil AA is not enough.
+
+This also pays off the `#A8A8A8` at 2.38:1 accessibility debt the previous handover had
+recorded as accepted.
+— Cost if wrong: a starker light mode than the original design intended. The judgement it
+rests on can only be made on a phone, outdoors.
+
+### `tokens.test.ts` measures contrast, so the palette enforces itself
+
+A whole design decision now rests on measured ratios, and a review cannot be relied on to
+re-measure them. The test computes WCAG relative luminance for every text token against its
+own theme's ground and asserts AAA in light, AA in dark, plus the 3:1 non-text minimum for
+borders.
+— Cost if wrong: none identified. It caught two things immediately.
+
+### `DARK.border` was raised to `#635C53` to meet 3:1
+
+The first draft of the contrast test let dark borders off at 1.4:1 — which was the
+assertion being written around a value already chosen, rather than the value being held to
+a standard. In dark mode `bgRaised` sits almost on top of `bg` and elevation is
+deliberately absent, so a panel's border carries nearly all of its definition; at 1.4:1 a
+panel is barely distinguishable from the screen behind it.
+— Cost if wrong: panel outlines are more present in dark than a minimal reading would
+want. The alternative is panels that are not visibly panels.
+
+### `LIGHT.positive` changes value, overturning an earlier ruling
+
+The earlier ruling kept `LIGHT.positive` at `#C6F24E` on the reasoning that a fill's
+contrast is "against neighbouring fills rather than through the colour to a background."
+At 1.295:1 against white — measured, not estimated — that is too generous: a lime bar on a
+white chart ground is genuinely hard to locate. It is now `#7A9000` (3.6:1).
+— Cost if wrong: light-mode chart bars are more olive than lime. `DARK.positive` is
+unchanged, so the app's signature colour is intact where it is most often seen.
+
+### `heroInk` is a token, not a branch
+
+A numeric hero cannot be amber on white and stay legible. Rather than branch on the theme
+inside a screen, the hero's colour became its own token: amber at night, ink in daylight.
+— Cost if wrong: one more token to keep in step. The alternative reopens theme branching
+in screens, which this round otherwise eliminated entirely.
+
+### JetBrains Mono for numerals, retiring the `tnum` constraint
+
+A pump readout is monospaced, and monospaced digits *cannot* change width — so the
+`fontVariant: ['tabular-nums']` dependency that disqualified DM Sans no longer constrains
+the numeral family at all. `Num` is deleted rather than left alongside `Readout`: two
+definitions of "a number on screen" is exactly the duplication this codebase keeps ruling
+against.
+
+The trap this creates: `SectionLabel` moved off system Menlo onto the same mono, which
+makes it a *custom* family, so the never-set-`fontWeight` rule applies to it for the first
+time. Its old `fontWeight: '600'` was only ever correct because Menlo is a system font.
+— Cost if wrong: a second font family to load. Numerals can no longer jitter, which was
+the risk the old constraint existed to manage.
+
+### ★ The seed is re-cut to a laddered wallet
+
+The old chain drained FIFO until a single lot survived. That starved two of the four
+features chosen this round: a timeline of one band is not a timeline, and locked-in value
+came to exactly R0.00 because the sole survivor had been bought at that day's price.
+
+One entry fixes it — a single R984 top-up on 8 July, 46.0 L at R21.40, someone buying ahead
+of an expected rise. That is the product's own mechanic, visible in its own data, and it
+leaves five lots standing at three prices with 12.0 L expiring in six days.
+
+Every figure in the resulting table was computed from the model before it was written down,
+and the plan forbids carrying any of them over by hand if the seed is tuned again.
+— Cost if wrong: two accepted regressions. September top-ups fall from 105.2 L to 18.6 L,
+so the cap meter reads emptier; and the weekly redemption cap is no longer the binding
+constraint on the Card, so that line does not render. Both are structural — bigger
+September top-ups survive as large September lots, pushing the balance to ~130 L, three
+tanks rather than one. A one-tank balance is the truer product shape.
+
+### The store's cap tests were silently passing for the wrong reason
+
+Found while re-pinning. The weekly-cap tests asserted that a fill was *declined*, but
+relied on the seed happening to leave only 40.6 L of headroom to make it so. The moment the
+seed changed, the fill simply succeeded — and the assertions still passed, because they
+checked the ledger length against a `before` captured in the same state. They now construct
+the binding state themselves.
+— Cost if wrong: none. A behaviour test that depends on fixture arithmetic is not testing
+the behaviour.
+
+### ★ Savings names its own decline
+
+The chart shows the edge per litre running 0.90 → 1.80 → 1.40 → 1.00 → 0.30 → 0.47, and a
+panel says so in words rather than letting it pass unremarked. A savings screen that only
+ever goes up reads as marketing; one that names its own decline reads as an instrument —
+and it is what creates the reason to act on the next scheduled rise.
+— Cost if wrong: a demo that admits a number went down. The owner chose this explicitly
+over a neutral chart with no callout.
+
+### ★ "Locked in below today's price" cannot be the Savings headline
+
+The previous handover proposed "R2,590 of fuel locked in below today's price" as a stronger
+framing than the realised figure. Measured against the model it is **R8.34**, and the
+90-day window caps it near R20 on a one-tank balance — the product sells price certainty,
+not accumulated profit. It survives as a forward-looking line on Your litres, tied to the
+next rise, and Savings leads with the realised figure explicitly labelled as such.
+— Cost if wrong: a thinner headline than the product would like. The alternative is a
+number that is off by two orders of magnitude.
+
+### The clock stays pinned; "live" means scripted
+
+`setClock(() => new Date())` guts the app: the price table silently returns October's price
+forever after 7 Oct, the cap meter empties on 1 Oct, and the last lot expires the balance to
+zero on 27 Dec. The arriving-fill demo is therefore scheduled against `DEMO_NOW`, and calls
+the real `cardFill` action so nothing below the store is faked. A test pins that the
+arriving fill is dated the demo instant.
+— Cost if wrong: none. Making the seed relative to real time remains separate work.
+
+### The Wallet's second footer button becomes contextual
+
+`CARD` sat next to `TOP UP` while Card was already tab 2 — a full button slot spent on
+navigation one tap away, and it squeezed the primary action. It now reads `HISTORY`, or
+`BEAT +Nc` inside the fourteen days before a rise.
+— Cost if wrong: a button whose label changes. The window is derived from the price table,
+and it falls back to `HISTORY` whenever `priceRise` returns null — which is what happens
+past the end of that table.
+
+### Balance and History split by what they answer
+
+Balance became "Your litres" and lost the ledger entirely: it answers *what do I have*
+(hero, expiry gauge, per-lot runways, locked-in value). History answers *what happened*
+(every entry, filterable, with a saving on each fill). Neither renders the other's content.
+— Cost if wrong: one more screen in the stack. Merging them buries the timeline above a
+long list, which is what made both features compete in the first place.
+
+### Screens no longer branch on the theme, with one deliberate exception
+
+The Wallet's price block used to invert to a black card in light mode — the single place
+the theme was not a mechanical token swap. It is gone, along with `useIsLight()`, the
+`DARK.*` pins and the conditional style object.
+
+`useIsLight` survives for exactly one caller: `Button.tsx`. Neither amber value reaches 3:1
+against white, so a filled button's *edge* is undefined in light mode. That is a luminance
+relationship between two tokens rather than a colour, so no token pair can express it, and
+an ink border is the honest fix.
+— Cost if wrong: one hook with one caller. Scoped to the primary variant only — the white
+variant is ink-on-white at 21:1 and needs no help.
