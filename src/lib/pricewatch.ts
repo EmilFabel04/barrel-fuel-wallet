@@ -2,13 +2,6 @@ import { Zone } from '../data/types';
 import { priceOn, pricePointOn, nextPriceChange } from '../data/prices';
 import { DAY } from './window';
 
-/**
- * How close a change must be before the Wallet swaps its second button from
- * HISTORY to the price CTA. Fourteen days is roughly half a price cycle — long
- * enough to act on, short enough that the button is not permanently a CTA.
- */
-export const RISE_CTA_WINDOW_DAYS = 14;
-
 export type PriceRise = {
   effectiveFrom: Date;
   pricePerLitre: number;
@@ -45,14 +38,4 @@ export function priceRise(zone: Zone, at: Date): PriceRise | null {
     daysUntil: Math.max(0, Math.ceil((next.effectiveFrom.getTime() - at.getTime()) / DAY)),
     progress: span > 0 ? Math.min(1, Math.max(0, elapsed / span)) : 0,
   };
-}
-
-/**
- * Whether to show the "beat the rise" call to action.
- *
- * A cut is never imminent in this sense — there is nothing to beat, and
- * telling someone to hurry before the price DROPS would be a lie.
- */
-export function isRiseImminent(rise: PriceRise | null): boolean {
-  return rise !== null && rise.deltaCents > 0 && rise.daysUntil <= RISE_CTA_WINDOW_DAYS;
 }

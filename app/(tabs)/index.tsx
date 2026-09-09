@@ -15,12 +15,16 @@ import { MOTION } from '../../src/theme/motion';
 import { useWallet, selectBalance, selectLastFill } from '../../src/store/wallet';
 import { formatLitres, formatRand, formatPrice, formatDayMonth } from '../../src/lib/format';
 import { priceOn } from '../../src/data/prices';
-import { priceRise, isRiseImminent } from '../../src/lib/pricewatch';
+import { priceRise } from '../../src/lib/pricewatch';
 import { lotBands } from '../../src/lib/holdings';
+import { expiringWithin } from '../../src/lib/lots';
 import { burnRate } from '../../src/lib/usage';
-import { savingsToDate, monthlySavings } from '../../src/lib/savings';
+
 import { STATIONS } from '../../src/data/stations';
 import { now } from '../../src/lib/clock';
+
+/** How close an expiry has to be before the Wallet says so. */
+const EXPIRY_WARNING_DAYS = 30;
 
 export default function Wallet() {
   const t = useTheme();
@@ -55,13 +59,15 @@ export default function Wallet() {
   // `rise` is null past the end of the table, and every branch below handles
   // that — it is the direction a real clock travels.
   const rise = priceRise('inland', at);
-  const imminent = isRiseImminent(rise);
 
   const bands = lotBands(lots, at);
   // lotBands sorts by expiry, so the first band is always the soonest.
   const soonest = bands[0] ?? null;
-  const monthly = monthlySavings(ledger, at);
-  const maxRand = Math.max(0, ...monthly.map(m => m.rand));
+  // The TOTAL inside the window, not the soonest lot's own share. Those
+  // coincide while only one lot is ever within 30 days, which is true of this
+  // seed and would have hidden the difference indefinitely.
+  const expiringSoon = expiringWithin(lots, at, EXPIRY_WARNING_DAYS);
+  const lotsExpiring = bands.filter(b => b.daysLeft <= EXPIRY_WARNING_DAYS).length;
 
   return (
     <Screen insetBottom={false}>
@@ -107,9 +113,11 @@ export default function Wallet() {
       <Text style={{ marginTop: 5, fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textMuted }}>
         {`You use about ${formatLitres(burnRate(ledger, at))} L a month`}
       </Text>
-      {soonest && soonest.daysLeft <= 30 ? (
+      {expiringSoon > 0 && soonest ? (
         <Text style={{ marginTop: 5, fontFamily: 'Figtree_600SemiBold', fontSize: 13, color: t.accentText }}>
-          {`${formatLitres(soonest.litres)} L expires in ${soonest.daysLeft} days`}
+          {lotsExpiring === 1
+            ? `${formatLitres(expiringSoon)} L expires in ${soonest.daysLeft} days`
+            : `${formatLitres(expiringSoon)} L expires within ${EXPIRY_WARNING_DAYS} days · soonest in ${soonest.daysLeft}`}
         </Text>
       ) : null}
 
@@ -151,27 +159,6 @@ export default function Wallet() {
         </Text>
       </Panel>
 
-      <View style={{ marginTop: 16, gap: 8 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <SectionLabel>Saved · 6 months</SectionLabel>
-          <Readout size={13} weight="700" color={t.positiveText}>
-            {`R${formatRand(Math.max(0, savingsToDate(ledger)))}`}
-          </Readout>
-        </View>
-        {/* A glance, not a chart — no value labels, so BarChart would be the
-            wrong component here. */}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: 26 }}>
-          {monthly.map(m => (
-            <View key={m.month} style={{
-              flex: 1,
-              height: maxRand > 0 ? Math.max(2, (Math.max(0, m.rand) / maxRand) * 26) : 2,
-              borderTopLeftRadius: RADIUS.xs, borderTopRightRadius: RADIUS.xs,
-              backgroundColor: m.rand === maxRand && maxRand > 0 ? t.positive : t.border,
-            }} />
-          ))}
-        </View>
-      </View>
-
       <View style={{ marginTop: 'auto', paddingBottom: 12, gap: 12 }}>
         <Rule />
         {lastFill ? (
@@ -191,17 +178,14 @@ export default function Wallet() {
           </Pressable>
         ) : null}
         {/* The second slot used to be CARD, which is already tab 2 — a full
-            button spent on navigation one tap away, and it squeezed TOP UP.
-            It now earns its width by changing when there is something worth
-            doing about the price. */}
+            button spent on navigation one tap away. It briefly read BEAT +Nc
+            before a price rise, which was worse: it routed to /top-up, the
+            same destination as the button beside it, behind a label you had to
+            decode. The urgency belongs in the price panel above, which states
+            it in a sentence and counts down to it. */}
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <Button label="TOP UP" flex={1} onPress={() => router.push('/top-up')} />
-          <Button
-            label={imminent ? `BEAT +${rise!.deltaCents}c` : 'HISTORY'}
-            variant="secondary"
-            flex={1}
-            onPress={() => router.push(imminent ? '/top-up' : '/history')}
-          />
+          <Button label="HISTORY" variant="secondary" flex={1} onPress={() => router.push('/history')} />
         </View>
       </View>
     </Screen>

@@ -1,4 +1,4 @@
-import { priceRise, isRiseImminent, RISE_CTA_WINDOW_DAYS } from '../pricewatch';
+import { priceRise } from '../pricewatch';
 
 describe('priceRise', () => {
   test('describes the next scheduled change', () => {
@@ -32,25 +32,5 @@ describe('priceRise', () => {
   test('reports a fall as negative cents rather than hiding it', () => {
     // R21.80 in June falling to R21.40 on 1 July.
     expect(priceRise('inland', new Date(2026, 5, 10))!.deltaCents).toBe(-40);
-  });
-});
-
-describe('isRiseImminent', () => {
-  test('is false when there is no rise at all', () => {
-    expect(isRiseImminent(null)).toBe(false);
-  });
-
-  test('is true inside the CTA window and false outside it', () => {
-    const inside = priceRise('inland', new Date(2026, 8, 30))!;   // 7 days out
-    const outside = priceRise('inland', new Date(2026, 8, 3))!;   // 34 days out
-    expect(inside.daysUntil).toBeLessThanOrEqual(RISE_CTA_WINDOW_DAYS);
-    expect(isRiseImminent(inside)).toBe(true);
-    expect(isRiseImminent(outside)).toBe(false);
-  });
-
-  test('a falling price is never an imminent rise', () => {
-    const fall = priceRise('inland', new Date(2026, 5, 25))!; // -40c on 1 Jul
-    expect(fall.deltaCents).toBeLessThan(0);
-    expect(isRiseImminent(fall)).toBe(false);
   });
 });
