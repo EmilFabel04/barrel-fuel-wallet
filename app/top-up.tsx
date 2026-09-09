@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '../src/components/Screen';
 import { ScreenHeader } from '../src/components/ScreenHeader';
-import { Num } from '../src/components/Num';
+import { Readout } from '../src/components/Readout';
 import { SectionLabel } from '../src/components/SectionLabel';
 import { Rule } from '../src/components/Rule';
 import { Button } from '../src/components/Button';
@@ -68,8 +68,8 @@ export default function TopUp() {
             derived from the same `rand` value the hero displays. The accent
             bar is decorative, not part of the value being announced. */}
         <View accessible accessibilityLabel={`You pay, ${spokenRand(rand)}`} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10, marginTop: 14 }}>
-          <Num size={30} color={t.textMuted}>R</Num>
-          <Num size={76}>{formatRandWhole(rand)}</Num>
+          <Readout size={30} color={t.textMuted}>R</Readout>
+          <Readout size={76}>{formatRandWhole(rand)}</Readout>
           <View style={{ width: 2, height: 56, backgroundColor: t.accent }} />
         </View>
         <View style={{ marginVertical: 26 }}><Rule /></View>
@@ -77,13 +77,13 @@ export default function TopUp() {
           <View>
             <SectionLabel>You get</SectionLabel>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 12 }}>
-              <Num size={46}>{formatLitres(litres)}</Num>
-              <Num size={20} color={t.textDim}>L</Num>
+              <Readout size={46}>{formatLitres(litres)}</Readout>
+              <Readout size={20} color={t.textDim}>L</Readout>
             </View>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
             <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textMuted }}>locked at</Text>
-            <Num size={15} style={{ marginTop: 4 }}>R{formatPrice(price)}/L</Num>
+            <Readout size={15} style={{ marginTop: 4 }}>R{formatPrice(price)}/L</Readout>
           </View>
         </View>
       </View>

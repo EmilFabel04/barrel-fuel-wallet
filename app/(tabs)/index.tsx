@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
-import { Num } from '../../src/components/Num';
+import { Readout } from '../../src/components/Readout';
 import { SectionLabel } from '../../src/components/SectionLabel';
 import { Rule } from '../../src/components/Rule';
 import { Button } from '../../src/components/Button';
@@ -90,8 +90,8 @@ export default function Wallet() {
       >
         <SectionLabel>Available fuel</SectionLabel>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 14 }}>
-          <Num size={92}>{formatLitres(balance)}</Num>
-          <Num size={34} color={t.textDim}>L</Num>
+          <Readout size={92}>{formatLitres(balance)}</Readout>
+          <Readout size={34} color={t.textDim}>L</Readout>
         </View>
         <Text style={{ marginTop: 16, fontFamily: 'Figtree_500Medium', fontSize: 17, color: t.textDim, fontVariant: ['tabular-nums'] }}>
           R {formatRand(balance * price)}
@@ -125,7 +125,7 @@ export default function Wallet() {
           <View>
             <Text style={{ fontFamily: 'Figtree_700Bold', fontSize: 12, letterSpacing: 0.24, color: DARK.text }}>PETROL 95</Text>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 7 }}>
-              <Num size={26} color={DARK.text}>{`R${formatPrice(price)}`}</Num>
+              <Readout size={26} color={DARK.text}>{`R${formatPrice(price)}`}</Readout>
               <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textMuted }}>/L</Text>
             </View>
           </View>
@@ -134,7 +134,7 @@ export default function Wallet() {
               width: 0, height: 0, borderLeftWidth: 6, borderRightWidth: 6, borderBottomWidth: 9,
               borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: t.accent,
             }} />
-            <Num size={15} color={t.accent}>{`+${formatPrice(priceDeltaPct)}%`}</Num>
+            <Readout size={15} color={t.accent}>{`+${formatPrice(priceDeltaPct)}%`}</Readout>
           </View>
         </View>
         <View style={{ height: 1, backgroundColor: DARK.hairline }} />
@@ -143,7 +143,7 @@ export default function Wallet() {
             {nextChange ? `Next change · ${ddMon(nextChange.effectiveFrom)}` : 'No change scheduled'}
           </Text>
           {nextChange ? (
-            <Num size={14} color={t.accent}>{`+${nextChangeCents}c expected`}</Num>
+            <Readout size={14} color={t.accent}>{`+${nextChangeCents}c expected`}</Readout>
           ) : null}
         </View>
         {/* Spec §9.5, folded in here when the Stations tab was removed. This is
@@ -165,7 +165,7 @@ export default function Wallet() {
             <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textDim }}>
               {`Last fill · ${lastFillName}`}
             </Text>
-            <Num size={14}>{`−${formatLitres(Math.abs(lastFill.deltaLitres))} L`}</Num>
+            <Readout size={14}>{`−${formatLitres(Math.abs(lastFill.deltaLitres))} L`}</Readout>
           </View>
         ) : null}
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { Screen } from '../../src/components/Screen';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
-import { Num } from '../../src/components/Num';
+import { Readout } from '../../src/components/Readout';
 import { SectionLabel } from '../../src/components/SectionLabel';
 import { Rule } from '../../src/components/Rule';
 import { useTheme } from '../../src/theme/ThemeProvider';
@@ -41,8 +41,8 @@ export default function Savings() {
             don't announce as separate stops; label derived from the same
             `saved` value the hero displays. */}
         <View accessible accessibilityLabel={`Saved since March, ${spokenRand(Math.max(0, saved))}`} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 14 }}>
-          <Num size={34} color={t.positiveText}>R</Num>
-          <Num size={82} color={t.positiveText}>{formatRand(Math.max(0, saved))}</Num>
+          <Readout size={34} color={t.positiveText}>R</Readout>
+          <Readout size={82} color={t.positiveText}>{formatRand(Math.max(0, saved))}</Readout>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 16 }}>
           <View style={{
@@ -69,7 +69,7 @@ export default function Savings() {
             const label = `${m.rand < 0 ? '-' : ''}R${formatRand(Math.abs(m.rand))}`;
             return (
               <View key={m.month} style={{ flex: 1, height: '100%', alignItems: 'center', justifyContent: 'flex-end', gap: 10 }}>
-                <Num size={11} weight="600" color={t.textDim}>{label}</Num>
+                <Readout size={11} weight="700" color={t.textDim}>{label}</Readout>
                 <View style={{
                   width: '100%', height: barHeight,
                   // Top corners only: a bar sits on the chart's baseline, so
@@ -77,7 +77,7 @@ export default function Savings() {
                   borderTopLeftRadius: RADIUS.xs, borderTopRightRadius: RADIUS.xs,
                   backgroundColor: isTallest ? t.positive : t.border,
                 }} />
-                <Num size={10} weight="500" color={t.textMuted}>{m.month}</Num>
+                <Readout size={10} weight="500" color={t.textMuted}>{m.month}</Readout>
               </View>
             );
           })}
@@ -88,12 +88,12 @@ export default function Savings() {
         <Rule />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textDim }}>Average buy price</Text>
-          <Num size={15}>{`R${formatPrice(avg)}/L`}</Num>
+          <Readout size={15}>{`R${formatPrice(avg)}/L`}</Readout>
         </View>
         <Rule />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textDim }}>Pump price today</Text>
-          <Num size={15}>{`R${formatPrice(pump)}/L`}</Num>
+          <Readout size={15}>{`R${formatPrice(pump)}/L`}</Readout>
         </View>
         <Rule />
         <Text style={{ fontFamily: 'Figtree_400Regular', fontSize: 12, lineHeight: 18.6, color: t.textMuted }}>

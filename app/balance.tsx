@@ -3,7 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '../src/components/Screen';
 import { ScreenHeader } from '../src/components/ScreenHeader';
-import { Num } from '../src/components/Num';
+import { Readout } from '../src/components/Readout';
 import { SectionLabel } from '../src/components/SectionLabel';
 import { Button } from '../src/components/Button';
 import { useTheme } from '../src/theme/ThemeProvider';
@@ -39,19 +39,19 @@ export default function Balance() {
         {/* spec §10.1: grouped into one accessible node, spelled-out label
             derived from the same `balance` the hero displays. */}
         <View accessible accessibilityLabel={`Balance, ${formatLitres(balance)} litres`} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 7 }}>
-          <Num size={74}>{formatLitres(balance)}</Num>
-          <Num size={28} color={t.textDim}>L</Num>
+          <Readout size={74}>{formatLitres(balance)}</Readout>
+          <Readout size={28} color={t.textDim}>L</Readout>
         </View>
 
         <View style={{ flexDirection: 'row', marginTop: 26, borderTopWidth: 1, borderBottomWidth: 1, borderColor: t.hairline }}>
           <View style={{ flex: 1, paddingVertical: 16 }}>
             <Text style={{ fontFamily: 'Figtree_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: t.textMuted }}>EXPIRES WITHIN 30 DAYS</Text>
-            <Num size={22} color={soon > 0 ? t.accent : t.text} style={{ marginTop: 9 }}>{formatLitres(soon)} L</Num>
+            <Readout size={22} color={soon > 0 ? t.accent : t.text} style={{ marginTop: 9 }}>{formatLitres(soon)} L</Readout>
           </View>
           <View style={{ width: 1, backgroundColor: t.hairline }} />
           <View style={{ flex: 1, paddingVertical: 16, paddingLeft: 20 }}>
             <Text style={{ fontFamily: 'Figtree_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: t.textMuted }}>LATER</Text>
-            <Num size={22} style={{ marginTop: 9 }}>{formatLitres(later)} L</Num>
+            <Readout size={22} style={{ marginTop: 9 }}>{formatLitres(later)} L</Readout>
           </View>
         </View>
 
@@ -110,12 +110,12 @@ export default function Balance() {
                   </Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Num size={15} color={e.deltaLitres > 0 ? t.positiveText : t.text}>
+                  <Readout size={15} color={e.deltaLitres > 0 ? t.positiveText : t.text}>
                     {e.deltaLitres > 0 ? '+' : '−'}{formatLitres(Math.abs(e.deltaLitres))} L
-                  </Num>
-                  <Num size={11} weight="500" color={t.textMuted} style={{ marginTop: 7 }}>
+                  </Readout>
+                  <Readout size={11} weight="500" color={t.textMuted} style={{ marginTop: 7 }}>
                     {formatLitres(e.balanceAfter)} L
-                  </Num>
+                  </Readout>
                 </View>
               </Pressable>
             );

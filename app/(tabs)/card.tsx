@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { Screen } from '../../src/components/Screen';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
-import { Num } from '../../src/components/Num';
+import { Readout } from '../../src/components/Readout';
 import { SectionLabel } from '../../src/components/SectionLabel';
 import { Rule } from '../../src/components/Rule';
 import { Button } from '../../src/components/Button';
@@ -83,13 +83,13 @@ export default function Card() {
           </View>
 
           <Text style={{ marginTop: 34, fontFamily: 'Figtree_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: PASS.muted }}>BALANCE</Text>
-          {/* spec §10.1: a numeric hero split across two Num nodes (value,
+          {/* spec §10.1: a numeric hero split across two Readout nodes (value,
               unit) is announced as two separate stops by a screen reader.
               Grouped into one accessible node with a spelled-out label,
               derived from the same `balance` the display uses. */}
           <View accessible accessibilityLabel={`Balance, ${formatLitres(balance)} litres`} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 7, marginTop: 10 }}>
-            <Num size={66} color={PASS.text}>{formatLitres(balance)}</Num>
-            <Num size={26} color={PASS.dim}>L</Num>
+            <Readout size={66} color={PASS.text}>{formatLitres(balance)}</Readout>
+            <Readout size={26} color={PASS.dim}>L</Readout>
           </View>
           <Text style={{ marginTop: 8, fontFamily: 'Figtree_500Medium', fontSize: 13, color: PASS.dim, fontVariant: ['tabular-nums'] }}>
             R{formatRandWhole(spendable * price)} available at today's 95
@@ -110,7 +110,7 @@ export default function Card() {
             </View>
             <View style={{ alignItems: 'flex-end' }}>
               <Text style={{ fontFamily: 'Figtree_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: PASS.muted }}>CARD</Text>
-              <Num size={13} color={PASS.text} style={{ marginTop: 8 }}>•••• 4127</Num>
+              <Readout size={13} color={PASS.text} style={{ marginTop: 8 }}>•••• 4127</Readout>
             </View>
           </View>
         </View>

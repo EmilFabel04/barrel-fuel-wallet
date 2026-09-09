@@ -152,6 +152,17 @@ describe('MOTION', () => {
   test('a large surface dims further than a button, since it does not scale', () => {
     expect(MOTION.surfaceOpacity).toBeLessThan(MOTION.pressOpacity);
   });
+
+  // readout and banner are deliberately NOT in the "feels like feedback" list
+  // above. That list caps at 300ms because a press must land under the finger.
+  // These two are transitions the user watches rather than causes, so they get
+  // their own, looser bound — but still short enough not to wait on.
+  test('the readout roll and the banner are transitions, not feedback', () => {
+    expect(MOTION.readout).toBeGreaterThan(MOTION.screen);
+    expect(MOTION.readout).toBeLessThanOrEqual(600);
+    expect(MOTION.banner).toBeGreaterThan(0);
+    expect(MOTION.banner).toBeLessThanOrEqual(400);
+  });
 });
 
 // The whole light-mode decision rests on measured contrast: the app is opened

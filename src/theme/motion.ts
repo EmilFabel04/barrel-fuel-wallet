@@ -28,4 +28,10 @@ export const MOTION = {
   toggle: 160,
   /** Stack push/pop. Long enough to follow, short enough not to wait on. */
   screen: 220,
+  /** Odometer roll when a numeric hero changes under the user — e.g. the
+   *  balance dropping as a fill arrives. Longer than a press because it is
+   *  watched, not caused. Animates transform and opacity only. */
+  readout: 420,
+  /** The arriving-fill banner's drop-in. */
+  banner: 260,
 } as const;

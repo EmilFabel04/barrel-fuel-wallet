@@ -5,6 +5,10 @@ import {
   Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold,
   Figtree_700Bold, Figtree_800ExtraBold,
 } from '@expo-google-fonts/figtree';
+import {
+  JetBrainsMono_400Regular, JetBrainsMono_500Medium,
+  JetBrainsMono_700Bold, JetBrainsMono_800ExtraBold,
+} from '@expo-google-fonts/jetbrains-mono';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '../src/theme/ThemeProvider';
 import { MOTION } from '../src/theme/motion';
@@ -13,6 +17,8 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold,
     Figtree_700Bold, Figtree_800ExtraBold,
+    JetBrainsMono_400Regular, JetBrainsMono_500Medium,
+    JetBrainsMono_700Bold, JetBrainsMono_800ExtraBold,
   });
   if (!loaded) return null;
   return (

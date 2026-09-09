@@ -3,7 +3,7 @@ import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
-import { Num } from '../../src/components/Num';
+import { Readout } from '../../src/components/Readout';
 import { SectionLabel } from '../../src/components/SectionLabel';
 import { Row } from '../../src/components/Row';
 import { Toggle } from '../../src/components/Toggle';
@@ -50,7 +50,7 @@ export default function Settings() {
           </View>
           <View>
             <Text style={{ fontFamily: 'Figtree_700Bold', fontSize: 20, letterSpacing: -0.4, color: t.text }}>Thabo Makhubela</Text>
-            <Num size={12} weight="500" color={t.textMuted} style={{ marginTop: 8 }}>+27 82 441 0912 · verified</Num>
+            <Readout size={12} weight="500" color={t.textMuted} style={{ marginTop: 8 }}>+27 82 441 0912 · verified</Readout>
           </View>
         </View>
 
@@ -85,9 +85,9 @@ export default function Settings() {
 
         <View style={{ paddingTop: 24, paddingBottom: 12, gap: 14 }}>
           <Button label="SIGN OUT" variant="secondary" height={54} />
-          <Num size={11} weight="500" color={t.textMuted} style={{ textAlign: 'center' }}>
+          <Readout size={11} weight="500" color={t.textMuted} style={{ textAlign: 'center' }}>
             Barrel v2.4.0 · FSP 51284
-          </Num>
+          </Readout>
         </View>
       </ScrollView>
     </Screen>

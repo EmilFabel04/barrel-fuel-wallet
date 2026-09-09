@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
-import { Num } from '../../src/components/Num';
+import { Readout } from '../../src/components/Readout';
 import { SectionLabel } from '../../src/components/SectionLabel';
 import { Rule } from '../../src/components/Rule';
 import { Row } from '../../src/components/Row';
@@ -57,15 +57,15 @@ export default function FillDetail() {
 
         <View style={{ marginTop: 22, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-            <Num size={34}>R{formatRand(c.randAmount)}</Num>
-            <Num size={24} color={t.textMuted}>÷</Num>
-            <Num size={34}>R{formatPrice(c.pricePerLitre)}</Num>
-            <Num size={16} color={t.textDim}>/L</Num>
+            <Readout size={34}>R{formatRand(c.randAmount)}</Readout>
+            <Readout size={24} color={t.textMuted}>÷</Readout>
+            <Readout size={34}>R{formatPrice(c.pricePerLitre)}</Readout>
+            <Readout size={16} color={t.textDim}>/L</Readout>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
-            <Num size={24} color={t.textMuted}>=</Num>
-            <Num size={44} color={t.positiveText}>{formatLitres(c.litres)}</Num>
-            <Num size={20} color={t.textDim}>L</Num>
+            <Readout size={24} color={t.textMuted}>=</Readout>
+            <Readout size={44} color={t.positiveText}>{formatLitres(c.litres)}</Readout>
+            <Readout size={20} color={t.textDim}>L</Readout>
           </View>
         </View>
 

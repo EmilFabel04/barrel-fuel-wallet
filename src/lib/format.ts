@@ -16,7 +16,7 @@ export const formatRandWhole = (n: number): string => fixed(n, 0);
 export const formatPrice = (n: number): string => n.toFixed(2);
 
 // Spec §10.1: numeric heroes need an accessibilityLabel that spells the
-// value out, since a screen reader announces "42.6 L" split across two Num
+// value out, since a screen reader announces "42.6 L" split across two Readout
 // nodes as two separate stops. Rand amounts read as "<whole> rand <cents>"
 // (cents omitted when exactly zero) rather than "42.6", which VoiceOver/
 // TalkBack otherwise announce as "forty-two point six" for a currency value.

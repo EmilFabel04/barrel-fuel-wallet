@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '../src/components/Screen';
 import { ScreenHeader } from '../src/components/ScreenHeader';
-import { Num } from '../src/components/Num';
+import { Readout } from '../src/components/Readout';
 import { SectionLabel } from '../src/components/SectionLabel';
 import { Rule } from '../src/components/Rule';
 import { Button } from '../src/components/Button';
@@ -78,7 +78,7 @@ export default function Alerts() {
               <BarrelMark size={14} />
               <Text style={{ fontFamily: 'Figtree_800ExtraBold', fontSize: 13, letterSpacing: -0.26, color: t.text }}>BARREL</Text>
             </View>
-            <Num size={11} weight="500" color={t.textMuted}>now</Num>
+            <Readout size={11} weight="500" color={t.textMuted}>now</Readout>
           </View>
           <View style={{ flexDirection: 'row', gap: 14, marginTop: 18 }}>
             <View style={{
@@ -113,12 +113,12 @@ export default function Alerts() {
                 width: 0, height: 0, borderLeftWidth: 5, borderRightWidth: 5, borderBottomWidth: 8,
                 borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: t.accent,
               }} />
-              <Num size={13} color={t.accent}>{`+${deltaCents}c`}</Num>
+              <Readout size={13} color={t.accent}>{`+${deltaCents}c`}</Readout>
             </View>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 20 }}>
-            <Num size={54}>{formatLitres(litresSaved)}</Num>
-            <Num size={18} color={t.textDim}>L saved</Num>
+            <Readout size={54}>{formatLitres(litresSaved)}</Readout>
+            <Readout size={18} color={t.textDim}>L saved</Readout>
           </View>
           <Text style={{ marginVertical: 14, fontFamily: 'Figtree_400Regular', fontSize: 13, lineHeight: 19.5, color: t.textDim }}>
             {`Topping up R2 000 before the increase buys you ${formatLitres(litresSaved)} litres more than it will on Wednesday.`}
@@ -131,7 +131,7 @@ export default function Alerts() {
         <Rule />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 13, color: t.textMuted }}>Alert me when 95 moves by</Text>
-          <Num size={14}>≥ 10c</Num>
+          <Readout size={14}>≥ 10c</Readout>
         </View>
       </View>
     </Screen>
