@@ -67,7 +67,8 @@ export default function RootLayout() {
         }}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="top-up" />
-          <Stack.Screen name="balance" />
+          <Stack.Screen name="litres" />
+          <Stack.Screen name="history" />
           <Stack.Screen name="alerts" />
           <Stack.Screen name="subscribe" />
           <Stack.Screen name="fill/[id]" />
