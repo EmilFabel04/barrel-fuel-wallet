@@ -341,3 +341,43 @@ describe('the simulated arriving fill', () => {
     expect(useWallet.getState().ledger).toHaveLength(entries);
   });
 });
+
+describe('resetDemo', () => {
+  // Persistence makes a bad state permanent and takes away the clean slate
+  // every run used to start from, so there has to be a way back to the seed.
+  test('returns the balance to the seed after a top-up', () => {
+    useWallet.getState().topUp(500);
+    expect(selectBalance(useWallet.getState())).not.toBeCloseTo(42.6, 1);
+
+    useWallet.getState().resetDemo();
+
+    expect(selectBalance(useWallet.getState())).toBeCloseTo(42.6, 1);
+  });
+
+  test('unfreezes a frozen card', () => {
+    useWallet.getState().freezeCard(true);
+
+    useWallet.getState().resetDemo();
+
+    expect(useWallet.getState().cardFrozen).toBe(false);
+  });
+
+  test('clears a decline reason left over from the discarded session', () => {
+    useWallet.getState().cardFill('UNKNOWN MERCHANT', 400, null);
+    expect(useWallet.getState().lastCardFillError).not.toBeNull();
+
+    useWallet.getState().resetDemo();
+
+    expect(useWallet.getState().lastCardFillError).toBeNull();
+  });
+
+  // Appearance is a preference the user set, not part of the demo's data, so
+  // resetting the demo should not quietly undo it.
+  test('keeps the appearance preference', () => {
+    useWallet.getState().setAppearance('light');
+
+    useWallet.getState().resetDemo();
+
+    expect(useWallet.getState().appearance).toBe('light');
+  });
+});

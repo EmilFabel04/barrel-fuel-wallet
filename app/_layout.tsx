@@ -50,7 +50,11 @@ export default function RootLayout() {
     JetBrainsMono_400Regular, JetBrainsMono_500Medium,
     JetBrainsMono_700Bold, JetBrainsMono_800ExtraBold,
   });
-  if (!loaded) return null;
+  // The wallet is read from storage asynchronously, so the screens wait for it
+  // as well as for the fonts. Painting the seed first and swapping to the
+  // persisted wallet a frame later is worse than one slightly longer hold.
+  const hydrated = useWallet(s => s.hasHydrated);
+  if (!loaded || !hydrated) return null;
   return (
     <SafeAreaProvider>
       <ThemeProvider>

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { Lot, LedgerEntry, Zone } from '../data/types';
 import { buildSeed } from '../data/seed';
 import { now } from '../lib/clock';
@@ -12,6 +13,7 @@ import { normaliseDescriptor, resolveZone, deriveLitres } from '../lib/cardfill'
 import { round1, toCents } from '../lib/round';
 import { expiryOf } from '../lib/window';
 import { STATIONS } from '../data/stations';
+import { STORAGE_KEY, STORE_VERSION, walletStorage, partialize, migrate } from './persist';
 
 export type Appearance = 'dark' | 'light' | 'system';
 export type Subscription = 'trial' | 'active' | 'lapsed';
@@ -31,6 +33,12 @@ export type WalletState = {
   lastCardFillError: string | null;
   /** The id of a fill that has just landed and not yet been acknowledged. */
   arrivedFillId: string | null;
+  /**
+   * False until the middleware has finished reading storage. The root layout
+   * holds the screens back on it, so nothing paints the seed and then swaps to
+   * the persisted wallet under the user.
+   */
+  hasHydrated: boolean;
   topUp: (rand: number) => void;
   cardFill: (descriptor: string, rand: number, zone: Zone | null) => void;
   disputeFill: (entryId: string) => void;
@@ -40,11 +48,12 @@ export type WalletState = {
   freezeCard: (frozen: boolean) => void;
   scheduleDemoFill: (delaySeconds?: number) => void;
   dismissArrival: () => void;
+  resetDemo: () => void;
 };
 
 const seed = buildSeed();
 
-export const useWallet = create<WalletState>((set, get) => ({
+export const useWallet = create<WalletState>()(persist((set, get) => ({
   lots: seed.lots,
   ledger: seed.ledger,
   appearance: 'dark',
@@ -54,6 +63,7 @@ export const useWallet = create<WalletState>((set, get) => ({
   cardFrozen: false,
   lastCardFillError: null,
   arrivedFillId: null,
+  hasHydrated: false,
 
   topUp: (rand) => {
     if (rand <= 0) return; // guard against a non-positive amount producing a negative-litre lot
@@ -194,6 +204,38 @@ export const useWallet = create<WalletState>((set, get) => ({
   toggleAlert: (i) => set(s => ({ alerts: s.alerts.map((v, j) => (j === i ? !v : v)) })),
   setSubscription: (subscription) => set({ subscription }),
   freezeCard: (cardFrozen) => set({ cardFrozen }),
+
+  /**
+   * Persistence takes away the clean slate every run used to start from: once
+   * state survives a reload, a demo that has been spent down — or wedged —
+   * stays that way. This is the way back.
+   *
+   * `appearance` is deliberately untouched. It is a preference the user set,
+   * not part of the demo's data, and silently undoing it would be a second,
+   * unasked-for change.
+   */
+  resetDemo: () => {
+    const fresh = buildSeed();
+    set({
+      lots: fresh.lots,
+      ledger: fresh.ledger,
+      subscription: 'trial',
+      trialDaysLeft: 24,
+      alerts: [true, true, false],
+      cardFrozen: false,
+      lastCardFillError: null,
+      arrivedFillId: null,
+    });
+  },
+}), {
+  name: STORAGE_KEY,
+  version: STORE_VERSION,
+  storage: walletStorage,
+  partialize,
+  migrate,
+  // Runs after the read of storage resolves, whether or not there was anything
+  // to read — a first launch has to release the gate too.
+  onRehydrateStorage: () => () => useWallet.setState({ hasHydrated: true }),
 }));
 
 export const selectBalance = (s: WalletState): number => balanceOf(s.lots, now());

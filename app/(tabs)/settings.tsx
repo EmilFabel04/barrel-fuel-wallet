@@ -30,6 +30,7 @@ export default function Settings() {
   const appearance = useWallet(s => s.appearance);
   const setAppearance = useWallet(s => s.setAppearance);
   const scheduleDemoFill = useWallet(s => s.scheduleDemoFill);
+  const resetDemo = useWallet(s => s.resetDemo);
   const trialDaysLeft = useWallet(s => s.trialDaysLeft);
   const subscription = useWallet(s => s.subscription);
   // spec §9.3: "Subscription · Trial · 24 days left" while trialling; once
@@ -101,6 +102,17 @@ export default function Settings() {
             Records a card-rail fill at a random station four seconds from now, so you can
             watch it land. It runs the real fill path — attribution, pricing, FIFO, the
             ledger and the weekly cap. Not part of the product.
+          </Text>
+          <Button
+            label="RESET DEMO DATA"
+            variant="secondary"
+            height={54}
+            onPress={resetDemo}
+          />
+          <Text style={{ fontFamily: 'Figtree_400Regular', fontSize: 11, lineHeight: 16, color: t.textMuted }}>
+            The wallet is now saved between launches, so a demo that has been spent down
+            stays that way. This puts the lots, the ledger, the card and the alerts back to
+            the seed. Your appearance setting is kept.
           </Text>
         </View>
 
