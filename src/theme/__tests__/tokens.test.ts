@@ -1,29 +1,49 @@
 import { DARK, LIGHT, PASS, RADIUS, DARK_ELEVATION, LIGHT_ELEVATION } from '../tokens';
 import { MOTION } from '../motion';
 
+// WCAG 2.1 relative luminance and contrast ratio. Inlined rather than put in
+// a module because every consumer of it is this file, and a helper file under
+// __tests__/ is collected by jest as a (test-less, failing) suite.
+function channel(c: number): number {
+  const s = c / 255;
+  return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+}
+function luminance(hex: string): number {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+}
+function contrast(a: string, b: string): number {
+  const la = luminance(a);
+  const lb = luminance(b);
+  const [hi, lo] = la > lb ? [la, lb] : [lb, la];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
 test('both themes define every token', () => {
   expect(Object.keys(DARK).sort()).toEqual(Object.keys(LIGHT).sort());
 });
 
-test('accents are identical across themes', () => {
-  expect(DARK.accent).toBe(LIGHT.accent);
-  expect(DARK.positive).toBe(LIGHT.positive);
-  expect(DARK.accent).toBe('#D9541E');
-  expect(DARK.positive).toBe('#C6F24E');
+test('accent and positive are fills; each has a text twin', () => {
+  // Two fill/text pairs now, not one. In dark both twins hold the same value
+  // because the dark ground is forgiving; in light they must differ.
+  expect(DARK.accent).toBe('#FF7A1A');
+  expect(DARK.accentText).toBe(DARK.accent);
+  expect(DARK.positiveText).toBe(DARK.positive);
+
+  expect(LIGHT.accentText).not.toBe(LIGHT.accent);
+  expect(LIGHT.positiveText).not.toBe(LIGHT.positive);
 });
 
-// Ruling (spec §3.1 amendment): `positive` is a fill colour and stays
-// identical across themes, same as `accent`. `positiveText` is the one token
-// that legitimately differs — #C6F24E on white is 1.30:1, so light mode gets
-// a darker value that still passes WCAG AA (4.97:1) for text and glyphs.
-test('positiveText is the one token that legitimately differs between themes', () => {
-  expect(DARK.positiveText).not.toBe(LIGHT.positiveText);
-  expect(DARK.positiveText).toBe('#C6F24E');
-  expect(LIGHT.positiveText).toBe('#5A7A0A');
+test('heroInk is amber at night and ink in daylight', () => {
+  expect(DARK.heroInk).toBe(DARK.accent);
+  expect(LIGHT.heroInk).not.toBe(LIGHT.accent);
 });
 
-test('dark background is black and light is white', () => {
-  expect(DARK.bg).toBe('#000000');
+test('dark ground is warm near-black and light ground is pure white', () => {
+  expect(DARK.bg).toBe('#0A0908');
   expect(LIGHT.bg).toBe('#FFFFFF');
 });
 
@@ -131,5 +151,49 @@ describe('MOTION', () => {
 
   test('a large surface dims further than a button, since it does not scale', () => {
     expect(MOTION.surfaceOpacity).toBeLessThan(MOTION.pressOpacity);
+  });
+});
+
+// The whole light-mode decision rests on measured contrast: the app is opened
+// outdoors at a pump, where glare adds a white veil that crushes mid-luminance
+// colour. AA is not enough through that; AAA is roughly what survives. Pinned
+// here so the palette enforces itself rather than relying on a review.
+describe('contrast', () => {
+  test('the helper agrees with known WCAG values', () => {
+    expect(contrast('#000000', '#FFFFFF')).toBeCloseTo(21, 1);
+    expect(contrast('#FFFFFF', '#FFFFFF')).toBeCloseTo(1, 5);
+  });
+
+  test('every dark-mode text token clears AA on its own ground', () => {
+    for (const token of ['text', 'textDim', 'textMuted', 'accentText', 'positiveText', 'heroInk'] as const) {
+      expect(contrast(DARK[token], DARK.bg)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  test('every light-mode text token clears AAA on its own ground', () => {
+    for (const token of ['text', 'textDim', 'textMuted', 'accentText', 'positiveText', 'heroInk'] as const) {
+      expect(contrast(LIGHT[token], LIGHT.bg)).toBeGreaterThanOrEqual(7);
+    }
+  });
+
+  test('borders meet the 3:1 minimum for non-text UI in both themes', () => {
+    // Symmetric on purpose. An earlier draft of this test let dark off with
+    // 1.4:1 — which was the assertion being written around a value already
+    // chosen, rather than the value being held to a standard.
+    expect(contrast(LIGHT.border, LIGHT.bg)).toBeGreaterThanOrEqual(3);
+    expect(contrast(DARK.border, DARK.bg)).toBeGreaterThanOrEqual(3);
+  });
+
+  test('a fill carries readable text set on it', () => {
+    // Light mode uses amber as a FILL with ink on it, not as text.
+    expect(contrast(LIGHT.text, LIGHT.accent)).toBeGreaterThanOrEqual(7);
+    expect(contrast(DARK.inverse, DARK.accent)).toBeGreaterThanOrEqual(7);
+  });
+
+  test('light-mode positive is visible as a chart fill against the ground', () => {
+    // The prior ruling kept LIGHT.positive at #C6F24E on the reasoning that a
+    // fill only contends with neighbouring fills. At 1.3:1 on white a lime bar
+    // is genuinely hard to locate, so it now meets the 3:1 UI minimum.
+    expect(contrast(LIGHT.positive, LIGHT.bg)).toBeGreaterThanOrEqual(3);
   });
 });

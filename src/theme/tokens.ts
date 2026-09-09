@@ -1,28 +1,59 @@
 export type Tokens = {
   bg: string; bgRaised: string; surface: string; border: string; hairline: string;
   textMuted: string; textDim: string; text: string; inverse: string;
-  accent: string; positive: string; positiveText: string;
+  accent: string; accentText: string;
+  positive: string; positiveText: string;
+  heroInk: string;
 };
 
+/**
+ * Pump — the night face. Amber on warm near-black, borrowed from a fuel-pump
+ * readout. `bg` is #0A0908 rather than pure black: warm reads as machined
+ * metal, and elevation is absent in dark either way (see DARK_ELEVATION).
+ */
 export const DARK: Tokens = {
-  bg: '#000000', bgRaised: '#0A0A0A', surface: '#1A1A1A', border: '#2E2E2E',
-  hairline: '#1F1F1F', textMuted: '#6B6B6B', textDim: '#A8A8A8',
-  text: '#FFFFFF', inverse: '#000000', accent: '#D9541E', positive: '#C6F24E',
-  // Unchanged from `positive` — #C6F24E on black is already well above AA.
-  positiveText: '#C6F24E',
+  // border is #635C53 rather than something darker so it clears 3:1 against
+  // this ground, the same floor light mode meets. It has to: `bgRaised` sits
+  // almost on top of `bg` in dark, and elevation is deliberately absent here,
+  // so a panel's border carries nearly all of its definition. A subtler line
+  // would leave panels indistinguishable from the screen behind them.
+  bg: '#0A0908', bgRaised: '#0E0D0C', surface: '#1C1917', border: '#635C53',
+  hairline: '#1C1917', textMuted: '#857E74', textDim: '#A79E93',
+  text: '#F5F1EA', inverse: '#0A0908',
+  // On this ground amber is legible as text (7.6:1), so accent and accentText
+  // hold the same value. The split only bites in light mode.
+  accent: '#FF7A1A', accentText: '#FF7A1A',
+  positive: '#D6E84A', positiveText: '#D6E84A',
+  heroInk: '#FF7A1A',
 };
 
+/**
+ * Pump — the day face. Bright, because this app is opened standing at a pump
+ * outdoors. Glare adds a flat white veil: it can only ADD light, so the
+ * brighter the ground, the more of the contrast range survives it. Pure white
+ * at full panel output beats an off-white at ~82%. The warm character lives in
+ * the greys instead of the ground.
+ *
+ * Every text value here clears 7:1 (AAA), not the 4.5:1 AA floor. Under a veil
+ * AA is not enough.
+ */
 export const LIGHT: Tokens = {
-  bg: '#FFFFFF', bgRaised: '#FFFFFF', surface: '#EDEBE7', border: '#D5D2CC',
-  hairline: '#E2DFDA', textMuted: '#6B6B6B', textDim: '#A8A8A8',
-  text: '#000000', inverse: '#FFFFFF', accent: '#D9541E', positive: '#C6F24E',
-  // #C6F24E measures 1.30:1 on white — invisible as text. #5A7A0A measures
-  // 4.97:1, passing WCAG AA, while still reading as the same lime-green hue.
-  // `positive` itself stays #C6F24E: it is the *fill* colour (chart bars, the
-  // Toggle track), where contrast is against neighbouring fills rather than
-  // through the colour to a background, so the fill value never had this
-  // problem. `positiveText` is for text and glyphs only (spec §3.1).
-  positiveText: '#5A7A0A',
+  bg: '#FFFFFF', bgRaised: '#FFFFFF', surface: '#F7F5F0', border: '#948A78',
+  hairline: '#DCD6C9', textMuted: '#5C554C', textDim: '#3A342D',
+  text: '#000000', inverse: '#FFFFFF',
+  // You cannot have an orange that is both luminous and high-contrast on
+  // white — they are opposites. So in light mode amber stops being a text
+  // colour and becomes a FILL with ink set on it (7.3:1): the price badge, the
+  // gauge, the meter, the primary button. Road-sign logic. `accentText` is for
+  // the small delta glyphs where a filled block would be absurd.
+  accent: '#FF6A00', accentText: '#9A3200',
+  // `positive` changed value here, overturning the prior ruling that a fill
+  // only contends with neighbouring fills: #C6F24E is 1.30:1 on white and a
+  // lime bar on a white chart ground is genuinely hard to locate.
+  positive: '#7A9000', positiveText: '#3F5406',
+  // A hero cannot be amber on white and stay legible, so the hero's colour is
+  // its own token rather than a branch inside a screen.
+  heroInk: '#0A0908',
 };
 
 /**
@@ -48,10 +79,10 @@ export const PASS = {
  * inventing a number.
  */
 export const RADIUS = {
-  xs: 4,     // savings bars, the cap-meter fill
-  sm: 10,    // small boxes: avatar squares, the grade selector
-  md: 14,    // buttons and bordered cards
-  lg: 18,    // large surfaces: the card pass, the inverted price-watch block
+  xs: 2,     // meters, chart bars, the gauge's segments
+  sm: 4,     // chips, small boxes, the grade selector
+  md: 6,     // buttons and panels
+  lg: 10,    // the card pass
   pill: 999, // the Toggle track and knob
 } as const;
 
