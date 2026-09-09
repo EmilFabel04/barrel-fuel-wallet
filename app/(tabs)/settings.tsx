@@ -3,7 +3,7 @@ import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
-import { Num } from '../../src/components/Num';
+import { Readout } from '../../src/components/Readout';
 import { SectionLabel } from '../../src/components/SectionLabel';
 import { Row } from '../../src/components/Row';
 import { Toggle } from '../../src/components/Toggle';
@@ -29,6 +29,7 @@ export default function Settings() {
   const toggleAlert = useWallet(s => s.toggleAlert);
   const appearance = useWallet(s => s.appearance);
   const setAppearance = useWallet(s => s.setAppearance);
+  const scheduleDemoFill = useWallet(s => s.scheduleDemoFill);
   const trialDaysLeft = useWallet(s => s.trialDaysLeft);
   const subscription = useWallet(s => s.subscription);
   // spec §9.3: "Subscription · Trial · 24 days left" while trialling; once
@@ -50,7 +51,7 @@ export default function Settings() {
           </View>
           <View>
             <Text style={{ fontFamily: 'Figtree_700Bold', fontSize: 20, letterSpacing: -0.4, color: t.text }}>Thabo Makhubela</Text>
-            <Num size={12} weight="500" color={t.textMuted} style={{ marginTop: 8 }}>+27 82 441 0912 · verified</Num>
+            <Readout size={12} weight="500" color={t.textMuted} style={{ marginTop: 8 }}>+27 82 441 0912 · verified</Readout>
           </View>
         </View>
 
@@ -83,11 +84,31 @@ export default function Settings() {
           </View>
         </View>
 
+        {/* Prototype control, not shipping UI. Deliberately labelled and
+            captioned so it reads as a debug tool rather than a feature a
+            reviewer could mistake for one. It lived on the Card screen, which
+            put a debug button under the product's primary object; every
+            prototype-only affordance now sits together, here. */}
+        <View style={{ paddingTop: 28, gap: 12 }}>
+          <SectionLabel>Demo — prototype only</SectionLabel>
+          <Button
+            label="SIMULATE AN ARRIVING FILL"
+            variant="secondary"
+            height={54}
+            onPress={() => scheduleDemoFill(4)}
+          />
+          <Text style={{ fontFamily: 'Figtree_400Regular', fontSize: 11, lineHeight: 16, color: t.textMuted }}>
+            Records a card-rail fill at a random station four seconds from now, so you can
+            watch it land. It runs the real fill path — attribution, pricing, FIFO, the
+            ledger and the weekly cap. Not part of the product.
+          </Text>
+        </View>
+
         <View style={{ paddingTop: 24, paddingBottom: 12, gap: 14 }}>
           <Button label="SIGN OUT" variant="secondary" height={54} />
-          <Num size={11} weight="500" color={t.textMuted} style={{ textAlign: 'center' }}>
+          <Readout size={11} weight="500" color={t.textMuted} style={{ textAlign: 'center' }}>
             Barrel v2.4.0 · FSP 51284
-          </Num>
+          </Readout>
         </View>
       </ScrollView>
     </Screen>

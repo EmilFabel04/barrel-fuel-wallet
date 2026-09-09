@@ -31,15 +31,32 @@ const MONTH_LABELS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT
 /** How many months the Savings chart shows. */
 export const CHART_MONTHS = 6;
 
+export type MonthCell = { label: string; year: number; month: number };
+
 /**
- * The last `CHART_MONTHS` months ending at `at`, oldest first, with the saving
- * realised in each.
+ * The last `count` months ending at `at`, oldest first.
  *
- * The months used to be a fixed APR-SEP list matched on `getMonth()` alone.
- * That was wrong in two ways once the clock could move: the window never
- * advanced past September, and month-only matching has no year, so a fill in
- * September of any later year would have been added to September 2026's bar.
- * Both are silent — the chart would simply show a wrong number with no error.
+ * Extracted because two chart series now need the same window, and month-only
+ * matching is a silent bug: a fill in September of any later year would land
+ * in this September's bucket. Day 1 of a negative month index is a plain JS
+ * idiom that normalises into the previous year, which is what carries the
+ * window across a year boundary.
+ */
+export function monthWindow(at: Date, count: number): MonthCell[] {
+  const out: MonthCell[] = [];
+  for (let back = count - 1; back >= 0; back--) {
+    const bucket = new Date(at.getFullYear(), at.getMonth() - back, 1);
+    out.push({
+      label: MONTH_LABELS[bucket.getMonth()],
+      year: bucket.getFullYear(),
+      month: bucket.getMonth(),
+    });
+  }
+  return out;
+}
+
+/**
+ * The saving realised in each of the last `CHART_MONTHS` months, oldest first.
  *
  * Against the pinned demo instant this returns exactly the same six months it
  * always did, so no published figure moves.
@@ -48,20 +65,44 @@ export function monthlySavings(
   ledger: LedgerEntry[], at: Date
 ): { month: string; rand: number }[] {
   const f = fills(ledger);
-  const out: { month: string; rand: number }[] = [];
-  for (let back = CHART_MONTHS - 1; back >= 0; back--) {
-    // Day 1 of the month `back` months before `at`; JS normalises a negative
-    // month index into the previous year, which is what carries the window
-    // across a year boundary.
-    const bucket = new Date(at.getFullYear(), at.getMonth() - back, 1);
-    const year = bucket.getFullYear();
-    const month = bucket.getMonth();
-    out.push({
-      month: MONTH_LABELS[month],
-      rand: f
-        .filter(e => e.when.getFullYear() === year && e.when.getMonth() === month)
-        .reduce((sum, e) => sum + (e.card!.pricePerLitre - e.buyPricePerLitre!) * e.card!.litres, 0),
-    });
-  }
-  return out;
+  return monthWindow(at, CHART_MONTHS).map(cell => ({
+    month: cell.label,
+    rand: f
+      .filter(e => e.when.getFullYear() === cell.year && e.when.getMonth() === cell.month)
+      .reduce((sum, e) => sum + (e.card!.pricePerLitre - e.buyPricePerLitre!) * e.card!.litres, 0),
+  }));
+}
+
+export type MonthPrices = {
+  month: string;
+  litres: number;
+  /** Litre-weighted price actually paid for the litres burned this month. */
+  yourPrice: number;
+  /** Litre-weighted pump price on the days those litres were burned. */
+  pumpPrice: number;
+};
+
+/**
+ * The two series behind the Savings chart: what the pump charged versus what
+ * these litres actually cost, month by month.
+ *
+ * Weighted by litres rather than averaged across fills, because a 38 L fill
+ * and a 2 L fill are not equal evidence about the month's price. A month with
+ * no fills returns zeroes, which the chart must render as a gap rather than as
+ * a line dropping to the axis.
+ */
+export function pumpVsBuyByMonth(ledger: LedgerEntry[], at: Date): MonthPrices[] {
+  const f = fills(ledger);
+  return monthWindow(at, CHART_MONTHS).map(cell => {
+    const inMonth = f.filter(
+      e => e.when.getFullYear() === cell.year && e.when.getMonth() === cell.month);
+    const litres = inMonth.reduce((s, e) => s + e.card!.litres, 0);
+    if (litres === 0) return { month: cell.label, litres: 0, yourPrice: 0, pumpPrice: 0 };
+    return {
+      month: cell.label,
+      litres,
+      yourPrice: inMonth.reduce((s, e) => s + e.buyPricePerLitre! * e.card!.litres, 0) / litres,
+      pumpPrice: inMonth.reduce((s, e) => s + e.card!.pricePerLitre * e.card!.litres, 0) / litres,
+    };
+  });
 }

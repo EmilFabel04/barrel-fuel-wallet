@@ -3,10 +3,11 @@ import { Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
-import { Num } from '../../src/components/Num';
+import { Readout } from '../../src/components/Readout';
 import { SectionLabel } from '../../src/components/SectionLabel';
 import { Rule } from '../../src/components/Rule';
 import { Row } from '../../src/components/Row';
+import { Panel } from '../../src/components/Panel';
 import { Button } from '../../src/components/Button';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useWallet } from '../../src/store/wallet';
@@ -41,6 +42,13 @@ export default function FillDetail() {
   // is the single definition of that lookup (src/data/prices.ts); guarded
   // here rather than left to throw, since a fill screen should still render
   // if the table were ever missing an entry for this date.
+  // What this fill actually saved: the pump price on the day, less the
+  // weighted price of the lots FIFO drew down for it. Zero is a real answer —
+  // it means these litres were bought at the pump price — and is shown as one.
+  const saved = entry.buyPricePerLitre !== undefined
+    ? (c.pricePerLitre - entry.buyPricePerLitre) * c.litres
+    : null;
+
   let effective;
   try {
     effective = pricePointOn(c.zone, entry.when);
@@ -57,15 +65,15 @@ export default function FillDetail() {
 
         <View style={{ marginTop: 22, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-            <Num size={34}>R{formatRand(c.randAmount)}</Num>
-            <Num size={24} color={t.textMuted}>÷</Num>
-            <Num size={34}>R{formatPrice(c.pricePerLitre)}</Num>
-            <Num size={16} color={t.textDim}>/L</Num>
+            <Readout size={34}>R{formatRand(c.randAmount)}</Readout>
+            <Readout size={24} color={t.textMuted}>÷</Readout>
+            <Readout size={34}>R{formatPrice(c.pricePerLitre)}</Readout>
+            <Readout size={16} color={t.textDim}>/L</Readout>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
-            <Num size={24} color={t.textMuted}>=</Num>
-            <Num size={44} color={t.positiveText}>{formatLitres(c.litres)}</Num>
-            <Num size={20} color={t.textDim}>L</Num>
+            <Readout size={24} color={t.textMuted}>=</Readout>
+            <Readout size={44} color={t.positiveText}>{formatLitres(c.litres)}</Readout>
+            <Readout size={20} color={t.textDim}>L</Readout>
           </View>
         </View>
 
@@ -76,7 +84,22 @@ export default function FillDetail() {
         </Text>
       </View>
 
-      <View style={{ marginTop: 34 }}>
+      {saved !== null ? (
+        <Panel label="What this fill saved" style={{ marginTop: 26 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+            <Readout size={30} color={saved > 0 ? t.positiveText : t.textDim}>
+              {`R${formatRand(Math.abs(saved))}`}
+            </Readout>
+            <Text style={{ flex: 1, fontFamily: 'Figtree_500Medium', fontSize: 12, lineHeight: 18, color: t.textMuted }}>
+              {saved > 0
+                ? `you paid R${formatPrice(entry.buyPricePerLitre!)}/L, the pump was R${formatPrice(c.pricePerLitre)}/L`
+                : 'these litres were bought at the pump price'}
+            </Text>
+          </View>
+        </Panel>
+      ) : null}
+
+      <View style={{ marginTop: 30 }}>
         <Rule />
         <Row label="Station" value={c.merchantDescriptor} />
         <Row label="Date" value={formatDayMonth(entry.when)} />

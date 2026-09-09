@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '../src/components/Screen';
 import { ScreenHeader } from '../src/components/ScreenHeader';
-import { Num } from '../src/components/Num';
+import { Readout } from '../src/components/Readout';
 import { Rule } from '../src/components/Rule';
 import { Button } from '../src/components/Button';
 import { useTheme } from '../src/theme/ThemeProvider';
@@ -37,8 +37,8 @@ export default function Subscribe() {
             separate text nodes, derived from the same MONTHLY_PRICE the
             hero displays. */}
         <View accessible accessibilityLabel={`${spokenRand(MONTHLY_PRICE)} per month`} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-          <Num size={34} color={t.textMuted}>R</Num>
-          <Num size={82}>{MONTHLY_PRICE}</Num>
+          <Readout size={34} color={t.textMuted}>R</Readout>
+          <Readout size={82}>{MONTHLY_PRICE}</Readout>
           <Text style={{ fontFamily: 'Figtree_500Medium', fontSize: 17, color: t.textDim }}>/ month</Text>
         </View>
       </View>

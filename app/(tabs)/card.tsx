@@ -2,9 +2,8 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { Screen } from '../../src/components/Screen';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
-import { Num } from '../../src/components/Num';
+import { Readout } from '../../src/components/Readout';
 import { SectionLabel } from '../../src/components/SectionLabel';
-import { Rule } from '../../src/components/Rule';
 import { Button } from '../../src/components/Button';
 import { BarrelMark } from '../../src/components/BarrelMark';
 import { useTheme, useElevation } from '../../src/theme/ThemeProvider';
@@ -13,7 +12,6 @@ import { formatLitres, formatRandWhole } from '../../src/lib/format';
 import { priceOn } from '../../src/data/prices';
 import { now } from '../../src/lib/clock';
 import { PASS, RADIUS } from '../../src/theme/tokens';
-import { STATIONS } from '../../src/data/stations';
 import { WEEKLY_REDEMPTION_CAP_L } from '../../src/lib/caps';
 
 export default function Card() {
@@ -31,23 +29,7 @@ export default function Card() {
   const cappedByWeek = weeklyLeft < balance;
   const frozen = useWallet(s => s.cardFrozen);
   const freeze = useWallet(s => s.freezeCard);
-  const cardFill = useWallet(s => s.cardFill);
   const price = priceOn('inland', now());
-
-  // Debug-only affordance (goal §2.3, §1.1): store.cardFill is fully
-  // implemented and tested but, absent this, has no UI trigger anywhere in
-  // the app, so the redemption half of the core loop can't be demonstrated.
-  // Picks a real station and a plausible rand amount scaled to whatever's
-  // left in the wallet (20% of it, R50-R300), so repeated taps stay
-  // resolvable instead of running the balance dry after one or two presses.
-  // Exercises normaliseDescriptor, resolveZone, deriveLitres, FIFO
-  // consumption, the ledger write and fill/[id] end to end.
-  const simulateFill = () => {
-    const station = STATIONS[Math.floor(Math.random() * STATIONS.length)];
-    const availableRand = spendable * price;
-    const amount = Math.max(50, Math.round(Math.min(300, availableRand * 0.2) / 10) * 10);
-    cardFill(station.name.toUpperCase(), amount, station.zone);
-  };
 
   return (
     <Screen insetBottom={false}>
@@ -83,13 +65,13 @@ export default function Card() {
           </View>
 
           <Text style={{ marginTop: 34, fontFamily: 'Figtree_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: PASS.muted }}>BALANCE</Text>
-          {/* spec §10.1: a numeric hero split across two Num nodes (value,
+          {/* spec §10.1: a numeric hero split across two Readout nodes (value,
               unit) is announced as two separate stops by a screen reader.
               Grouped into one accessible node with a spelled-out label,
               derived from the same `balance` the display uses. */}
           <View accessible accessibilityLabel={`Balance, ${formatLitres(balance)} litres`} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 7, marginTop: 10 }}>
-            <Num size={66} color={PASS.text}>{formatLitres(balance)}</Num>
-            <Num size={26} color={PASS.dim}>L</Num>
+            <Readout size={66} color={PASS.text}>{formatLitres(balance)}</Readout>
+            <Readout size={26} color={PASS.dim}>L</Readout>
           </View>
           <Text style={{ marginTop: 8, fontFamily: 'Figtree_500Medium', fontSize: 13, color: PASS.dim, fontVariant: ['tabular-nums'] }}>
             R{formatRandWhole(spendable * price)} available at today's 95
@@ -110,7 +92,7 @@ export default function Card() {
             </View>
             <View style={{ alignItems: 'flex-end' }}>
               <Text style={{ fontFamily: 'Figtree_600SemiBold', fontSize: 9, letterSpacing: 1.44, color: PASS.muted }}>CARD</Text>
-              <Num size={13} color={PASS.text} style={{ marginTop: 8 }}>•••• 4127</Num>
+              <Readout size={13} color={PASS.text} style={{ marginTop: 8 }}>•••• 4127</Readout>
             </View>
           </View>
         </View>
@@ -132,21 +114,6 @@ export default function Card() {
           onPress={() => freeze(!frozen)}
         />
 
-        {/* Prototype control, not shipping UI — see comment above simulateFill.
-            Deliberately labelled and captioned so it reads as a debug tool,
-            not a product feature a reviewer could mistake it for. */}
-        <Rule margin={4} />
-        <SectionLabel>Debug — prototype only</SectionLabel>
-        <Button
-          label="SIMULATE A FILL"
-          variant="secondary"
-          height={54}
-          onPress={simulateFill}
-        />
-        <Text style={{ fontFamily: 'Figtree_400Regular', fontSize: 11, lineHeight: 16, color: t.textMuted }}>
-          Fakes a card-rail fill at a random station to demo the redemption half of the
-          core loop end to end. Not part of the product.
-        </Text>
       </View>
     </Screen>
   );

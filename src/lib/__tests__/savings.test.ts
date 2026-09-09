@@ -1,5 +1,10 @@
-import { savingsToDate, litresBelowPump, averageBuyPrice, monthlySavings } from '../savings';
+import {
+  savingsToDate, litresBelowPump, averageBuyPrice, monthlySavings,
+  monthWindow, pumpVsBuyByMonth, CHART_MONTHS,
+} from '../savings';
 import { LedgerEntry } from '../../data/types';
+import { buildSeed } from '../../data/seed';
+import { DEMO_NOW } from '../clock';
 
 const fill = (when: Date, litres: number, buyPrice: number, pumpPrice: number): LedgerEntry => ({
   id: `f-${when.getTime()}`, kind: 'fill', what: '', when, detail: '',
@@ -89,5 +94,58 @@ describe('monthlySavings', () => {
     expect(sep.rand).toBeCloseTo(8.7, 1);
     const sum = result.reduce((s, r) => s + r.rand, 0);
     expect(sum).toBeCloseTo(savingsToDate(l), 6);
+  });
+});
+
+describe('monthWindow', () => {
+  test('returns `count` months ending at `at`, oldest first', () => {
+    const w = monthWindow(new Date(2026, 8, 30), 6);
+    expect(w).toHaveLength(6);
+    expect(w.map(m => m.label)).toEqual(['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP']);
+    expect(w[5]).toMatchObject({ year: 2026, month: 8 });
+  });
+
+  test('carries across a year boundary', () => {
+    const w = monthWindow(new Date(2027, 1, 15), 4);
+    expect(w.map(m => m.label)).toEqual(['NOV', 'DEC', 'JAN', 'FEB']);
+    expect(w[0].year).toBe(2026);
+    expect(w[3].year).toBe(2027);
+  });
+});
+
+describe('pumpVsBuyByMonth', () => {
+  const mk = (day: number, litres: number, paid: number, pump: number): LedgerEntry => ({
+    id: `e${day}`, kind: 'fill', what: 'Fill', when: new Date(2026, 8, day),
+    detail: '', grade: '95', deltaLitres: -litres, balanceAfter: 0,
+    buyPricePerLitre: paid,
+    card: { merchantDescriptor: 'X', stationId: null, mcc: '5541',
+      randAmount: litres * pump, zone: 'inland', pricePerLitre: pump, litres, disputed: false },
+  });
+
+  test('returns one entry per chart month, oldest first', () => {
+    expect(pumpVsBuyByMonth(buildSeed().ledger, DEMO_NOW)).toHaveLength(CHART_MONTHS);
+  });
+
+  test('your price is at or below the pump in every month that has fills', () => {
+    for (const m of pumpVsBuyByMonth(buildSeed().ledger, DEMO_NOW)) {
+      if (m.litres > 0) expect(m.yourPrice).toBeLessThanOrEqual(m.pumpPrice);
+    }
+  });
+
+  test('a month with no fills reports zeroes rather than NaN', () => {
+    for (const m of pumpVsBuyByMonth([], new Date(2026, 8, 30))) {
+      expect(m.litres).toBe(0);
+      expect(Number.isNaN(m.yourPrice)).toBe(false);
+      expect(Number.isNaN(m.pumpPrice)).toBe(false);
+    }
+  });
+
+  test('prices are litre-weighted, not a plain mean of fills', () => {
+    // One big cheap fill and one small dear one in the same month: the
+    // weighted price must sit near the big one.
+    const series = pumpVsBuyByMonth([mk(5, 90, 20, 22), mk(6, 10, 30, 22)], new Date(2026, 8, 30));
+    const sep = series[series.length - 1];
+    expect(sep.litres).toBeCloseTo(100, 5);
+    expect(sep.yourPrice).toBeCloseTo(21, 5); // (90*20 + 10*30) / 100
   });
 });

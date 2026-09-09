@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Animated, Pressable, Text } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, useIsLight } from '../theme/ThemeProvider';
 import { RADIUS } from '../theme/tokens';
 import { MOTION } from '../theme/motion';
 
@@ -14,6 +14,11 @@ export function Button({
   disabled?: boolean; height?: number; flex?: number;
 }) {
   const t = useTheme();
+  // The ONE component that legitimately needs this hook. Everything else in
+  // the system expresses a theme difference as a token pair, but the
+  // requirement below is about a luminance RELATIONSHIP between two tokens
+  // rather than about a colour, so no pair can carry it.
+  const isLight = useIsLight();
 
   // The button had haptics but no visual response at all — it fired a tap you
   // could feel and not see. Scale and opacity are the two properties the
@@ -30,6 +35,16 @@ export function Button({
   const fg = disabled ? t.textMuted
     : variant === 'secondary' ? t.text
     : t.inverse;
+
+  // The amber button's edge is undefined in light mode: neither amber value
+  // reaches 3:1 against white, so fill and ground are too close to separate.
+  // An ink border defines it, and reads as deliberate in this language.
+  //
+  // Only `primary` needs it. `white` is ink-on-white at 21:1 in light mode and
+  // paper-on-black in dark, so its edge is never in doubt; dark mode's amber
+  // is far brighter than its ground. A border in any of those cases would draw
+  // a line around nothing, or around itself.
+  const needsEdge = !disabled && variant === 'primary' && isLight;
 
   return (
     <Animated.View style={{
@@ -50,7 +65,8 @@ export function Button({
         onPress={() => { Haptics.selectionAsync(); onPress?.(); }}
         style={{
           height, borderRadius: RADIUS.md, backgroundColor: bg,
-          borderWidth: variant === 'secondary' ? 1 : 0, borderColor: t.border,
+          borderWidth: variant === 'secondary' || needsEdge ? 1 : 0,
+          borderColor: variant === 'secondary' ? t.border : t.text,
           alignItems: 'center', justifyContent: 'center',
           minHeight: 44, minWidth: 44,
         }}
