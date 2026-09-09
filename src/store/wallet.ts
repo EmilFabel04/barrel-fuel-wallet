@@ -11,6 +11,7 @@ import {
 import { normaliseDescriptor, resolveZone, deriveLitres } from '../lib/cardfill';
 import { round1, toCents } from '../lib/round';
 import { expiryOf } from '../lib/window';
+import { STATIONS } from '../data/stations';
 
 export type Appearance = 'dark' | 'light' | 'system';
 export type Subscription = 'trial' | 'active' | 'lapsed';
@@ -28,6 +29,8 @@ export type WalletState = {
   // (or a test) can observe why a fill didn't happen instead of the bare
   // `catch {}` this replaces swallowing the reason entirely.
   lastCardFillError: string | null;
+  /** The id of a fill that has just landed and not yet been acknowledged. */
+  arrivedFillId: string | null;
   topUp: (rand: number) => void;
   cardFill: (descriptor: string, rand: number, zone: Zone | null) => void;
   disputeFill: (entryId: string) => void;
@@ -35,6 +38,8 @@ export type WalletState = {
   toggleAlert: (i: number) => void;
   setSubscription: (s: Subscription) => void;
   freezeCard: (frozen: boolean) => void;
+  scheduleDemoFill: (delaySeconds?: number) => void;
+  dismissArrival: () => void;
 };
 
 const seed = buildSeed();
@@ -48,6 +53,7 @@ export const useWallet = create<WalletState>((set, get) => ({
   alerts: [true, true, false],
   cardFrozen: false,
   lastCardFillError: null,
+  arrivedFillId: null,
 
   topUp: (rand) => {
     if (rand <= 0) return; // guard against a non-positive amount producing a negative-litre lot
@@ -145,6 +151,44 @@ export const useWallet = create<WalletState>((set, get) => ({
       e.id === entryId && e.card ? { ...e, card: { ...e.card, disputed: true } } : e
     ),
   })),
+
+  /**
+   * Prototype-only: schedule a card-rail fill to land while the app is open.
+   *
+   * The timer lives here rather than in src/lib, which must stay pure and free
+   * of side effects. It calls the real `cardFill` action, so the whole path —
+   * normaliseDescriptor, resolveZone, deriveLitres, FIFO consumption, the
+   * ledger write, the redemption cap — runs exactly as it would for a genuine
+   * fill. Nothing is faked below the store.
+   *
+   * The clock is NOT advanced. `now()` stays pinned to DEMO_NOW: a real clock
+   * silently returns October's price forever after 7 Oct, empties the cap meter
+   * on 1 Oct, and expires the balance to zero on 27 Dec.
+   */
+  scheduleDemoFill: (delaySeconds = 4) => {
+    setTimeout(() => {
+      const before = get().ledger.length;
+      const station = STATIONS[Math.floor(Math.random() * STATIONS.length)];
+      const at = now();
+      const spendable = Math.min(
+        balanceOf(get().lots, at), redemptionCapRemaining(get().ledger, at));
+      const availableRand = spendable * priceOn('inland', at);
+      // Scaled to what is left so repeated demos stay resolvable instead of
+      // running the wallet dry after one press.
+      const amount = Math.max(50, Math.round(Math.min(300, availableRand * 0.2) / 10) * 10);
+      get().cardFill(station.name.toUpperCase(), amount, station.zone);
+
+      const ledger = get().ledger;
+      // cardFill declines silently for a documented reason (an unresolvable
+      // merchant, a cap reached). If it did not write, there is nothing to
+      // announce — and announcing anyway would claim a fill that never happened.
+      if (ledger.length > before) {
+        set({ arrivedFillId: ledger[ledger.length - 1].id });
+      }
+    }, delaySeconds * 1000);
+  },
+
+  dismissArrival: () => set({ arrivedFillId: null }),
 
   setAppearance: (appearance) => set({ appearance }),
   toggleAlert: (i) => set(s => ({ alerts: s.alerts.map((v, j) => (j === i ? !v : v)) })),

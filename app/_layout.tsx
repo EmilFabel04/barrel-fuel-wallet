@@ -1,5 +1,6 @@
 import React from 'react';
-import { Stack } from 'expo-router';
+import { View } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
 import {
   useFonts,
   Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold,
@@ -12,6 +13,35 @@ import {
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '../src/theme/ThemeProvider';
 import { MOTION } from '../src/theme/motion';
+import { Banner } from '../src/components/Banner';
+import { useWallet } from '../src/store/wallet';
+import { STATIONS } from '../src/data/stations';
+import { formatLitres } from '../src/lib/format';
+
+/**
+ * Mounted above the stack so an arriving fill is announced wherever the user
+ * happens to be, including inside the tabs. Renders nothing until there is
+ * something to announce.
+ */
+function ArrivalBanner() {
+  const router = useRouter();
+  const id = useWallet(s => s.arrivedFillId);
+  const dismiss = useWallet(s => s.dismissArrival);
+  const entry = useWallet(s => s.ledger.find(e => e.id === s.arrivedFillId));
+  if (!id || !entry?.card) return null;
+  // Prefer the resolved station's own name over the raw card descriptor, which
+  // arrives shouty off the rail ('SHELL GRAYSTON').
+  const name = STATIONS.find(st => st.id === entry.card!.stationId)?.name
+    ?? entry.card!.merchantDescriptor;
+  return (
+    <Banner
+      title={name}
+      detail={`−${formatLitres(Math.abs(entry.deltaLitres))} L`}
+      onPress={() => { dismiss(); router.push(`/fill/${id}`); }}
+      onDismiss={dismiss}
+    />
+  );
+}
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -29,6 +59,7 @@ export default function RootLayout() {
             the right; naming it makes Android match instead of cross-fading,
             and gives the two a shared duration. The back swipe is the native
             stack's own and is left alone. */}
+        <View style={{ flex: 1 }}>
         <Stack screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
@@ -41,6 +72,8 @@ export default function RootLayout() {
           <Stack.Screen name="subscribe" />
           <Stack.Screen name="fill/[id]" />
         </Stack>
+        <ArrivalBanner />
+        </View>
       </ThemeProvider>
     </SafeAreaProvider>
   );

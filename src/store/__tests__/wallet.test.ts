@@ -9,6 +9,7 @@ import {
   selectLastFill,
 } from '../wallet';
 import { LedgerEntry } from '../../data/types';
+import { DEMO_NOW } from '../../lib/clock';
 
 const initial = useWallet.getState();
 
@@ -287,5 +288,56 @@ describe('simple setters', () => {
 
     useWallet.getState().freezeCard(true);
     expect(useWallet.getState().cardFrozen).toBe(true);
+  });
+});
+
+describe('the simulated arriving fill', () => {
+  beforeEach(() => { jest.useFakeTimers(); });
+  afterEach(() => { jest.useRealTimers(); });
+
+  test('nothing has arrived before one is scheduled', () => {
+    expect(useWallet.getState().arrivedFillId).toBeNull();
+  });
+
+  test('a scheduled fill lands after its delay and reduces the balance', () => {
+    const before = selectBalance(useWallet.getState());
+    useWallet.getState().scheduleDemoFill(4);
+
+    // Nothing yet — the delay is the point.
+    expect(useWallet.getState().arrivedFillId).toBeNull();
+
+    jest.advanceTimersByTime(4000);
+
+    const s = useWallet.getState();
+    expect(s.arrivedFillId).not.toBeNull();
+    expect(selectBalance(s)).toBeLessThan(before);
+  });
+
+  test('the arrived id names a real fill in the ledger', () => {
+    useWallet.getState().scheduleDemoFill(1);
+    jest.advanceTimersByTime(1000);
+    const s = useWallet.getState();
+    const entry = s.ledger.find(e => e.id === s.arrivedFillId);
+    expect(entry?.kind).toBe('fill');
+    expect(entry?.card).toBeTruthy();
+  });
+
+  // The clock must not move. A real clock silently returns October's price
+  // forever after 7 Oct and expires the balance to zero on 27 Dec.
+  test('the fill is dated the pinned demo instant, not real time', () => {
+    useWallet.getState().scheduleDemoFill(1);
+    jest.advanceTimersByTime(1000);
+    const s = useWallet.getState();
+    const entry = s.ledger.find(e => e.id === s.arrivedFillId)!;
+    expect(entry.when.getTime()).toBe(DEMO_NOW.getTime());
+  });
+
+  test('dismissing clears the banner without touching the ledger', () => {
+    useWallet.getState().scheduleDemoFill(1);
+    jest.advanceTimersByTime(1000);
+    const entries = useWallet.getState().ledger.length;
+    useWallet.getState().dismissArrival();
+    expect(useWallet.getState().arrivedFillId).toBeNull();
+    expect(useWallet.getState().ledger).toHaveLength(entries);
   });
 });
