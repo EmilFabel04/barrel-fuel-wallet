@@ -29,6 +29,7 @@ export default function Settings() {
   const toggleAlert = useWallet(s => s.toggleAlert);
   const appearance = useWallet(s => s.appearance);
   const setAppearance = useWallet(s => s.setAppearance);
+  const scheduleDemoFill = useWallet(s => s.scheduleDemoFill);
   const trialDaysLeft = useWallet(s => s.trialDaysLeft);
   const subscription = useWallet(s => s.subscription);
   // spec §9.3: "Subscription · Trial · 24 days left" while trialling; once
@@ -81,6 +82,26 @@ export default function Settings() {
             />
             <Row label="Help & FICA documents" value="→" />
           </View>
+        </View>
+
+        {/* Prototype control, not shipping UI. Deliberately labelled and
+            captioned so it reads as a debug tool rather than a feature a
+            reviewer could mistake for one. It lived on the Card screen, which
+            put a debug button under the product's primary object; every
+            prototype-only affordance now sits together, here. */}
+        <View style={{ paddingTop: 28, gap: 12 }}>
+          <SectionLabel>Demo — prototype only</SectionLabel>
+          <Button
+            label="SIMULATE AN ARRIVING FILL"
+            variant="secondary"
+            height={54}
+            onPress={() => scheduleDemoFill(4)}
+          />
+          <Text style={{ fontFamily: 'Figtree_400Regular', fontSize: 11, lineHeight: 16, color: t.textMuted }}>
+            Records a card-rail fill at a random station four seconds from now, so you can
+            watch it land. It runs the real fill path — attribution, pricing, FIFO, the
+            ledger and the weekly cap. Not part of the product.
+          </Text>
         </View>
 
         <View style={{ paddingTop: 24, paddingBottom: 12, gap: 14 }}>
