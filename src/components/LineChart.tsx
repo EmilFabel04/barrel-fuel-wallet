@@ -54,7 +54,13 @@ export function LineChart({
 
   return (
     <View>
-      <Svg width="100%" height={height} viewBox={`0 0 ${VIEW_W} ${height}`}>
+      {/* preserveAspectRatio="none" is load-bearing, not decoration. The
+          default ("xMidYMid meet") scales the viewBox to FIT while preserving
+          its aspect ratio, so a 240x96 drawing inside a 340pt-wide container
+          gets letterboxed and centred — the lines bunch in the middle of the
+          axis while the month labels below still span the full width. A chart
+          wants x and y scaled independently, which is exactly what "none" does. */}
+      <Svg testID="chart-svg" width="100%" height={height} viewBox={`0 0 ${VIEW_W} ${height}`} preserveAspectRatio="none">
         {/* testID is 'chart-gap', deliberately not 'line-gap' — the series
             testIDs are 'line-<key>' and a shared prefix would make any
             "how many lines are there" query silently count the fill too. */}

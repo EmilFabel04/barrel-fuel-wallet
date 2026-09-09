@@ -44,6 +44,19 @@ describe('LineChart', () => {
     expect(getAllByTestId(/^line-/)).toHaveLength(2);
   });
 
+  // Regression: the default preserveAspectRatio letterboxes the viewBox, which
+  // bunches the lines in the middle of the axis while the labels below span the
+  // full width. Counting paths does not catch it — only looking at it does, so
+  // the property is pinned here instead.
+  test('stretches to its container rather than letterboxing the viewBox', async () => {
+    const { getByTestId } = await render(<LineChart labels={labels} series={two} />);
+    // react-native-svg parses preserveAspectRatio into `align`/`meetOrSlice`
+    // before it reaches the node, so assert on what the native side receives.
+    const svg = getByTestId('chart-svg');
+    expect(svg.props.align).toBe('none');
+    expect(svg.props.vbWidth).toBeGreaterThan(0);
+  });
+
   test('survives an empty series', async () => {
     const { queryAllByTestId } = await render(<LineChart labels={[]} series={[]} />);
     expect(queryAllByTestId(/^line-/)).toHaveLength(0);
