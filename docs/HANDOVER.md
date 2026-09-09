@@ -7,7 +7,7 @@ together, and the traps that bit repeatedly during the build.
 
 ## Start here — state as of 9 September 2026
 
-**Branch:** `main`. Clean tree. 260 tests green, `npx tsc --noEmit` clean.
+**Branch:** `main`. Clean tree. 270 tests green, `npx tsc --noEmit` clean.
 **Unpushed:** `main` is ahead of `origin/main`. Nothing has been pushed since the redesign.
 
 **What just happened.** The Pump redesign landed: a full visual re-approach across all 12
@@ -29,8 +29,9 @@ seed. Spec and plan are in `docs/superpowers/`.
 - **The app promises something it does not do.** Three screens say unused litres convert
   back to the rand you paid. Nothing implements it — the `expiry` ledger kind is declared
   in the types and never written. See `GAPS.md` §1.1. This is the top of the list.
-- **Nothing persists.** The store is in memory; a reload restores the seed.
-- **Not one test renders a screen.** All 260 cover `src/lib`, `src/data`, the store and
+- **The wallet persists** across launches (AsyncStorage, added 9 September 2026).
+  `Settings → RESET DEMO DATA` puts it back to the seed.
+- **Not one test renders a screen.** All 270 cover `src/lib`, `src/data`, the store and
   isolated components. A chart bug that bunched both series into the middle third of the
   panel passed every one of them and was found by opening the app. Verify visually.
 
@@ -41,8 +42,8 @@ seed. Spec and plan are in `docs/superpowers/`.
 ## What this is
 
 A **UI shell over mock data** for Barrel: a prepaid fuel wallet for South African motorists,
-denominated in **litres, not rand**. No backend, no payments, no persistence — the store is
-in memory and resets on reload. That is deliberate: the business overview says a legal
+denominated in **litres, not rand**. No backend and no payments; the wallet is persisted
+locally but there is nothing behind it. That is deliberate: the business overview says a legal
 opinion gates everything, so this exists to validate flows and be shown to people, nothing
 more.
 
@@ -79,7 +80,7 @@ app/         12 screens, expo-router
 ```
 
 `src/lib` and `src/data` are the good part: pure functions over plain data, one definition
-of each operation, 260 tests. If you keep only `src/`, you have a portable model ready to
+of each operation, 270 tests. If you keep only `src/`, you have a portable model ready to
 validate against a real backend. Change logic there and let the screens follow.
 
 **Litres are held as dated `Lot`s**, each carrying the price paid and a 90-day expiry — not
@@ -226,7 +227,7 @@ profit**, and no copy may imply the savings compound.
   It calls the real `cardFill` action, so nothing below the store is faked.
 - ~~`textDim` `#A8A8A8` on white measures 2.38:1.~~ **Paid.** Light mode now holds every
   text token at AAA (≥7:1), asserted in `tokens.test.ts`.
-- No persistence, no onboarding, no map, no real push, no billing.
+- No onboarding, no map, no real push, no billing. Persistence is local only.
 
 ## Where to start next
 
@@ -234,7 +235,9 @@ profit**, and no copy may imply the savings compound.
 "what now":
 
 1. **Build the expiry conversion** — the app makes a promise it does not keep.
-2. **Add persistence** — everything else is judged through a demo that resets.
+2. ~~**Add persistence.**~~ Done. Next: an **account and session seam** — a session slice
+   and a working `SIGN OUT` with a stub behind it — since login, push tokens, wallet-pass
+   ownership and a biometric unlock all hang off it.
 3. **Give Top up a confirmation and a receipt** — it moves money and behaves like a toggle.
 4. **Handle the zero state** on Wallet, Savings and Card — every new user starts there.
 5. **Neutralise or label the inert controls** — four sit on the two screens you would demo
@@ -261,6 +264,6 @@ profit**, and no copy may imply the savings compound.
 npx expo start --tunnel     # phone, any network
 npx expo start              # phone, same wifi, faster
 npx expo start --web        # browser
-npm test                    # 260 tests
+npm test                    # 270 tests
 npx tsc --noEmit
 ```

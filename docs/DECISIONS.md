@@ -575,3 +575,66 @@ relationship between two tokens rather than a colour, so no token pair can expre
 an ink border is the honest fix.
 — Cost if wrong: one hook with one caller. Scoped to the primary variant only — the white
 variant is ink-on-white at 21:1 and needs no help.
+
+---
+
+## Decisions during the persistence work (9 September 2026)
+
+The first of the foundational pieces: the wallet now survives a reload.
+
+### AsyncStorage rather than MMKV
+
+MMKV is faster and its synchronous API would have avoided the hydration gate entirely. It
+also requires a native build, and `app.json` has no bundle identifier and no EAS config —
+this project runs in Expo Go. Making the *first* foundational change the one that forces a
+native build would have put a toolchain migration in front of a two-file feature.
+— Cost if wrong: a storage swap behind `walletStorage`. Nothing outside `persist.ts` names
+AsyncStorage, and the middleware's interface is the same either way.
+
+### Dates are tagged, not sniffed
+
+The model is full of `Date` and JSON turns every one into a string, after which every
+comparison silently returns the wrong answer. Three options: change the model to ISO strings
+(invasive — it touches all 260 existing tests), revive any string matching an ISO shape, or
+tag dates explicitly as `{"__d": "…"}` at the storage boundary.
+
+The sniffer was rejected: `LedgerEntry.detail` is free text and `merchantDescriptor` comes
+off the rail unsanitised, so a string that happens to look like a date would eventually be
+revived into a `Date` and break something far from here. Tagging costs a few bytes and
+cannot misfire.
+— Cost if wrong: stored wallets become unreadable, which `migrate` already handles by
+discarding them.
+
+### `arrivedFillId` and `lastCardFillError` are not persisted
+
+Both describe a moment rather than a state. A persisted `arrivedFillId` would pop the
+arrival banner on a cold start for a fill the user acknowledged days ago, and a persisted
+decline reason would outlive the session that caused it.
+— Cost if wrong: an arrival missed across a crash, which the ledger still records.
+
+### An unrecognised version is discarded, not migrated
+
+`migrate` returns `undefined` for anything not written by the current version, which leaves
+zustand's merge with nothing to apply and the store keeps its seed. There is no version 2
+yet, so there is nothing to translate — but the hook has to exist before the shape changes,
+not after.
+— Cost if wrong: a user loses a wallet on an upgrade that should have been translatable.
+The alternative — adopting a shape the code cannot read — fails later and less legibly.
+
+### Hydration joins the font gate rather than getting its own
+
+`app/_layout.tsx` already returned `null` until fonts loaded. Reading storage is a second
+asynchronous precondition with the same answer, so it became a second clause rather than a
+second pattern. Painting the seed and swapping to the persisted wallet a frame later is
+worse than one slightly longer hold.
+— Cost if wrong: cold start is as long as the slower of two reads. GAPS 3.2 already wanted
+a skeleton here; this makes that want slightly louder without changing its shape.
+
+### ★ `RESET DEMO DATA`, shipped in the same change
+
+Persistence takes away the clean slate every run used to start from: a demo spent down —
+or wedged — now stays that way. Without a way back, this change would have made the
+prototype *harder* to demo. It sits with the other prototype-only affordances in Settings,
+and deliberately keeps `appearance`, which is a preference the user set rather than part of
+the demo's data.
+— Cost if wrong: a destructive one-tap control with no confirmation, recorded in GAPS 2.5.

@@ -35,14 +35,16 @@ credit note against the next top-up.
 *Why it matters:* it is the difference between a wallet and a voucher that eats your money.
 It is also very likely the thing a regulator asks about first.
 
-### ⛔ 1.2 No persistence — everything resets on reload
+### ✅ 1.2 No persistence — *resolved 9 September 2026*
 
-The store is in memory. Close the app and the seed comes back: your top-up, your fills,
-your frozen card, your appearance preference, all gone.
+The store is now wrapped in zustand's `persist` middleware over AsyncStorage. Dates are
+tagged explicitly on the way out (`{"__d": "…"}`) and rebuilt on the way in, so the model
+keeps its `Date` objects and no comparison silently breaks. `arrivedFillId` and
+`lastCardFillError` are deliberately not persisted. Settings gained `RESET DEMO DATA`,
+because a saved wallet no longer starts clean.
 
-*Needs:* AsyncStorage or MMKV behind a zustand persist middleware, and a migration story
-for the `Date` objects the model is full of (JSON round-trips them to strings and every
-date comparison silently breaks).
+See `docs/DECISIONS.md` for the reasoning. What it did **not** solve is below — 1.3 in
+particular is now sharper, not softer.
 
 ### 1.3 The clock is pinned, and the seed cannot survive being unpinned
 
@@ -57,6 +59,11 @@ dated absolutely and collapses against a real clock:
 
 *Needs:* a seed generated relative to `now()`, and a price table that either extends or
 extrapolates with an explicit, visible rule.
+
+**Persistence raised the stakes here.** Until now every launch rebuilt the seed against a
+pinned instant, so the mismatch never had time to show. A wallet written today and reopened
+weeks later is real data judged by a frozen clock, and `RESET DEMO DATA` is currently the
+only way out of the resulting state.
 
 ### ⛔ 1.4 `cardFill` declines silently where it should queue
 
@@ -153,6 +160,9 @@ coloured bar.
 
 - **Freeze card** — `onPress={() => freeze(!frozen)}`. Instant, no confirm, and no
   statement of what freezing actually stops.
+- **Reset demo data** — added with persistence, and it discards the whole wallet on one
+  tap with no confirmation. It is prototype-only and labelled as such, but it is the most
+  destructive control in the app.
 - **Dispute a fill** — instant, permanent, one tap.
 - **Sign out** — inert (see 3.1), but would presumably be instant too.
 
@@ -240,10 +250,12 @@ Harmless while everything is local; the first thing missed when it is not.
 
 ## 4. Testing and tooling gaps
 
-- **No screen-level tests.** 260 tests cover `src/lib`, `src/data`, the store, and the
+- **No screen-level tests.** 270 tests cover `src/lib`, `src/data`, the store, and the
   components in isolation. **Not one test renders a screen.** The `preserveAspectRatio` bug
   that bunched both chart lines into the middle third of the panel passed every test and was
-  caught only by looking at the running app.
+  caught only by looking at the running app. The hydration gate added in `app/_layout.tsx`
+  is unverified for the same reason — the persistence *logic* is covered end to end,
+  including a real write through the middleware, but nothing renders the layout.
 - **No visual regression testing**, so the same class of bug will recur.
 - **No linter.** No ESLint config, so rules like "no unused imports" are enforced only by
   `tsc` and attention.
@@ -256,7 +268,9 @@ Harmless while everything is local; the first thing missed when it is not.
 
 1. **Build the expiry conversion** (1.1). The app makes a promise it does not keep, and it
    is the promise most likely to be examined.
-2. **Add persistence** (1.2). Everything else is judged through a demo that resets.
+2. ~~**Add persistence** (1.2).~~ Done. The next foundational piece is the **account and
+   session seam** — a session slice and a real `SIGN OUT`, with a stub behind it — because
+   login, push tokens, pass ownership and a biometric unlock all attach to it.
 3. **Give Top up a confirm and a receipt** (2.1). It moves money and behaves like a toggle.
 4. **Handle the zero state on Wallet, Savings and Card** (2.3). Every new user starts there.
 5. **Neutralise or label the inert controls** (3.1). Four of them sit on the two screens you
