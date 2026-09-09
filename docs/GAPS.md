@@ -164,7 +164,7 @@ coloured bar.
   tap with no confirmation. It is prototype-only and labelled as such, but it is the most
   destructive control in the app.
 - **Dispute a fill** — instant, permanent, one tap.
-- **Sign out** — inert (see 3.1), but would presumably be instant too.
+- ~~**Sign out**~~ — now confirmed before it acts, on iOS and Android.
 
 ### 2.6 Nothing to *do* about expiring litres
 
@@ -200,7 +200,6 @@ Verified by audit — every one of these renders as a fully-styled, tappable con
 |---|---|
 | Card | `ADD TO APPLE WALLET` |
 | Card | `ADD TO GOOGLE PAY` |
-| Settings | `SIGN OUT` |
 | Settings | `Payment methods · FNB ••4127` |
 | Settings | `Linked vehicle · CA 418 921` |
 | Settings | `Fuel grade · Petrol 95` |
@@ -209,6 +208,13 @@ Verified by audit — every one of these renders as a fully-styled, tappable con
 
 Two of these — the wallet-pass buttons — are the entire mechanism by which the product is
 supposed to be *used*.
+
+`SIGN OUT` came off this list on 9 September 2026 — it now ends the session behind a
+confirmation. **On web it is still inert**: `Alert.alert` is an empty method in
+react-native-web, so the confirmation never appears and nothing happens. iOS and Android
+are the real targets and behave correctly, but anyone demonstrating in a browser should
+know. A confirmation built from the app's own components rather than the platform's would
+fix it, and there is no modal pattern in the design system yet.
 
 *Needs, at minimum for a demo:* a "not in this prototype" affordance, so a viewer is not
 silently misled.
@@ -250,7 +256,7 @@ Harmless while everything is local; the first thing missed when it is not.
 
 ## 4. Testing and tooling gaps
 
-- **No screen-level tests.** 270 tests cover `src/lib`, `src/data`, the store, and the
+- **No screen-level tests.** 295 tests cover `src/lib`, `src/data`, the store, and the
   components in isolation. **Not one test renders a screen.** The `preserveAspectRatio` bug
   that bunched both chart lines into the middle third of the panel passed every test and was
   caught only by looking at the running app. The hydration gate added in `app/_layout.tsx`
@@ -268,9 +274,10 @@ Harmless while everything is local; the first thing missed when it is not.
 
 1. **Build the expiry conversion** (1.1). The app makes a promise it does not keep, and it
    is the promise most likely to be examined.
-2. ~~**Add persistence** (1.2).~~ Done. The next foundational piece is the **account and
-   session seam** — a session slice and a real `SIGN OUT`, with a stub behind it — because
-   login, push tokens, pass ownership and a biometric unlock all attach to it.
+2. ~~**Add persistence** (1.2).~~ ~~**Build the session seam.**~~ Both done. The identity
+   the rest hangs off now exists, so the next foundational piece is **local notifications**
+   for the expiry warning and the price alert — the one item on the roadmap that needs no
+   server and makes two existing promises true (2.6, 2.7).
 3. **Give Top up a confirm and a receipt** (2.1). It moves money and behaves like a toggle.
 4. **Handle the zero state on Wallet, Savings and Card** (2.3). Every new user starts there.
 5. **Neutralise or label the inert controls** (3.1). Four of them sit on the two screens you

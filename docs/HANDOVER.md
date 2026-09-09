@@ -7,7 +7,7 @@ together, and the traps that bit repeatedly during the build.
 
 ## Start here — state as of 9 September 2026
 
-**Branch:** `main`. Clean tree. 270 tests green, `npx tsc --noEmit` clean.
+**Branch:** `main`. Clean tree. 295 tests green, `npx tsc --noEmit` clean.
 **Unpushed:** `main` is ahead of `origin/main`. Nothing has been pushed since the redesign.
 
 **What just happened.** The Pump redesign landed: a full visual re-approach across all 12
@@ -31,7 +31,7 @@ seed. Spec and plan are in `docs/superpowers/`.
   in the types and never written. See `GAPS.md` §1.1. This is the top of the list.
 - **The wallet persists** across launches (AsyncStorage, added 9 September 2026).
   `Settings → RESET DEMO DATA` puts it back to the seed.
-- **Not one test renders a screen.** All 270 cover `src/lib`, `src/data`, the store and
+- **Not one test renders a screen.** All 295 cover `src/lib`, `src/data`, the store and
   isolated components. A chart bug that bunched both series into the middle third of the
   panel passed every one of them and was found by opening the app. Verify visually.
 
@@ -80,7 +80,7 @@ app/         12 screens, expo-router
 ```
 
 `src/lib` and `src/data` are the good part: pure functions over plain data, one definition
-of each operation, 270 tests. If you keep only `src/`, you have a portable model ready to
+of each operation, 295 tests. If you keep only `src/`, you have a portable model ready to
 validate against a real backend. Change logic there and let the screens follow.
 
 **Litres are held as dated `Lot`s**, each carrying the price paid and a 90-day expiry — not
@@ -235,9 +235,9 @@ profit**, and no copy may imply the savings compound.
 "what now":
 
 1. **Build the expiry conversion** — the app makes a promise it does not keep.
-2. ~~**Add persistence.**~~ Done. Next: an **account and session seam** — a session slice
-   and a working `SIGN OUT` with a stub behind it — since login, push tokens, wallet-pass
-   ownership and a biometric unlock all hang off it.
+2. ~~**Add persistence.**~~ ~~**Build the session seam.**~~ Both done — sign-in is a
+   phone-and-code stub over a real `useSession` store. Next: **local notifications**, the
+   one roadmap item needing no server.
 3. **Give Top up a confirmation and a receipt** — it moves money and behaves like a toggle.
 4. **Handle the zero state** on Wallet, Savings and Card — every new user starts there.
 5. **Neutralise or label the inert controls** — four sit on the two screens you would demo
@@ -264,6 +264,6 @@ profit**, and no copy may imply the savings compound.
 npx expo start --tunnel     # phone, any network
 npx expo start              # phone, same wifi, faster
 npx expo start --web        # browser
-npm test                    # 270 tests
+npm test                    # 295 tests
 npx tsc --noEmit
 ```

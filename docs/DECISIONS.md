@@ -638,3 +638,72 @@ prototype *harder* to demo. It sits with the other prototype-only affordances in
 and deliberately keeps `appearance`, which is a preference the user set rather than part of
 the demo's data.
 — Cost if wrong: a destructive one-tap control with no confirmation, recorded in GAPS 2.5.
+
+---
+
+## Decisions during the session seam (9 September 2026)
+
+A sign-in that is a stub in exactly one place — the code check — and real everywhere else,
+so that replacing it later replaces a transport rather than a design.
+
+### The session is its own store, not a slice of the wallet
+
+The wallet is data and the session is access. They have different lifetimes, different
+storage keys, and `resetDemo` throws away the first without touching the second. Folded
+together, resetting the demo would have ejected the user from the app — a Settings button
+that says nothing about signing out, signing you out.
+— Cost if wrong: two stores to hydrate instead of one, which the root layout already had to
+wait on anyway.
+
+### Signed in is derived, and a half-finished sign-in never reaches the store
+
+State is `phone` and `signedInAt`; `selectIsSignedIn` is `signedInAt !== null`. There is no
+`status` enum that can disagree with the identity, and no `'awaiting-code'` to be persisted
+and hydrated back into. The number travels between the two screens as a route param
+instead.
+— Cost if wrong: a reload mid-sign-in loses the number and starts over, which the code
+screen handles by redirecting rather than showing a screen with nothing to confirm.
+
+### `Stack.Protected` rather than a redirect effect
+
+expo-router 57 has a declarative guard, so protected routes simply do not exist while the
+guard is false. The usual alternative — `useSegments` with a `router.replace` in an effect —
+mounts the wrong screen first and navigates away from it, which is a visible frame and a
+race with hydration.
+— Cost if wrong: an expo-router API rather than one written here. Verified working: a cold
+start while signed out lands on `/sign-in` without an unmatched-route screen.
+
+### The gate waits on both stores, not just the wallet
+
+Deciding the guard before the *session* has hydrated would show a signed-in user the
+sign-in screen for a frame and then navigate away from it — the exact flicker the
+declarative guard was chosen to avoid.
+— Cost if wrong: cold start is as long as the slower of two reads.
+
+### The Keypad's rand-shaped assumptions became parameters
+
+It capped input at seven characters and dropped a leading zero, both correct for an amount
+and both wrong for a phone number — the second silently ate the first digit of every South
+African mobile number. `maxLength` and `allowLeadingZero` default to the old behaviour, so
+Top up is untouched.
+— Cost if wrong: two props on one component. The alternative was a second keypad.
+
+### ★ Signing out keeps the wallet on the device
+
+Sign-out ends the session and leaves the lots and ledger on disk, and the confirmation says
+so. This is a prototype compromise, recorded as such: with no server there is nothing to
+restore from, so clearing local data would destroy the wallet permanently rather than
+merely sign the user out. In production, with a server behind it, clearing on sign-out is
+the correct behaviour on a shared device.
+— Cost if wrong: a device that has been signed out still holds the previous user's wallet.
+Acceptable only because no real money or identity is behind it yet.
+
+### Sign out is confirmed, and on web that confirmation does nothing
+
+Wiring up an inert button with a one-tap action would have closed GAPS 3.1 by opening
+GAPS 2.5, so it asks first. It asks with `Alert.alert`, which react-native-web implements
+as an empty method — so on web the button is still inert, silently. iOS and Android, the
+real targets, are correct.
+— Cost if wrong: a browser demo has a dead sign-out. Recorded in GAPS 3.1. The fix is a
+confirmation built from the app's own components, which needs a modal pattern the design
+system does not have yet.
