@@ -21,27 +21,34 @@ describe('useWallet initial state (from the seed)', () => {
     expect(selectBalance(useWallet.getState())).toBeCloseTo(42.6, 1);
   });
 
-  test('nothing expires within 30 days', () => {
-    expect(selectExpiringSoon(useWallet.getState())).toBe(0);
+  // The laddered seed's oldest surviving lot -- 12.0 L bought 8 July at
+  // R21.40 -- expires 6 October, six days after the demo instant. The previous
+  // seed drained FIFO until only the newest lot stood, so this read 0.0 L and
+  // the expiry warning could not be demonstrated at all.
+  test('12.0 L expires within 30 days', () => {
+    expect(selectExpiringSoon(useWallet.getState())).toBe(12);
   });
 
-  test('September top-ups total 105.2 L, leaving 394.8 L of the 500 L cap', () => {
-    expect(selectLitresThisMonth(useWallet.getState())).toBeCloseTo(105.2, 1);
-    expect(selectTopUpCapRemaining(useWallet.getState())).toBeCloseTo(394.8, 1);
+  test('September top-ups total 18.6 L, leaving 481.4 L of the 500 L cap', () => {
+    expect(selectLitresThisMonth(useWallet.getState())).toBeCloseTo(18.6, 1);
+    expect(selectTopUpCapRemaining(useWallet.getState())).toBeCloseTo(481.4, 1);
   });
 
-  // The seed's last two fills — 31.4 L on 24 Sep and 38.0 L on 30 Sep — both
-  // fall inside the trailing 7 days from the demo instant, so 69.4 L of the 110 L weekly
-  // cap is already spent. That leaves less headroom than the balance, which
-  // makes the cap the binding constraint in the seeded state.
-  test('69.4 L of the weekly redemption cap is already spent, leaving 40.6 L', () => {
-    expect(selectRedemptionRemaining(useWallet.getState())).toBeCloseTo(40.6, 1);
+  // The seed's last two fills -- 12.0 L on 24 Sep and 8.0 L on 30 Sep -- both
+  // fall inside the trailing 7 days from the demo instant, so 20.0 L of the
+  // 110 L weekly cap is spent. That leaves far more headroom than the balance,
+  // so the cap is NOT the binding constraint on a laddered one-tank wallet --
+  // which is the truth of the product for a normal user. The cap is fraud
+  // mitigation aimed at heavy redemption, and the tests below construct that
+  // case explicitly rather than relying on the seed to produce it.
+  test('20.0 L of the weekly redemption cap is spent, leaving 90.0 L', () => {
+    expect(selectRedemptionRemaining(useWallet.getState())).toBeCloseTo(90.0, 1);
   });
 
-  test('spendable is the weekly cap, not the balance, when the cap is tighter', () => {
+  test('spendable is the balance while the weekly cap has more room than that', () => {
     const s = useWallet.getState();
-    expect(selectSpendable(s)).toBeCloseTo(40.6, 1);
-    expect(selectSpendable(s)).toBeLessThan(selectBalance(s));
+    expect(selectSpendable(s)).toBeCloseTo(42.6, 1);
+    expect(selectSpendable(s)).toBeLessThan(selectRedemptionRemaining(s));
   });
 
   test('appearance defaults to dark and the card starts unfrozen', () => {
@@ -141,7 +148,31 @@ describe('cardFill', () => {
 });
 
 describe('cardFill — weekly redemption cap (spec §8.5)', () => {
-  // R900 buys 41.2 L: inside the 42.6 L balance, but past the 40.6 L left of
+  // These tests are about the CAP, not about the seed. They used to lean on
+  // the seed happening to leave only 40.6 L of cap, which quietly turned them
+  // into no-ops the moment the seed changed -- the fill simply succeeded and
+  // the "declines" assertions passed for the wrong reason. So the binding
+  // state is now constructed here: a 60 L fill dated the day before the demo
+  // instant, added to the LEDGER only. Lots are untouched, so the balance
+  // stays 42.6 L and the cap is isolated from the balance guard above it.
+  beforeEach(() => {
+    const s = useWallet.getState();
+    useWallet.setState({
+      ledger: [...s.ledger, {
+        id: 'cap-setup', kind: 'fill', what: 'Fill · Setup',
+        when: new Date(2026, 8, 29), detail: '', grade: '95',
+        deltaLitres: -60, balanceAfter: 0,
+      }],
+    });
+  });
+
+  test('the constructed state really does make the cap the tighter limit', () => {
+    const s = useWallet.getState();
+    expect(selectRedemptionRemaining(s)).toBeCloseTo(30.0, 1);
+    expect(selectSpendable(s)).toBeLessThan(selectBalance(s));
+  });
+
+  // R900 buys 41.2 L: inside the 42.6 L balance, but past the 30.0 L left of
   // the weekly cap. So this isolates the cap from the balance guard above it.
   test('declines a fill that fits the balance but breaches the weekly cap', () => {
     const before = useWallet.getState();
@@ -180,11 +211,11 @@ describe('selectLastFill', () => {
     deltaLitres: delta, balanceAfter: 0,
   });
 
-  test('is the seed\'s newest fill — Shell Grayston, 38.0 L on 30 September', () => {
+  test('is the seed\'s newest fill — Shell Grayston, 8.0 L on 30 September', () => {
     const e = selectLastFill(useWallet.getState());
     expect(e).not.toBeNull();
     expect(e!.what).toBe('Fill · Shell Grayston');
-    expect(Math.abs(e!.deltaLitres)).toBeCloseTo(38.0, 1);
+    expect(Math.abs(e!.deltaLitres)).toBeCloseTo(8.0, 1);
     expect(e!.when.getDate()).toBe(30);
   });
 
