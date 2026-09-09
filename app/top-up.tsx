@@ -12,21 +12,22 @@ import { useTheme } from '../src/theme/ThemeProvider';
 import { RADIUS } from '../src/theme/tokens';
 import { MOTION } from '../src/theme/motion';
 import { useWallet, selectLitresThisMonth, selectTopUpCapRemaining } from '../src/store/wallet';
+import { suggestedTopUp } from '../src/lib/usage';
 import { MONTHLY_TOPUP_CAP_L } from '../src/lib/caps';
 import { formatLitres, formatRandWhole, formatPrice, spokenRand } from '../src/lib/format';
 import { priceOn } from '../src/data/prices';
 import { now } from '../src/lib/clock';
 
-// The design's R1 500 default is restored. Ruling C3 had lowered it to R500
-// because a 150 L monthly cap minus the seed's 105.2 L of September top-ups
-// left only 44.8 L (~R980), so R1 500 opened this screen already disabled at
-// "MONTHLY CAP REACHED". The cap is now 500 L (spec §8.2), leaving 394.8 L
-// (~R8 630) of headroom, so that no longer happens and the workaround goes.
+// The default amount is derived from how much fuel this wallet actually
+// burns, not written down. It used to be a hardcoded '1500', which had already
+// been changed once (to 500, then back) as the cap moved underneath it — a
+// literal that has to be re-tuned whenever anything around it changes is a
+// figure the model should be producing.
 export default function TopUp() {
   const t = useTheme();
   const router = useRouter();
-  const [raw, setRaw] = useState('1500');
   const topUp = useWallet(s => s.topUp);
+  const ledger = useWallet(s => s.ledger);
   const used = useWallet(selectLitresThisMonth);
   const remaining = useWallet(selectTopUpCapRemaining);
   const subscription = useWallet(s => s.subscription);
@@ -37,7 +38,11 @@ export default function TopUp() {
   // going inert.
   const lapsed = subscription === 'lapsed';
 
-  const price = priceOn('inland', now());
+  const at = now();
+  const price = priceOn('inland', at);
+  const suggested = suggestedTopUp(ledger, at, price);
+  // Falls back to R500 for a wallet with no fills to learn from.
+  const [raw, setRaw] = useState(String(suggested || 500));
   const rand = parseInt(raw || '0', 10);
   const litres = rand / price;
   const wouldExceed = litres > remaining;
@@ -72,6 +77,13 @@ export default function TopUp() {
           <Readout size={76}>{formatRandWhole(rand)}</Readout>
           <View style={{ width: 2, height: 56, backgroundColor: t.accent }} />
         </View>
+        {/* Only while the amount is still the suggestion. Once the user has
+            typed, the app should stop explaining their own number back to them. */}
+        {suggested > 0 && rand === suggested ? (
+          <Text style={{ marginTop: 12, fontFamily: 'Figtree_500Medium', fontSize: 12, color: t.textMuted }}>
+            About a month at your usage.
+          </Text>
+        ) : null}
         <View style={{ marginVertical: 26 }}><Rule /></View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <View>

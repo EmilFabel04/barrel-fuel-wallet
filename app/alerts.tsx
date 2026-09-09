@@ -10,12 +10,14 @@ import { Button } from '../src/components/Button';
 import { BarrelMark } from '../src/components/BarrelMark';
 import { useTheme, useElevation } from '../src/theme/ThemeProvider';
 import { RADIUS } from '../src/theme/tokens';
-import { priceOn, nextPriceChange } from '../src/data/prices';
+import { priceOn } from '../src/data/prices';
+import { priceRise } from '../src/lib/pricewatch';
 import { now } from '../src/lib/clock';
 import { formatPrice, formatLitres } from '../src/lib/format';
 import { round1 } from '../src/lib/round';
 
 const MONTHS_UPPER = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 // "07 OCT" — the design's own screen-title casing (spec §3.2), not
 // format.ts's `formatDayMonth` (unpadded, mixed case), which is built for
@@ -47,22 +49,20 @@ export default function Alerts() {
   // One instant for the whole render — see the note in (tabs)/index.tsx.
   const at = now();
   const currentPrice = priceOn('inland', at);
-  const nextChange = nextPriceChange('inland', at);
-  // Guarded the same way index.tsx guards it: nothing here can throw if the
-  // table ever has no change scheduled after now(), even though today's
-  // seed always finds 7 Oct.
-  const nextPrice = nextChange ? nextChange.pricePerLitre : currentPrice;
-  const nextDate = nextChange ? nextChange.effectiveFrom : at;
-  const deltaCents = nextChange ? Math.round((nextPrice - currentPrice) * 100) : 0;
-  const nextDateLabel = nextChange ? ddMonUpper(nextDate) : '—';
+  // One definition of "the next scheduled change": src/lib/pricewatch.ts,
+  // shared with the Wallet. This screen used to re-derive it from
+  // nextPriceChange alongside its own delta and date arithmetic, which is
+  // exactly the duplication that let the Wallet's "02 Oct" literal survive
+  // three fix rounds while contradicting DMPR's first-Wednesday rule.
+  const rise = priceRise('inland', at);
+  const nextPrice = rise ? rise.pricePerLitre : currentPrice;
+  const nextDate = rise ? rise.effectiveFrom : at;
+  const deltaCents = rise ? rise.deltaCents : 0;
+  const nextDateLabel = rise ? ddMonUpper(nextDate) : '—';
+  // Derived rather than written: SA prices move on the first Wednesday, but
+  // naming the weekday from the date means the copy cannot drift from it.
+  const nextWeekday = DAYS[nextDate.getDay()];
 
-  // "buys you N litres more than it will on Wednesday" — how many more
-  // litres the same R2 000 buys today than it will once the price above
-  // takes effect. Derived from the same price table as everything else on
-  // this screen, never hand-picked: the canvas's "2.4 L saved" was off by
-  // ~5x against these two prices (R2 000 / 21.87 = 91.4 L vs / 21.99 = 91.0
-  // L, a 0.5 L gap, not 2.4 L). When there's no scheduled change, nextPrice
-  // falls back to currentPrice above, so this naturally resolves to 0.
   const illustrativeRand = 2000;
   const litresSaved = round1(illustrativeRand / currentPrice - illustrativeRand / nextPrice);
 
@@ -120,8 +120,18 @@ export default function Alerts() {
             <Readout size={54}>{formatLitres(litresSaved)}</Readout>
             <Readout size={18} color={t.textDim}>L saved</Readout>
           </View>
+          {rise ? (
+            <View style={{ marginTop: 16 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7 }}>
+                <SectionLabel>{`${rise.daysUntil} days left at R${formatPrice(currentPrice)}`}</SectionLabel>
+              </View>
+              <View style={{ height: 4, borderRadius: RADIUS.xs, backgroundColor: t.hairline }}>
+                <View style={{ height: 4, borderRadius: RADIUS.xs, width: `${rise.progress * 100}%`, backgroundColor: t.accent }} />
+              </View>
+            </View>
+          ) : null}
           <Text style={{ marginVertical: 14, fontFamily: 'Figtree_400Regular', fontSize: 13, lineHeight: 19.5, color: t.textDim }}>
-            {`Topping up R2 000 before the increase buys you ${formatLitres(litresSaved)} litres more than it will on Wednesday.`}
+            {`Topping up R2 000 before the increase buys you ${formatLitres(litresSaved)} litres more than it will on ${nextWeekday}.`}
           </Text>
           <Button label={`TOP UP BEFORE ${nextDateLabel}`} height={54} onPress={() => router.push('/top-up')} />
         </View>
