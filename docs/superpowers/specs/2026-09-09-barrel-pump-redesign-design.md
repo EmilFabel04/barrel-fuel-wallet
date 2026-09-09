@@ -435,8 +435,9 @@ May remains the tallest bar. Every fill still consumes within its 90-day window.
   balance to roughly 130 L — about three tanks. A one-tank balance is the truer product
   shape, so realism wins.
 - **Burn rate falls to 15.7 L/month**, which is low for a real driver. It is the seed's
-  fiction either way; tune the fill sizes during implementation if a higher figure reads
-  better, keeping the ladder intact.
+  fiction either way. Fill sizes may be tuned during implementation if a higher figure
+  reads better, but the ladder must survive and **the whole §11 table must be recomputed
+  from the model and re-asserted** — no figure in it may be carried over by hand.
 
 ### Tests that must be re-pinned
 
