@@ -6,13 +6,35 @@ import { RADIUS } from '../theme/tokens';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', '←'];
 
-export function Keypad({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+/**
+ * Both defaults describe a rand amount, which is what this was built for: seven
+ * characters is a sensible ceiling on a top-up, and a leading zero is dropped so
+ * an amount never reads `042`.
+ *
+ * A phone number wants neither — it is ten digits and every South African mobile
+ * number opens with a zero — so both are parameters rather than constants.
+ */
+export function Keypad({
+  value,
+  onChange,
+  maxLength = 7,
+  allowLeadingZero = false,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  maxLength?: number;
+  allowLeadingZero?: boolean;
+}) {
   const t = useTheme();
   const press = (k: string) => {
     Haptics.selectionAsync();
     if (k === '←') return onChange(value.slice(0, -1));
-    if (k === '00') return onChange(value === '0' || value === '' ? '0' : (value + '00').slice(0, 7));
-    onChange(((value === '0' ? '' : value) + k).slice(0, 7));
+    const base = !allowLeadingZero && value === '0' ? '' : value;
+    if (k === '00') {
+      if (!allowLeadingZero && (value === '0' || value === '')) return onChange('0');
+      return onChange((base + '00').slice(0, maxLength));
+    }
+    onChange((base + k).slice(0, maxLength));
   };
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', backgroundColor: t.surface, gap: 1, borderRadius: RADIUS.md, overflow: 'hidden' }}>

@@ -15,6 +15,7 @@ import { ThemeProvider } from '../src/theme/ThemeProvider';
 import { MOTION } from '../src/theme/motion';
 import { Banner } from '../src/components/Banner';
 import { useWallet } from '../src/store/wallet';
+import { useSession, selectIsSignedIn } from '../src/store/session';
 import { STATIONS } from '../src/data/stations';
 import { formatLitres } from '../src/lib/format';
 
@@ -50,11 +51,15 @@ export default function RootLayout() {
     JetBrainsMono_400Regular, JetBrainsMono_500Medium,
     JetBrainsMono_700Bold, JetBrainsMono_800ExtraBold,
   });
-  // The wallet is read from storage asynchronously, so the screens wait for it
-  // as well as for the fonts. Painting the seed first and swapping to the
-  // persisted wallet a frame later is worse than one slightly longer hold.
-  const hydrated = useWallet(s => s.hasHydrated);
-  if (!loaded || !hydrated) return null;
+  // Both stores are read from storage asynchronously, so the screens wait for
+  // them as well as for the fonts. Painting the seed first and swapping to the
+  // persisted wallet a frame later is worse than one slightly longer hold — and
+  // deciding the guard below before the *session* has hydrated would show a
+  // signed-in user the sign-in screen for a frame.
+  const walletHydrated = useWallet(s => s.hasHydrated);
+  const sessionHydrated = useSession(s => s.hasHydrated);
+  const signedIn = useSession(selectIsSignedIn);
+  if (!loaded || !walletHydrated || !sessionHydrated) return null;
   return (
     <SafeAreaProvider>
       <ThemeProvider>
@@ -69,15 +74,24 @@ export default function RootLayout() {
           animation: 'slide_from_right',
           animationDuration: MOTION.screen,
         }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="top-up" />
-          <Stack.Screen name="litres" />
-          <Stack.Screen name="history" />
-          <Stack.Screen name="alerts" />
-          <Stack.Screen name="subscribe" />
-          <Stack.Screen name="fill/[id]" />
+          {/* Declarative rather than a redirect effect: when the guard is false
+              these routes do not exist, so there is no navigation race and no
+              frame in which the wrong screen is mounted. */}
+          <Stack.Protected guard={signedIn}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="top-up" />
+            <Stack.Screen name="litres" />
+            <Stack.Screen name="history" />
+            <Stack.Screen name="alerts" />
+            <Stack.Screen name="subscribe" />
+            <Stack.Screen name="fill/[id]" />
+          </Stack.Protected>
+          <Stack.Protected guard={!signedIn}>
+            <Stack.Screen name="sign-in/index" />
+            <Stack.Screen name="sign-in/code" />
+          </Stack.Protected>
         </Stack>
-        <ArrivalBanner />
+        {signedIn ? <ArrivalBanner /> : null}
         </View>
       </ThemeProvider>
     </SafeAreaProvider>

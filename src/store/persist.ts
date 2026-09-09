@@ -2,10 +2,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createJSONStorage } from 'zustand/middleware';
 import type { WalletState } from './wallet';
 
+// ---------------------------------------------------------------------------
+// Shared machinery. Every persisted store in the app goes through this half, so
+// there is one definition of how a `Date` survives a round trip and one of what
+// happens to state the current code cannot read.
+// ---------------------------------------------------------------------------
+
 /**
- * Persisting the wallet means round-tripping a model that is full of `Date`
- * through JSON, which turns every one of them into a string and silently
- * breaks every comparison downstream.
+ * Persisting a store means round-tripping a model full of `Date` through JSON,
+ * which turns every one of them into a string and silently breaks every
+ * comparison downstream.
  *
  * Dates are therefore tagged explicitly on the way out and rebuilt on the way
  * in. The alternative — reviving any string that looks like an ISO date — would
@@ -30,6 +36,34 @@ export function reviver(_key: string, value: unknown) {
 }
 
 /**
+ * AsyncStorage with the date handling above applied. AsyncStorage rather than
+ * MMKV because it works in Expo Go, and persistence should not be the change
+ * that forces a native build.
+ *
+ * The generic admits `undefined` because a `migrate` can return it — that is
+ * how state from an unreadable version is dropped.
+ */
+export const jsonStorage = <T>() =>
+  createJSONStorage<T | undefined>(() => AsyncStorage, { replacer, reviver });
+
+/**
+ * A `migrate` that keeps state written by the current version and discards
+ * anything else. Returning `undefined` leaves zustand's merge with nothing to
+ * apply, so the store keeps its initial state — a legible starting point, which
+ * a half-revived older shape would not be.
+ *
+ * The hook has to exist before a shape changes, not after.
+ */
+export const discardUnknownVersion =
+  <T>(current: number) =>
+  (persisted: unknown, version: number): T | undefined =>
+    version === current ? (persisted as T) : undefined;
+
+// ---------------------------------------------------------------------------
+// The wallet's own configuration.
+// ---------------------------------------------------------------------------
+
+/**
  * Everything that should survive a cold start. The two omissions are
  * deliberate: `arrivedFillId` and `lastCardFillError` both describe a moment
  * rather than a state, and reviving either would replay an event the user
@@ -52,26 +86,9 @@ export const partialize = (s: WalletState): PersistedWallet =>
 
 export const STORE_VERSION = 1;
 
-/**
- * The hook has to exist before the shape changes, not after. Until there is a
- * version 2 there is nothing to translate, so anything not written by the
- * current version is dropped: returning `undefined` leaves zustand's merge with
- * nothing to apply and the store keeps its seed, which is a legible starting
- * point. A half-revived older shape would not be.
- */
-export const migrate = (persisted: unknown, version: number): PersistedWallet | undefined =>
-  version === STORE_VERSION ? (persisted as PersistedWallet) : undefined;
+export const migrate = discardUnknownVersion<PersistedWallet>(STORE_VERSION);
 
-/**
- * The AsyncStorage key the whole wallet lives under. AsyncStorage rather than
- * MMKV because it works in Expo Go, and this change should not be the one that
- * forces a native build.
- */
+/** The AsyncStorage key the whole wallet lives under. */
 export const STORAGE_KEY = 'barrel-wallet';
 
-// The generic admits `undefined` because `migrate` can return it — that is how
-// state from an unreadable version is dropped.
-export const walletStorage = createJSONStorage<PersistedWallet | undefined>(() => AsyncStorage, {
-  replacer,
-  reviver,
-});
+export const walletStorage = jsonStorage<PersistedWallet>();

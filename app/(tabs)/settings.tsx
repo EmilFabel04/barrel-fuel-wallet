@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
@@ -11,6 +11,7 @@ import { Button } from '../../src/components/Button';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { RADIUS } from '../../src/theme/tokens';
 import { useWallet, Appearance } from '../../src/store/wallet';
+import { useSession } from '../../src/store/session';
 import { MONTHLY_TOPUP_CAP_L, WEEKLY_REDEMPTION_CAP_L } from '../../src/lib/caps';
 
 const TOGGLE_LABELS = ['Price increase alerts', 'Weekly balance summary', 'Station promotions'];
@@ -31,6 +32,7 @@ export default function Settings() {
   const setAppearance = useWallet(s => s.setAppearance);
   const scheduleDemoFill = useWallet(s => s.scheduleDemoFill);
   const resetDemo = useWallet(s => s.resetDemo);
+  const signOut = useSession(s => s.signOut);
   const trialDaysLeft = useWallet(s => s.trialDaysLeft);
   const subscription = useWallet(s => s.subscription);
   // spec §9.3: "Subscription · Trial · 24 days left" while trialling; once
@@ -117,7 +119,25 @@ export default function Settings() {
         </View>
 
         <View style={{ paddingTop: 24, paddingBottom: 12, gap: 14 }}>
-          <Button label="SIGN OUT" variant="secondary" height={54} />
+          <Button
+            label="SIGN OUT"
+            variant="secondary"
+            height={54}
+            // Confirmed rather than instant: wiring this control up without a
+            // confirm would close one gap (an inert button) by opening another
+            // (GAPS 2.5). The copy states what happens to the wallet, because
+            // that is the part a user cannot guess.
+            onPress={() =>
+              Alert.alert(
+                'Sign out?',
+                'Your litres stay on this device and will be here when you sign back in.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Sign out', style: 'destructive', onPress: signOut },
+                ],
+              )
+            }
+          />
           <Readout size={11} weight="500" color={t.textMuted} style={{ textAlign: 'center' }}>
             Barrel v2.4.0 · FSP 51284
           </Readout>
