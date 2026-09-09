@@ -3,6 +3,41 @@
 Read this before changing anything. It covers what the project is, the rules that hold it
 together, and the traps that bit repeatedly during the build.
 
+---
+
+## Start here — state as of 9 September 2026
+
+**Branch:** `main`. Clean tree. 260 tests green, `npx tsc --noEmit` clean.
+**Unpushed:** `main` is ahead of `origin/main`. Nothing has been pushed since the redesign.
+
+**What just happened.** The Pump redesign landed: a full visual re-approach across all 12
+screens, plus fill history, a reworked Savings screen, the price-rise panel, simulated
+arriving fills, a lot expiry timeline, and burn-rate top-up sizing — on a re-cut laddered
+seed. Spec and plan are in `docs/superpowers/`.
+
+**Read in this order:**
+
+1. This file — the rules, the seeded state, the traps.
+2. `docs/UI.md` — what every screen is for, what each number means, and where it comes
+   from. Includes the expiry mechanic in full.
+3. `docs/GAPS.md` — **what is missing**, across the model, UX and UI. Start any new work
+   from here; §5 is a five-item shortlist.
+4. `docs/DECISIONS.md` — why things are the way they are, with cost-if-wrong on each.
+
+**The three things most worth knowing before you touch anything:**
+
+- **The app promises something it does not do.** Three screens say unused litres convert
+  back to the rand you paid. Nothing implements it — the `expiry` ledger kind is declared
+  in the types and never written. See `GAPS.md` §1.1. This is the top of the list.
+- **Nothing persists.** The store is in memory; a reload restores the seed.
+- **Not one test renders a screen.** All 260 cover `src/lib`, `src/data`, the store and
+  isolated components. A chart bug that bunched both series into the middle third of the
+  panel passed every one of them and was found by opening the app. Verify visually.
+
+**Running it:** `npx expo start`. The dev server is not currently running.
+
+---
+
 ## What this is
 
 A **UI shell over mock data** for Barrel: a prepaid fuel wallet for South African motorists,
@@ -20,7 +55,9 @@ no bank, and no station agreements.
 |---|---|
 | `docs/superpowers/specs/2026-09-06-barrel-fuel-wallet-design.md` | The original authority. Still binds for the data model, guardrails and product rules. |
 | `docs/superpowers/specs/2026-09-09-barrel-pump-redesign-design.md` | **Supersedes its §3 and §6** — the Pump design system, the four added features, the laddered seed. |
-| `docs/DECISIONS.md` | 58 rulings — 46 from the build, then 47+ made after it. Each records reasoning and cost-if-wrong. |
+| `docs/DECISIONS.md` | The rulings — from the original build, then the redesign. Each records reasoning and cost-if-wrong. |
+| `docs/UI.md` | How the UI works: every screen, every figure, and the mechanics behind them. |
+| `docs/GAPS.md` | What is missing — model, UX, UI, testing. Where new work should start. |
 | `docs/superpowers/plans/2026-09-07-barrel-fuel-wallet-ui.md` | The build plan. **Historical — it was wrong in ~15 places.** Do not treat as current. |
 
 **When anything disagrees with the spec, the spec wins.** This was true seven times during
@@ -42,7 +79,7 @@ app/         12 screens, expo-router
 ```
 
 `src/lib` and `src/data` are the good part: pure functions over plain data, one definition
-of each operation, 262 tests. If you keep only `src/`, you have a portable model ready to
+of each operation, 260 tests. If you keep only `src/`, you have a portable model ready to
 validate against a real backend. Change logic there and let the screens follow.
 
 **Litres are held as dated `Lot`s**, each carrying the price paid and a 90-day expiry — not
@@ -191,6 +228,18 @@ profit**, and no copy may imply the savings compound.
   text token at AAA (≥7:1), asserted in `tokens.test.ts`.
 - No persistence, no onboarding, no map, no real push, no billing.
 
+## Where to start next
+
+`docs/GAPS.md` is the full audit. Its shortlist, repeated here because it is the answer to
+"what now":
+
+1. **Build the expiry conversion** — the app makes a promise it does not keep.
+2. **Add persistence** — everything else is judged through a demo that resets.
+3. **Give Top up a confirmation and a receipt** — it moves money and behaves like a toggle.
+4. **Handle the zero state** on Wallet, Savings and Card — every new user starts there.
+5. **Neutralise or label the inert controls** — four sit on the two screens you would demo
+   first, including both wallet-pass buttons.
+
 ## Open product decisions
 
 1. ~~**The Savings headline.**~~ **Answered: no.** "R2,590 of fuel locked in below today's
@@ -212,6 +261,6 @@ profit**, and no copy may imply the savings compound.
 npx expo start --tunnel     # phone, any network
 npx expo start              # phone, same wifi, faster
 npx expo start --web        # browser
-npm test                    # 262 tests
+npm test                    # 260 tests
 npx tsc --noEmit
 ```
