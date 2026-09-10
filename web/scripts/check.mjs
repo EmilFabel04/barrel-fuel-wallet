@@ -154,6 +154,10 @@ for (const p of src.filter(p => p.endsWith('.tsx') && !p.includes(join('app', 't
 // endpoint we wrote would appear.
 const ALLOWED = [
   /^https?:\/\/(www\.)?getbarrel\./i,
+  // Task 7 — the waitlist form posts to Buttondown. This is the one
+  // third-party origin the spec permits (spec §8, §9): the form's own
+  // action attribute, not a script, pixel or font-CDN request.
+  /^https?:\/\/(www\.)?buttondown\.com/i,
 ];
 // §7 provenance is the one place a third-party origin belongs in source. The
 // price series is the site's only factual claim, so data/fuel-prices.ts has to
@@ -301,6 +305,32 @@ if (existsSync(chart)) {
 } else {
   fail('chart missing', chart, 'not created');
 }
+
+// Task 7 — the form states its purpose at the point of collection, and the
+// privacy notice names the processor and the cross-border transfer
+const form = join(ROOT, 'components/WaitlistForm.tsx');
+if (existsSync(form)) {
+  const s = read(form);
+  if (/<iframe/i.test(s)) fail('§8 iframe embeds are disqualified', form, '<iframe>');
+  if (/Get started|Sign up now/i.test(s)) fail('§4.1 button copy implies a shipped product', form, 'label');
+}
+const privacy = join(ROOT, 'app/privacy/page.tsx');
+if (existsSync(privacy)) {
+  const s = read(privacy);
+  for (const [re, name] of [
+    [/outside South Africa|cross-border|transferred to servers/i, 'the cross-border transfer'],
+    [/unsubscribe|remove|opt out/i, 'the removal path'],
+  ]) if (!re.test(s)) fail('§8 privacy notice incomplete', privacy, name);
+} else {
+  fail('§8 /privacy missing', privacy, 'not created');
+}
+
+// The waitlist endpoint is inert until the site owner fills in their list id.
+// Failing here is deliberate: a form that silently posts to an incomplete URL
+// is worse than a build that refuses.
+const formFile = join(ROOT, 'components/WaitlistForm.tsx');
+if (existsSync(formFile) && read(formFile).includes('__SET_BEFORE_LAUNCH__'))
+  fail('§8 waitlist endpoint not configured', formFile, 'LIST_ID is still the placeholder');
 
 if (failures.length) {
   console.error(`\n${failures.length} check failure(s):\n`);

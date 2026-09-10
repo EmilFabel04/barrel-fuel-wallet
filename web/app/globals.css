@@ -115,3 +115,44 @@ hr.rule {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* The one amber, and the only place this literal appears. Black label at
+   7.31:1, not white at 2.87:1 — the app's Button.tsx uses t.inverse here,
+   which is white in light mode and below the AA floor. The ink border is
+   Button.tsx's needsEdge rule: amber is 2.87:1 against white, so without a
+   border the fill has no defined edge. */
+.button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 24px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--text);
+  border: 1px solid var(--text);
+  font-family: var(--font-figtree), system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.45px;
+  cursor: pointer;
+  transition: opacity 120ms ease;
+}
+
+/* Press and hover dim rather than recolour — the app dims too, and a second
+   amber here would put two accent values in the stylesheet. */
+.button:hover { opacity: 0.9; }
+.button:active { opacity: 0.8; }
+
+.field {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-figtree), system-ui, sans-serif;
+  font-size: 17px;
+}

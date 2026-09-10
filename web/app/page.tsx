@@ -1,5 +1,6 @@
 import { Lockup } from '@/components/Lockup';
 import { PriceChart } from '@/components/PriceChart';
+import { WaitlistForm } from '@/components/WaitlistForm';
 
 export default function Home() {
   return (
@@ -59,6 +60,17 @@ export default function Home() {
           changes. That’s the whole product — certainty about what you’ve paid, not a
           return on it.
         </p>
+      </section>
+
+      <div className="wrap" style={{ paddingTop: 96 }}><hr className="rule" /></div>
+
+      {/* Block 4 — the waitlist form, the site's one amber button. */}
+      <section id="waitlist" className="wrap" style={{ paddingTop: 48 }}>
+        <p className="label">The waitlist</p>
+        <h2 style={{ fontSize: 'clamp(26px, 5vw, 34px)', lineHeight: 1.2, fontWeight: 800, letterSpacing: '-0.02em', marginTop: 16 }}>
+          We’ll tell you when it’s real.
+        </h2>
+        <WaitlistForm />
       </section>
     </main>
   );
