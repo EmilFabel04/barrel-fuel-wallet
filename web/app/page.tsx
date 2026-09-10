@@ -1,4 +1,5 @@
 import { Lockup } from '@/components/Lockup';
+import { PriceChart } from '@/components/PriceChart';
 
 export default function Home() {
   return (
@@ -40,6 +41,7 @@ export default function Home() {
           You find out when you get to the pump. You have no say in it, no warning that
           lands anywhere useful, and no way to buy at last month’s price once it’s gone.
         </p>
+        <PriceChart />
       </section>
 
       <div className="wrap" style={{ paddingTop: 96 }}><hr className="rule" /></div>

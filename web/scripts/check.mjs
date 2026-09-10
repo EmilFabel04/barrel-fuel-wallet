@@ -27,9 +27,14 @@ const src = walk(ROOT, ['.ts', '.tsx', '.css', '.mjs']).filter(
 const cssish = src.filter(p => ['.css', '.tsx'].includes(extname(p)));
 const read = p => readFileSync(p, 'utf8');
 
-// §5.1 — banned visual effects
+const stripComments = s =>
+  s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+// §5.1 — banned visual effects. Comments are stripped first, matching the
+// palette, lime and radius checks below — a code comment that merely
+// mentions "gradient" must not fail the build.
 for (const p of cssish) {
-  const s = read(p);
+  const s = stripComments(read(p));
   for (const [re, name] of [
     [/gradient/i, 'gradient'],
     [/backdrop-filter/i, 'backdrop-filter'],
@@ -44,9 +49,6 @@ for (const d of Object.keys(deps)) {
   if (/icon|lucide|heroicons|feather|font-awesome|tailwind|bootstrap/i.test(d))
     fail('§5.1 banned dependency', join(ROOT, 'package.json'), d);
 }
-
-const stripComments = s =>
-  s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
 // §5.2 — the palette is closed. These eleven values are the whole system;
 // any other literal is a defect. Comments are stripped first, so
@@ -284,6 +286,20 @@ for (const p of cssish) {
     /margin\s*:\s*['"][^'"]*\bauto\b/,                            // JSX shorthand string
   ].some(re => re.test(s));
   if (hits) fail('§5.1 auto side-margin centres the layout', p, 'auto side-margin');
+}
+
+// Task 6 — the chart must label its grade, zone and source on the page. The
+// caption cites the publisher by name (FUEL_PRICE_SOURCE.sourceName), never
+// FUEL_PRICE_SOURCE.source, which is a dmpr.gov.za URL — rendering that would
+// put a third-party origin in built output and fail the §9 scan above.
+const chart = join(ROOT, 'components/PriceChart.tsx');
+if (existsSync(chart)) {
+  const s = read(chart);
+  for (const field of ['grade', 'zone', 'sourceName'])
+    if (!s.includes(`FUEL_PRICE_SOURCE.${field}`))
+      fail('§7 chart must display its provenance', chart, `FUEL_PRICE_SOURCE.${field}`);
+} else {
+  fail('chart missing', chart, 'not created');
 }
 
 if (failures.length) {

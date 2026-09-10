@@ -44,6 +44,8 @@ export type FuelPricePoint = { month: string; pricePerLitre: number };
 
 export const FUEL_PRICE_SOURCE = {
   source: 'https://www.dmpr.gov.za/Branches/Petroleum-Resources/Fuel-Prices',
+  sourceName: 'Department of Mineral and Petroleum Resources',
+  crosscheckName: 'Automobile Association of South Africa',
   retrieved: '2026-09-10',
   grade: '95 Unleaded',
   zone: 'Inland (Gauteng)',
