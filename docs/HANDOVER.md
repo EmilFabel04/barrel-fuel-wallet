@@ -267,3 +267,61 @@ npx expo start --web        # browser
 npm test                    # 295 tests
 npx tsc --noEmit
 ```
+
+## The website
+
+`web/` is a pre-launch marketing site for Barrel — a waitlist page plus `/terms` and
+`/privacy` — built separately from the app documented above. It is a second, independent
+Next.js project, not a screen or a feature of the Expo app, and it has its own lockfile
+rather than being folded into this repo's npm workspace.
+
+**Why it is not a workspace.** The app pins `react@19.2.3` (what Expo 57 / React Native
+0.86 requires); `web/` runs Next 16 on `react@19.2.8`. A shared workspace forces one
+resolved React version for both, so either the app installs a React it was not built
+against or the site is held back from the version Next wants. Two lockfiles keep each
+project on the React its framework actually shipped for, at the cost of two
+`node_modules`. Run everything from inside `web/` — `cd web && npm install`, `npm run
+dev`, etc. — never `npm install` from the repo root expecting it to reach `web/`.
+
+**Why `npm run check` instead of tests.** `web/` has no test runner by design (see the
+website spec, §9). The site is mostly static markup and copy; the properties worth
+guarding mechanically are the visual and content constraints in the spec — the closed
+eleven-colour palette, no fill colour used as text, no lime background, no centred
+layout, a 10px radius ceiling, no mechanics vocabulary outside `/terms`, no import
+reaching outside `web/`, no third-party request beyond Buttondown, and the provenance
+fields on the price data — not unit behaviour. `scripts/check.mjs` encodes those rules
+directly against the built output and source text and is the project's only automated
+gate. `npm run verify` runs `next build` then `check.mjs`; that is what CI or a
+pre-deploy step should call.
+
+**Spec and plan.** `docs/superpowers/specs/2026-09-09-barrel-website-design.md` is the
+design spec; `docs/superpowers/plans/2026-09-09-barrel-website.md` is the build plan it
+was executed against. Both apply only to `web/`, not to the app.
+
+**The rule that matters most: `src/data/prices.ts` must never reach the public site.**
+That file is this app's invented demo data — a fictional 2026 supply shock with pinned
+September/October values, written to make the prototype's screens tell a coherent story.
+It is not real. `web/` has its own price file, `web/data/fuel-prices.ts`, holding actual
+published DMPR (Department of Mineral and Petroleum Resources) figures, cross-checked
+against the AA's published series, each entry carrying its source, retrieval date, fuel
+grade and pricing zone. `scripts/check.mjs` fails the build if that provenance is
+missing and fails separately if any import in `web/` resolves to a path outside `web/`
+— which is exactly the path `src/data/prices.ts` would need to be reached by. Do not
+weaken or route around either check to make a number match the app; get the number from
+`web/data/fuel-prices.ts` or leave it out.
+
+**Not deployed.** The site has been built and verified (`npm run verify` fails on
+exactly one check, deliberately — see below) but no Vercel project exists for it and
+nothing has been pushed live. `LIST_ID` in `web/components/WaitlistForm.tsx` is still
+the placeholder `'__SET_BEFORE_LAUNCH__'`; `check.mjs` refuses the build on that
+placeholder on purpose, so the site cannot go live pointing nowhere. The site owner has
+to create the Buttondown account (it needs their own billing and identity), set
+`LIST_ID` to the real value, and only then deploy.
+
+**The root `tsconfig.json` excludes `web/`.** It carries `"exclude": ["web"]` for
+exactly one reason: without it, `npx tsc --noEmit` at the repo root walks into `web/`
+and type-checks it against Next's React types, which are not the React types the Expo
+app is written against — the app then fails to type-check on code it never touched.
+Removing that exclusion is the fastest way to make `npx tsc --noEmit` fail for a reason
+that has nothing to do with the app. Leave it in place; `web/` type-checks itself, via
+its own `tsconfig.json`, as part of `next build`.
