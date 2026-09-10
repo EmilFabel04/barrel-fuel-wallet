@@ -153,12 +153,26 @@ for (const p of src.filter(p => p.endsWith('.tsx') && !p.includes(join('app', 't
 const ALLOWED = [
   /^https?:\/\/(www\.)?getbarrel\./i,
 ];
+// §7 provenance is the one place a third-party origin belongs in source. The
+// price series is the site's only factual claim, so data/fuel-prices.ts has to
+// name the department it was taken from and the body it was cross-checked
+// against — a figure nobody can trace is worth less than no figure. These are
+// citations in a comment and in a string; the file declares data and makes no
+// request. The exemption is scoped to that one file and those two origins, so
+// any other origin appearing in it still fails, and the built-output scan
+// below is untouched: a URL that reaches the rendered page is still a defect.
+const PROVENANCE_FILE = join(ROOT, 'data/fuel-prices.ts');
+const PROVENANCE_ORIGINS = [
+  /^https?:\/\/(www\.)?dmpr\.gov\.za/i,  // the DMRE/DMPR published price tables
+  /^https?:\/\/(www\.)?aa\.co\.za/i,     // the AA of South Africa, cross-check
+];
 const scanForOrigins = files => {
   for (const p of files) {
+    const allowed = p === PROVENANCE_FILE ? [...ALLOWED, ...PROVENANCE_ORIGINS] : ALLOWED;
     for (const m of read(p).matchAll(/https?:\/\/[a-z0-9.-]+/gi)) {
       const url = m[0];
       if (/schema\.org|w3\.org/i.test(url)) continue; // namespaces, not requests
-      if (!ALLOWED.some(re => re.test(url)))
+      if (!allowed.some(re => re.test(url)))
         fail('§9 third-party origin', p, url);
     }
   }
