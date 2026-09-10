@@ -137,7 +137,6 @@ hr.rule {
   font-weight: 800;
   letter-spacing: 0.45px;
   cursor: pointer;
-  transition: opacity 120ms ease;
 }
 
 /* Press and hover dim rather than recolour — the app dims too, and a second

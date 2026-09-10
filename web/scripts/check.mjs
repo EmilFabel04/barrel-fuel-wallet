@@ -22,9 +22,13 @@ function walk(dir, exts, out = []) {
 }
 
 const src = walk(ROOT, ['.ts', '.tsx', '.css', '.mjs']).filter(
-  p => !p.includes(`${join('scripts', 'check.mjs')}`) && !p.endsWith('next-env.d.ts')
+  p => !p.includes(`${join('scripts', 'check.mjs')}`) && !p.endsWith('next-env.d.ts') && !p.endsWith('next.config.ts')
 );
-const cssish = src.filter(p => ['.css', '.tsx'].includes(extname(p)));
+// .ts is included alongside .css/.tsx: the scan scope is meant to be "does
+// this reach the page", not a file-extension boundary. Colour, copy and
+// mechanics are all as easy to hide in a data/*.ts module as in a component,
+// and a plain .ts file is the most ordinary place to extract either into.
+const cssish = src.filter(p => ['.css', '.tsx', '.ts'].includes(extname(p)));
 const read = p => readFileSync(p, 'utf8');
 
 const stripComments = s =>
@@ -32,14 +36,32 @@ const stripComments = s =>
 
 // §5.1 — banned visual effects. Comments are stripped first, matching the
 // palette, lime and radius checks below — a code comment that merely
-// mentions "gradient" must not fail the build.
+// mentions "gradient" must not fail the build. @keyframes/animation are a
+// named §5.1 tell (scroll-reveal); translateX(-50%)/translate(-50%...) is a
+// second route to the centred layout the auto-margin check below already
+// bans; filter: url(...) is an SVG-filter blur that evades the blur() text
+// pattern. animation/animation-name/transition are banned by VALUE, not by
+// keyword, because `transition: none` and `animation: none` are exactly
+// what the prefers-reduced-motion block further down uses to turn motion
+// off, and that block must keep passing.
 for (const p of cssish) {
   const s = stripComments(read(p));
   for (const [re, name] of [
     [/gradient/i, 'gradient'],
     [/backdrop-filter/i, 'backdrop-filter'],
     [/\bblur\s*\(/i, 'blur()'],
+    [/@keyframes/i, '@keyframes'],
+    [/\btranslateX\(\s*-50%\s*\)/i, 'translateX(-50%)'],
+    [/\btranslate\(\s*-50%/i, 'translate(-50%...)'],
+    [/\bfilter\s*:\s*[^;}\n]*\burl\(/i, 'filter: url(...)'],
   ]) if (re.test(s)) fail(`§5.1 banned effect: ${name}`, p, 'found');
+
+  for (const prop of ['animation', 'animation-name', 'transition']) {
+    for (const m of s.matchAll(new RegExp(`(?:^|[;{\\s])${prop}\\s*:\\s*([^;}\\n]+)`, 'gi'))) {
+      const value = m[1].replace(/!important/i, '').trim().toLowerCase();
+      if (value !== 'none') fail(`§5.1 banned effect: ${prop}`, p, m[1].trim());
+    }
+  }
 }
 
 // §5.1 — no icon library, no CSS framework
@@ -64,8 +86,45 @@ for (const p of cssish) {
   }
 }
 
+// §5.2 — the palette is closed to more than hex literals. rgb()/hsl()/
+// color-mix()/lab()-family functions and CSS named colours reach the same
+// unauthorised colour a hex literal would, and a maintainer reaches for
+// them just as readily. Function forms are banned outright: nothing in this
+// system's eleven values needs to be expressed that way.
+const COLOR_FUNCTIONS = ['rgb(', 'rgba(', 'hsl(', 'hsla(', 'color-mix(', 'lab(', 'lch(', 'oklch(', 'oklab('];
+for (const p of cssish) {
+  const s = stripComments(read(p));
+  for (const fn of COLOR_FUNCTIONS)
+    if (s.includes(fn)) fail('§5.2 colour outside the closed palette', p, `${fn}...)`);
+}
+
+// Named colours are the harder case: there is no closed list of the ones to
+// ban, so this inverts the problem. It matches a colour-valued property
+// whose value is a bare word, then rejects any bare word that is not one of
+// the handful of legal non-colour keywords — no list of the 148 CSS named
+// colours required.
+const COLOR_PROPS = ['color', 'background', 'background-color', 'border-color', 'fill', 'stroke', 'outline-color'];
+const LEGAL_COLOR_KEYWORDS = new Set(['inherit', 'currentcolor', 'transparent', 'none', 'unset', 'initial', 'revert']);
+{
+  const propAlt = COLOR_PROPS.join('|');
+  const re = new RegExp(`(?:^|[;{\\s])(${propAlt})\\s*[:=]\\s*['"]?([a-zA-Z][a-zA-Z-]*)\\b(?!\\()`, 'gi');
+  for (const p of cssish) {
+    const s = stripComments(read(p));
+    for (const m of s.matchAll(re)) {
+      const word = m[2].toLowerCase();
+      if (!LEGAL_COLOR_KEYWORDS.has(word))
+        fail('§5.2 named colour outside the closed palette', p, `${m[1]}: ${m[2]}`);
+    }
+  }
+}
+
 // §5.2 — fills are never text. #FF6A00 is 2.87:1 on white and #7A9000 is
-// 3.61:1; their text twins are #9A3200 and #3F5406.
+// 3.61:1; their text twins are #9A3200 and #3F5406. Two more routes reach
+// the same defect and are closed here too: (a) `fill` painting a <text>
+// element's glyphs directly — CSS `color:` never touches SVG text, only
+// `fill` does — and (b) a fresh custom property aliasing --accent or
+// --positive (`--brand: var(--accent)`), which would launder either fill
+// token past a `color:` check that only recognises the two names by name.
 for (const p of cssish) {
   const s = stripComments(read(p));
   for (const [re, name] of [
@@ -73,7 +132,21 @@ for (const p of cssish) {
     [/(^|[;{\s])color:\s*var\(\s*--positive\s*\)/m, 'var(--positive)'],
     [/(^|[;{\s])color:\s*['"]?#FF6A00/im, '#FF6A00'],
     [/(^|[;{\s])color:\s*['"]?#7A9000/im, '#7A9000'],
+    [/--[a-zA-Z-]+\s*:\s*var\(\s*--accent\s*\)/, 'a custom property aliasing var(--accent)'],
+    [/--[a-zA-Z-]+\s*:\s*var\(\s*--positive\s*\)/, 'a custom property aliasing var(--positive)'],
   ]) if (re.test(s)) fail('§5.2 a fill colour used as text', p, name);
+
+  // fill on a <text> element specifically — a <circle>/<path>/<line> may
+  // legally carry --accent or --positive as a fill; a <text> glyph may not.
+  for (const m of s.matchAll(/<text\b[\s\S]*?<\/text>/gi)) {
+    const block = m[0];
+    for (const [re, name] of [
+      [/fill\s*=\s*['"{]*\s*var\(\s*--accent\s*\)/i, 'fill=var(--accent) on <text>'],
+      [/fill\s*=\s*['"{]*\s*var\(\s*--positive\s*\)/i, 'fill=var(--positive) on <text>'],
+      [/fill\s*=\s*['"]?#FF6A00/i, 'fill=#FF6A00 on <text>'],
+      [/fill\s*=\s*['"]?#7A9000/i, 'fill=#7A9000 on <text>'],
+    ]) if (re.test(block)) fail('§5.2 a fill colour used as text', p, name);
+  }
 }
 
 // §5.2 — lime is never a background, because black on it is 5.82:1: AA, under
@@ -90,15 +163,20 @@ for (const p of cssish) {
     fail('§5.1 centred text', p, 'text-align: center');
 }
 
-// §5.2 — radius ceiling. Anything that is not 0 or <=10px fails, including
-// percentages and rem, which the px-only pattern used to wave through.
+// §5.2 — radius ceiling. Anything that is not 0, <=10px, or the token
+// itself is banned, including percentages and rem (which the px-only
+// pattern used to wave through). var(--radius) is accepted outright: it is
+// the spec's own token (--radius: 6px in globals.css), so rejecting it only
+// pushed maintainers toward hardcoding the literal it exists to replace.
+// Matches the shorthand and all four longhands (border-top-left-radius
+// etc.), not just the literal string "border-radius".
 for (const p of cssish) {
-  for (const m of stripComments(read(p)).matchAll(/border-radius:\s*([^;}\n]+)/gi)) {
+  for (const m of stripComments(read(p)).matchAll(/border(?:-[a-z]+)*-radius\s*:\s*([^;}\n]+)/gi)) {
     const value = m[1].trim();
     for (const part of value.split(/\s+/)) {
+      if (part === '0' || part === 'var(--radius)') continue;
       const px = /^(\d+(?:\.\d+)?)px$/.exec(part);
-      if (part === '0') continue;
-      if (!px || Number(px[1]) > 10) fail('§5.2 radius must be 0 or <=10px', p, value);
+      if (!px || Number(px[1]) > 10) fail('§5.2 radius must be 0, <=10px, or var(--radius)', p, value);
     }
   }
 }
@@ -132,7 +210,9 @@ if (existsSync(pricesFile)) {
     fail('§7 price series is empty', pricesFile, 'cut the chart rather than ship it empty');
 }
 
-// §2.1 — no mechanics outside /terms
+// §2.1 — no mechanics outside /terms. Scans .ts as well as .tsx: copy
+// extracted into a data/*.ts module is just as much "outside /terms" as
+// copy left inline in a component.
 const MECHANICS = [
   [/\b90[-\s]day/i, '90-day window'],
   [/\bexpir(y|es|ed|ing|ation)\b/i, 'expiry'],
@@ -140,18 +220,19 @@ const MECHANICS = [
   [/\bburn rate\b/i, 'burn rate'],
   [/\b(monthly|weekly) cap\b/i, 'cap'],
 ];
-for (const p of src.filter(p => p.endsWith('.tsx') && !p.includes(join('app', 'terms')))) {
+for (const p of src.filter(p => (p.endsWith('.tsx') || p.endsWith('.ts')) && !p.includes(join('app', 'terms')))) {
   const s = read(p);
   for (const [re, name] of MECHANICS)
     if (re.test(s)) fail('§2.1 mechanic outside /terms', p, name);
 }
 
-// §9 — no third-party requests. Two surfaces, deliberately not the built JS:
-// framework bundles carry inert documentation URLs (react.dev's error
-// decoder, nextjs.org, core-js) that are strings, never requests. Built HTML
-// and CSS is where a real resource reference lands — script, link, img, form
-// action — and where a font-CDN leak would show. Our own source is where an
-// endpoint we wrote would appear.
+// §9 — no third-party requests. Built HTML and CSS is where a real resource
+// reference lands — script, link, img, form action — and where a font-CDN
+// leak would show. Our own source is where an endpoint we wrote would
+// appear. Built JS is scanned separately, below: a prior ruling skipped it
+// on the reasoning that "our compiled JS derives from source", which misses
+// that it also derives from node_modules — a dependency calling a remote
+// host lands only in the bundle, never in our source or in built HTML/CSS.
 const ALLOWED = [
   /^https?:\/\/(www\.)?getbarrel\./i,
   // Task 7 — the waitlist form posts to Buttondown. This is the one
@@ -187,9 +268,42 @@ const out = join(ROOT, 'out');
 if (existsSync(out)) scanForOrigins(walk(out, ['.html', '.css']));
 scanForOrigins(src.filter(p => ['.ts', '.tsx'].includes(extname(p))));
 
-// §5.2 — tokens must match src/theme/tokens.ts (LIGHT) exactly. Parsed from
-// the file, not restated here, so drift fails instead of quietly passing a
-// hardcoded copy.
+// Built JS, scanned with a narrow allowlist. Today it holds exactly four
+// inert hosts, none of them a runtime request: react.dev and nextjs.org are
+// doc/error-decoder links interpolated into strings that only print if a
+// bug is hit, github.com is a core-js license comment, and w3.org is the
+// XML namespace URI React assigns to SVG/MathML/xlink attributes. They are
+// named explicitly rather than skipping the scan, so a genuinely new
+// third-party host pulled in by a future dependency still fails loudly.
+// The host pattern requires a real domain (label.label...tld), unlike the
+// looser pattern above, because core-js's own WHATWG-URL conformance tests
+// contain single-letter non-domains ("https://a", "http://n") that are
+// string fixtures, not URLs — the same reasoning as the w3.org exemption
+// above, applied to a bundle where it actually shows up.
+const BUILT_JS_ALLOWED = [
+  ...ALLOWED,
+  /^https?:\/\/(www\.)?react\.dev\b/i,
+  /^https?:\/\/(www\.)?nextjs\.org\b/i,
+  /^https?:\/\/(www\.)?github\.com\b/i,
+  /^https?:\/\/(www\.)?w3\.org\b/i,
+];
+if (existsSync(out)) {
+  for (const p of walk(out, ['.js'])) {
+    for (const m of read(p).matchAll(/https?:\/\/(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s"'`)]*)?/gi)) {
+      const url = m[0];
+      if (!BUILT_JS_ALLOWED.some(re => re.test(url)))
+        fail('§9 third-party origin in built JS', p, url);
+    }
+  }
+}
+
+// §5.2 — tokens must match globals.css exactly. REQUIRED_TOKENS below IS a
+// hardcoded restatement of the values, not something parsed — it is the
+// declared contract this file checks globals.css against. Drift from the
+// app's actual source of record is checked separately, immediately after:
+// that block reads and parses ../src/theme/tokens.ts (LIGHT) at check time,
+// so a change there is what fails the build, rather than a copy hardcoded
+// here quietly going stale.
 const REQUIRED_TOKENS = {
   '--bg': '#FFFFFF', '--surface': '#F7F5F0', '--text': '#000000',
   '--text-dim': '#3A342D', '--text-muted': '#5C554C',
@@ -203,7 +317,41 @@ if (existsSync(globalsPath)) {
     tokens[m[1]] = m[2].toUpperCase();
   for (const [name, want] of Object.entries(REQUIRED_TOKENS)) {
     if (!tokens[name]) fail('§5.2 token missing', globalsPath, name);
-    else if (tokens[name] !== want) fail('§5.2 token drifted from src/theme/tokens.ts', globalsPath, `${name} is ${tokens[name]}, expected ${want}`);
+    else if (tokens[name] !== want) fail('§5.2 token drifted from REQUIRED_TOKENS', globalsPath, `${name} is ${tokens[name]}, expected ${want}`);
+  }
+}
+
+// §5.2 — REQUIRED_TOKENS itself must not have drifted from the app's actual
+// source of record, ../src/theme/tokens.ts (LIGHT). This is a dev-time file
+// read, not an import — it does not violate the no-escaping-imports rule
+// above, which only resolves relative `import`/`require` specifiers. web/
+// must stay buildable on its own, so a missing tokens.ts is a printed
+// notice, not a failure: only a present-but-different value is a defect.
+const TOKENS_TS_NAME_MAP = {
+  '--bg': 'bg', '--surface': 'surface', '--text': 'text', '--text-dim': 'textDim',
+  '--text-muted': 'textMuted', '--border': 'border', '--hairline': 'hairline',
+  '--accent': 'accent', '--accent-text': 'accentText',
+  '--positive': 'positive', '--positive-text': 'positiveText',
+};
+const tokensTsPath = resolvePath(ROOT, '..', 'src', 'theme', 'tokens.ts');
+if (!existsSync(tokensTsPath)) {
+  console.log(`note: ${relative(ROOT, tokensTsPath)} not found — skipping the drift comparison against the app's source of record`);
+} else {
+  const tsSource = stripComments(read(tokensTsPath));
+  const lightMatch = /export const LIGHT[^=]*=\s*{([\s\S]*?)^};/m.exec(tsSource);
+  if (!lightMatch) {
+    fail('§5.2 cannot parse src/theme/tokens.ts', tokensTsPath, 'LIGHT block not found in the expected shape');
+  } else {
+    const appTokens = {};
+    for (const m of lightMatch[1].matchAll(/([a-zA-Z]+):\s*'(#[0-9A-Fa-f]{6})'/g))
+      appTokens[m[1]] = m[2].toUpperCase();
+    for (const [ourName, appName] of Object.entries(TOKENS_TS_NAME_MAP)) {
+      const have = appTokens[appName];
+      const want = REQUIRED_TOKENS[ourName];
+      if (!have) fail('§5.2 cannot parse src/theme/tokens.ts', tokensTsPath, `LIGHT.${appName} not found`);
+      else if (have !== want)
+        fail('§5.2 token drifted from src/theme/tokens.ts', tokensTsPath, `LIGHT.${appName} is ${have}, web's ${ourName} is ${want}`);
+    }
   }
 }
 

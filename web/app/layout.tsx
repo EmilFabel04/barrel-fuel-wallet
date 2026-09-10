@@ -9,7 +9,7 @@ import './globals.css';
 // is no third-party request to disclose.
 const figtree = Figtree({
   subsets: ['latin'],
-  weight: ['400', '600', '800'],
+  weight: ['400', '600', '700', '800'],
   variable: '--font-figtree',
   display: 'swap',
 });
