@@ -20,8 +20,16 @@ Every task's requirements implicitly include this section.
 - Root `npm test` (260 tests) and `npx tsc --noEmit` must keep passing and must not traverse `web/`.
 - **Concept only, no mechanics.** Excluded from every page except `/terms`: the 90-day window, expiry, litres held as lots, FIFO, the monthly and weekly caps, savings figures, burn rate, station names, any number describing a return. (Spec §2.1.)
 - **Light mode only.** No dark mode, no theme toggle.
-- **Amber `#FF6A00` appears exactly once** in the stylesheet, as the fill of the single button, with **black** text on it (7.31:1) and a 1px black border. Never as text.
-- **Lime never appears.** Not `#7A9000`, not `#D6E84A`, not `#3F5406`.
+- **The palette is closed.** Exactly eleven colour values may appear anywhere in `web/`:
+  `#FFFFFF` `#F7F5F0` `#000000` `#3A342D` `#5C554C` `#948A78` `#DCD6C9` `#FF6A00`
+  `#9A3200` `#7A9000` `#3F5406`. Any other literal is a defect.
+- **Fills are never text.** `#FF6A00` (2.87:1 on white) and `#7A9000` (3.61:1) are fills
+  and graphic elements only. Their text twins are `#9A3200` (7.42:1 AAA) and `#3F5406`
+  (8.46:1 AAA). The amber button carries **black** text (7.31:1) and a 1px black border.
+- **Lime is never a background for text** — black on lime is 5.82:1, AA but under this
+  site's AAA bar.
+- **Colour carries meaning, not decoration**, on the app's semantics: amber is fuel and
+  price, lime is the gain, ink is neutral fact. Direction stays on ▲ ▼ glyphs and copy.
 - Radii ≤ 10px. Banned outright: gradients, `backdrop-filter`, `blur()`, icon libraries, emoji as icons, centred body text, scroll-triggered animation, testimonials, logo strips.
 - Every text value clears **AAA (≥7:1)**. Keyboard focus is visible on both interactive elements.
 - Numerals are always JetBrains Mono; prose and labels are always Figtree.

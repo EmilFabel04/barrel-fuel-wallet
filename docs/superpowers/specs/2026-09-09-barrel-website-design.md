@@ -147,11 +147,21 @@ project's CSS as custom properties; the app file remains the source of record an
 divergence is a defect.
 
 - Ground `#FFFFFF`, surface `#F7F5F0`, text `#000000`, hairline `#DCD6C9`.
-- **Amber `#FF6A00` appears exactly once**, as the fill of the single button, with ink set
-  on it. Amber is never text: it measures 2.8:1 on white. This is the app's rule and it
-  holds here.
-- **Lime never appears.** It means savings; there are no savings on a page with no
-  mechanics. Introducing it would break the app's one-meaning-per-colour rule.
+- **Both brand colours are used, on the app's semantics** — amber is fuel and price, lime
+  is the gain — and each appears only in the form that is legible. Amended 10 September
+  2026 at the site owner's instruction; the original spec restricted amber to one button
+  fill and banned lime outright.
+
+  | Value | Role | Measured on white |
+  |---|---|---|
+  | `#FF6A00` | fill only, black ink on it | 2.87:1 as text — **never text** |
+  | `#9A3200` | amber as text | 7.42:1 AAA |
+  | `#7A9000` | graphic element only (rules, marks) | 3.61:1 — clears the 3:1 non-text bar, **never text** |
+  | `#3F5406` | lime as text | 8.46:1 AAA |
+
+  Black on an amber fill is 7.31:1 (AAA). Black on a lime fill is 5.82:1 — AA but below
+  this site's AAA bar, so **lime is never a background for text**. `#9A3200` on `--surface`
+  is 6.81:1, so amber text sits on white, not on the raised surface.
 - Radii from `RADIUS`: 6px for the button and any bordered box, 10px maximum anywhere.
 - **The button's hover and active states are opacity changes, not a second amber.** The app
   dims rather than recolours on press (`MOTION.surfaceOpacity`), and introducing a darker
