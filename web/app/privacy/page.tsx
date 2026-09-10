@@ -1,26 +1,9 @@
 import type { CSSProperties } from 'react';
+import { ENTITY } from '@/data/entity';
 import { Lockup } from '@/components/Lockup';
 import Link from 'next/link';
 
 export const metadata = { title: 'Privacy — Barrel' };
-
-// SET THIS BEFORE LAUNCH, together with LIST_ID in components/WaitlistForm.tsx.
-//
-// POPIA s18(1)(b) requires the notice to give the name and address of the
-// responsible party — whoever decides why these email addresses are collected
-// and answers for them. Nothing in this repo knows who that is. The site says
-// only "Barrel is being built in South Africa", and no legal entity has been
-// registered yet, so there is nobody to name and no address to give.
-//
-// A privacy policy that cannot name a responsible party cannot actually be
-// used: the rights below all end in "write to us", and a reader has no way to
-// tell who "us" is or where to serve anything. scripts/check.mjs therefore
-// refuses the build while either field is still the placeholder, exactly as it
-// does for the waitlist endpoint. Fill both in when the entity exists.
-const RESPONSIBLE_PARTY = {
-  name: '__SET_BEFORE_LAUNCH__',
-  address: '__SET_BEFORE_LAUNCH__',
-};
 
 // The Information Regulator is given in full — address, email, phone — rather
 // than hyperlinked, deliberately. POPIA s18(1)(h)(iii) requires the notice to
@@ -68,11 +51,11 @@ export default function Privacy() {
 
       <h2 style={h2}>Who is asking</h2>
       <p className="prose" style={prose}>
-        <strong>{RESPONSIBLE_PARTY.name}</strong> is the responsible party for this list
+        <strong>{ENTITY.name}</strong> is the responsible party for this list
         under POPIA — the one who decides why your address is collected and answers for
-        what happens to it. The registered address is {RESPONSIBLE_PARTY.address}. For
+        what happens to it. The registered address is {ENTITY.address}. For
         anything in this policy, write to{' '}
-        <a href="mailto:hello@getbarrel.co.za" style={link}>hello@getbarrel.co.za</a>.
+        <a href={`mailto:${ENTITY.contact}`} style={link}>{ENTITY.contact}</a>.
       </p>
 
       <h2 style={h2}>What we do with it</h2>
@@ -117,7 +100,7 @@ export default function Privacy() {
       <h2 style={h2}>Getting removed</h2>
       <p className="prose" style={prose}>
         Every email we send carries an unsubscribe link. You can also write to{' '}
-        <a href="mailto:hello@getbarrel.co.za" style={link}>hello@getbarrel.co.za</a>{' '}
+        <a href={`mailto:${ENTITY.contact}`} style={link}>{ENTITY.contact}</a>{' '}
         and we will delete you from the list.
       </p>
 
@@ -125,7 +108,7 @@ export default function Privacy() {
       <p className="prose" style={prose}>
         Under POPIA you may ask what we hold about you, have it corrected, have it
         deleted, or object to us using it at all. Write to{' '}
-        <a href="mailto:hello@getbarrel.co.za" style={link}>hello@getbarrel.co.za</a>{' '}
+        <a href={`mailto:${ENTITY.contact}`} style={link}>{ENTITY.contact}</a>{' '}
         and we will do it. There is no form to fill in and no fee, and you do not have to
         say why.
       </p>

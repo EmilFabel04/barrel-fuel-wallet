@@ -499,14 +499,23 @@ const formFile = join(ROOT, 'components/WaitlistForm.tsx');
 if (existsSync(formFile) && read(formFile).includes('__SET_BEFORE_LAUNCH__'))
   fail('§8 waitlist endpoint not configured', formFile, 'LIST_ID is still the placeholder');
 
-// The responsible party is the other thing only the site owner can supply.
-// POPIA s18(1)(b) wants /privacy to name them and give an address, and until a
-// legal entity exists there is nothing to name. The rights in that policy all
-// end in "write to us"; a reader who cannot tell who "us" is has been given a
-// policy they cannot act on, which is worse than a page that isn't live yet.
-// Same ruling as the endpoint above — refuse the build.
-if (existsSync(privacy) && read(privacy).includes('__SET_BEFORE_LAUNCH__'))
-  fail('§8 responsible party not named', privacy, 'RESPONSIBLE_PARTY is still the placeholder');
+// Who is behind the site is the other thing only the site owner can supply.
+// POPIA s18(1)(b) wants /privacy to name a responsible party and give an
+// address, /terms needs to say whose terms they are, and until a legal entity
+// exists there is nothing to name. The rights in that policy all end in "write
+// to us"; a reader who cannot tell who "us" is has been given a policy they
+// cannot act on, which is worse than a page that isn't live yet. Same ruling
+// as the endpoint above — refuse the build.
+//
+// This reads data/entity.ts, not the pages. Both legal pages import the
+// constant from there, so the pages no longer contain the placeholder text and
+// checking them would pass vacuously — which is exactly the failure mode this
+// gate exists to prevent.
+const entity = join(ROOT, 'data/entity.ts');
+if (!existsSync(entity))
+  fail('§8 entity module missing', entity, 'not created');
+else if (read(entity).includes('__SET_BEFORE_LAUNCH__'))
+  fail('§8 responsible party not named', entity, 'ENTITY is still the placeholder');
 
 if (failures.length) {
   console.error(`\n${failures.length} check failure(s):\n`);

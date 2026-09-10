@@ -318,18 +318,36 @@ and nothing has been pushed live. Two values are still the placeholder
 - `LIST_ID` in `web/components/WaitlistForm.tsx` — the waitlist would otherwise post
   nowhere. The site owner has to create the Buttondown account first; it needs their own
   billing and identity, so nobody else can.
-- `RESPONSIBLE_PARTY` in `web/app/privacy/page.tsx` — POPIA s18(1)(b) requires the
-  policy to name who is responsible for the list and give an address, and no legal
-  entity has been registered yet. Every right in that policy ends in "write to us", so a
-  reader who cannot tell who "us" is has a policy they cannot act on.
+- `ENTITY` in `web/data/entity.ts` — both legal pages read it: `/privacy` needs a
+  responsible party and an address for POPIA s18(1)(b), and `/terms` needs to say whose
+  terms they are. No legal entity has been registered yet. Every right in that policy
+  ends in "write to us", so a reader who cannot tell who "us" is has a policy they
+  cannot act on. The gate reads `data/entity.ts`, not the pages — the pages import the
+  constant, so checking them would pass vacuously.
 
 Fill both in, then deploy.
+
+**A third launch requirement, which no check can see: `hello@getbarrel.co.za` has to
+receive mail.** As of 2026-09-10 `getbarrel.co.za` publishes no MX record at all, so
+mail to it is refused. The domain resolves (GoDaddy nameservers, parked A records) but
+nothing serves mail on it. Both legal pages route every request a reader can make —
+access, correction, deletion, objection, unsubscribe — to that one address, and the
+footer publishes it on every page. Set the MX records up before the site is live, or the
+privacy policy is a promise the domain cannot keep.
 
 **One launch step no check can catch.** `/privacy` promises the launch email carries no
 open or click tracking. Both are opt-in in Buttondown and off until somebody switches
 them on at `buttondown.com/settings/tracking` — a dashboard setting, invisible to
 `check.mjs` and to the repo. Leave them off. If the tracking is ever wanted, the privacy
 notice has to change in the same breath, or it is simply false.
+
+**`/terms` is terms of use, not commercial terms.** It covers the site: who runs it,
+what it is for, that the product description binds nobody, the price chart's provenance,
+site use, and South African governing law. It deliberately does not try to be terms for
+buying litres. Barrel holds no legal opinion on whether it may sell them, and terms that
+purport to bind a buyer to a product that does not exist would be the first thing
+contradicted by whatever that opinion says. The binding commercial terms get written
+after the opinion, not before.
 
 **The root `tsconfig.json` excludes `web/`.** It carries `"exclude": ["web"]` for
 exactly one reason: without it, `npx tsc --noEmit` at the repo root walks into `web/`
