@@ -8,7 +8,8 @@ together, and the traps that bit repeatedly during the build.
 ## Start here — state as of 9 September 2026
 
 **Branch:** `main`. Clean tree. 295 tests green, `npx tsc --noEmit` clean.
-**Unpushed:** `main` is ahead of `origin/main`. Nothing has been pushed since the redesign.
+**Pushed:** `main` and `origin/main` are level as of 10 September 2026. The redesign and
+the whole website branch are now on the remote.
 
 **What just happened.** The Pump redesign landed: a full visual re-approach across all 12
 screens, plus fill history, a reworked Savings screen, the price-rise panel, simulated
@@ -18,11 +19,13 @@ seed. Spec and plan are in `docs/superpowers/`.
 **Read in this order:**
 
 1. This file — the rules, the seeded state, the traps.
-2. `docs/UI.md` — what every screen is for, what each number means, and where it comes
+2. `docs/TODO.md` — **what to do next**, ordered by what blocks what, across the app and
+   the website. Short, and the fastest way to find a starting point.
+3. `docs/UI.md` — what every screen is for, what each number means, and where it comes
    from. Includes the expiry mechanic in full.
-3. `docs/GAPS.md` — **what is missing**, across the model, UX and UI. Start any new work
-   from here; §5 is a five-item shortlist.
-4. `docs/DECISIONS.md` — why things are the way they are, with cost-if-wrong on each.
+4. `docs/GAPS.md` — **what is missing**, across the model, UX and UI. The detail behind
+   the app half of `TODO.md`; §5 is a five-item shortlist.
+5. `docs/DECISIONS.md` — why things are the way they are, with cost-if-wrong on each.
 
 **The three things most worth knowing before you touch anything:**
 
