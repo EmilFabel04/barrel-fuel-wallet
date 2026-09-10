@@ -53,10 +53,20 @@ body {
   color: var(--text-muted);
 }
 
+/* Left-anchored, not a centred column. A reading measure floating mid-viewport
+   is symmetrical rhythm — the §5.1 tell — and it is what the first build
+   looked like at 1440px. The page anchors to a left margin that grows with
+   the viewport; the reading measure belongs to paragraphs, not to the page. */
 .wrap {
+  max-width: 1180px;
+  margin: 0;
+  padding: 0 clamp(24px, 6vw, 96px);
+}
+
+/* Prose keeps a reading measure. Headings are free to run wider, which is what
+   gives the page a hierarchy instead of one uniform column. */
+.prose {
   max-width: var(--measure);
-  margin: 0 auto;
-  padding: 0 24px;
 }
 
 hr.rule {

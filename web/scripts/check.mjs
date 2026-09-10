@@ -241,6 +241,15 @@ if (existsSync(page)) {
   fail('§4.1 landing page missing', page, 'not created');
 }
 
+// §5.1 — nothing on this site is horizontally centred. The page is anchored
+// left; an auto side-margin is how a centred column gets reintroduced, and it
+// is invisible to the text-align check above.
+for (const p of cssish) {
+  const s = stripComments(read(p));
+  if (/margin(-inline)?:\s*[^;}\n]*\bauto\b/.test(s) || /margin-(left|right|inline-start|inline-end):\s*auto/.test(s))
+    fail('§5.1 auto side-margin centres the layout', p, 'margin: ... auto');
+}
+
 if (failures.length) {
   console.error(`\n${failures.length} check failure(s):\n`);
   for (const f of failures) console.error(`  ✗ ${f}`);
