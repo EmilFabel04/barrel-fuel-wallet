@@ -36,10 +36,18 @@
 //    list exports as CSV on demand (docs.buttondown.com/
 //    data-exports-subscriber).
 //
-// Jurisdiction, for /privacy: Buttondown, LLC's terms name its place of
-// business as Richmond, VA, United States, governed by Delaware law
-// (buttondown.com/legal/terms) — so subscriber data is a cross-border
-// transfer out of South Africa to the United States.
+// Jurisdiction, for /privacy. Buttondown, LLC's terms name its place of
+// business as Richmond, VA, governed by Delaware law
+// (buttondown.com/legal/terms). That is where the COMPANY is, which is not
+// the same as where the DATA is, and an earlier version of this comment
+// inferred one from the other. Checked 2026-09-10: neither
+// buttondown.com/legal/privacy nor buttondown.com/legal/subprocessors
+// states a country or region for any of the eleven subprocessors it names
+// (Cloudflare, Google Workspace, Heroku, Mailgun, Plain, Postmark, Seline,
+// Sentry, Slack, Stripe, Twilio). So /privacy claims only what is
+// verifiable: a US-based company, named providers, and processing outside
+// South Africa — which is the fact POPIA s72 actually turns on. If the site
+// owner gets a data-residency answer in writing, name it here and there.
 //
 // Endpoint: POST https://buttondown.com/api/emails/embed-subscribe/{username}
 // Fields: email (required), tag (hidden, optional list segmentation),

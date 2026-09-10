@@ -24,10 +24,13 @@ export default function Privacy() {
 
       <h2 style={{ fontSize: 19, fontWeight: 700, marginTop: 40 }}>Who holds it</h2>
       <p className="prose" style={{ color: 'var(--text-dim)' }}>
-        The list is held by <strong>Buttondown</strong>, which stores data on servers
-        outside South Africa, in the United States. Under POPIA this is a cross-border
-        transfer, and by joining the waitlist you consent to it. If you would rather not,
-        do not join the list — email us instead and we will note your interest by reply.
+        The list is held by <strong>Buttondown</strong>, a company based in the United
+        States, which uses its own infrastructure providers — among them Heroku,
+        Cloudflare and Postmark. Buttondown does not publish the country its servers sit
+        in, so we will not claim one. What is certain is that your address is processed
+        outside South Africa. Under POPIA that is a cross-border transfer, and by joining
+        the waitlist you consent to it. If you would rather not, do not join the list —
+        email us instead and we will note your interest by reply.
       </p>
 
       <h2 style={{ fontSize: 19, fontWeight: 700, marginTop: 40 }}>Getting removed</h2>
