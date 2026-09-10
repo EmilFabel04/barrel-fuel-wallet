@@ -100,11 +100,23 @@ for (const p of cssish) {
 
 // Named colours are the harder case: there is no closed list of the ones to
 // ban, so this inverts the problem. It matches a colour-valued property
-// whose value is a bare word, then rejects any bare word that is not one of
-// the handful of legal non-colour keywords — no list of the 148 CSS named
-// colours required.
-const COLOR_PROPS = ['color', 'background', 'background-color', 'border-color', 'fill', 'stroke', 'outline-color'];
-const LEGAL_COLOR_KEYWORDS = new Set(['inherit', 'currentcolor', 'transparent', 'none', 'unset', 'initial', 'revert']);
+// whose value is a bare word (quoted or not), then rejects any bare word
+// that is not one of the handful of legal non-colour keywords — no list of
+// the 148 CSS named colours required. COLOR_PROPS carries both spellings of
+// every compound property: hyphenated CSS (border-color: orange) and JSX
+// camelCase (borderColor: 'orange') — because this codebase writes inline
+// styles as JSX objects, the same gap the auto-margin check above already
+// hit and closed.
+const COLOR_PROPS = [
+  'color', 'background', 'background-color', 'border-color',
+  'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
+  'outline-color', 'caret-color', 'text-decoration-color', 'column-rule-color',
+  'fill', 'stroke',
+  'backgroundColor', 'borderColor',
+  'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor',
+  'outlineColor', 'caretColor', 'textDecorationColor', 'columnRuleColor',
+];
+const LEGAL_COLOR_KEYWORDS = new Set(['inherit', 'currentcolor', 'transparent', 'none', 'unset', 'initial', 'revert', 'revert-layer']);
 {
   const propAlt = COLOR_PROPS.join('|');
   const re = new RegExp(`(?:^|[;{\\s])(${propAlt})\\s*[:=]\\s*['"]?([a-zA-Z][a-zA-Z-]*)\\b(?!\\()`, 'gi');
