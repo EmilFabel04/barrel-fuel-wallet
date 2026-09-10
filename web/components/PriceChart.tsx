@@ -61,8 +61,9 @@ export function PriceChart() {
             explicitly rather than left for a reader to spot in the line. */}
         <circle cx={x(peakIndex)} cy={y(peakValue)} r={3} fill="var(--accent-text)" />
         <text
-          x={x(peakIndex)} y={y(peakValue) - 10}
+          x={x(peakIndex)} y={y(peakValue) - 12}
           textAnchor={peakAnchor}
+          dominantBaseline="auto"
           fill="var(--text)" fontSize="11" fontWeight={700}
           style={MONO}
         >
@@ -94,11 +95,17 @@ export function PriceChart() {
         ))}
       </svg>
 
-      <figcaption className="label" style={{ marginTop: 16, lineHeight: 1.6 }}>
-        {FUEL_PRICE_SOURCE.grade} · {FUEL_PRICE_SOURCE.zone} · rand per litre
-        <br />
-        {FUEL_PRICE_SOURCE.sourceName}, retrieved {FUEL_PRICE_SOURCE.retrieved}. Cross-checked
-        against the {FUEL_PRICE_SOURCE.crosscheckName}.
+      <figcaption style={{ marginTop: 16 }}>
+        <p className="label" style={{ margin: 0 }}>
+          {FUEL_PRICE_SOURCE.grade} · {FUEL_PRICE_SOURCE.zone} · rand per litre
+        </p>
+        <p
+          className="prose"
+          style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.5, color: 'var(--text-muted)' }}
+        >
+          {FUEL_PRICE_SOURCE.sourceName}, retrieved {FUEL_PRICE_SOURCE.retrieved}. Cross-checked
+          against the {FUEL_PRICE_SOURCE.crosscheckName}.
+        </p>
       </figcaption>
     </figure>
   );
