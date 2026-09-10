@@ -205,6 +205,16 @@ for (const [fgRef, bgRef, name] of TEXT_PAIRS) {
   if (ratio < 7) fail('§5.4 text below AAA', globalsPath, `${name}: ${ratio.toFixed(2)}:1 (needs 7:1)`);
 }
 
+// Task 2 — the lockup uses the artwork's own viewBox, not a re-drawn path
+const lockup = join(ROOT, 'components/Lockup.tsx');
+if (existsSync(lockup)) {
+  const s = read(lockup);
+  if (!s.includes('297 0 948 1500'))
+    fail('lockup viewBox must match BarrelMark.tsx', lockup, 'expected "297 0 948 1500"');
+} else {
+  fail('lockup missing', lockup, 'not created');
+}
+
 if (failures.length) {
   console.error(`\n${failures.length} check failure(s):\n`);
   for (const f of failures) console.error(`  ✗ ${f}`);
