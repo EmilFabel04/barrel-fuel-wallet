@@ -46,11 +46,9 @@
 // embed=1 (hidden, marks this as a bare-HTML embed submission per
 // Buttondown's documented example).
 //
-// No honeypot field: with no server of ours between the browser and
-// buttondown.com, nothing here would ever read a hidden field before the
-// POST leaves the page — a honeypot would be decorative, not a defence,
-// and Buttondown does not look for one. The server-side validation and
-// double opt-in described above are the real, and only, control.
+// No honeypot field. See the comment in the JSX below, between the email
+// field and the submit button, for the full reasoning and what Buttondown's
+// own documentation says about spam handling — checked 2026-09-10.
 //
 // SET THIS BEFORE LAUNCH. The site owner creates the Buttondown account;
 // nobody else can — it requires their own billing and identity.
@@ -78,6 +76,50 @@ export function WaitlistForm() {
       {/* Marks this as a bare-HTML embed submission, per Buttondown's
           documented form example. */}
       <input type="hidden" name="embed" value="1" />
+
+      {/* Deliberately no honeypot field here.
+
+          A honeypot only filters spam if whoever receives the submission
+          inspects it and rejects submissions where it's filled in. This is
+          a static export: the browser posts straight to buttondown.com,
+          and there is no server of ours sitting in between to ever read a
+          hidden field before that happens. A field we never look at isn't
+          a weaker defence than none — it's decoration that reads as a
+          defence, which is worse: the next person to touch this file
+          could reasonably believe spam is being filtered here when it
+          isn't.
+
+          Checked Buttondown's own documentation for a field THEY read
+          (2026-09-10): docs.buttondown.com/api-subscribers-create,
+          /api-subscribers-introduction, /double-opt-in, /firewall,
+          /dealing-with-spam-subscribers, /api-introduction; plus
+          buttondown.com/blog/deliverability and a site search of
+          docs.buttondown.com for "honeypot" and "spam". None of it
+          documents a honeypot field, a timestamp trap, or a CAPTCHA token
+          for the embed-subscribe form. What it does document:
+
+          - "Buttondown validates all incoming subscribers through the
+            API" (api-subscribers-create) — server-side email-format and
+            deliverability checks, run on Buttondown's own server.
+          - IP screening against internal data plus Spamhaus and Project
+            Honeypot: "checking incoming subscriptions' IP addresses
+            against a combination of both our internal datasets and those
+            of trusted vendors like Spamhaus and Project Honeypot ...
+            lets us immediately filter out automated or malicious bots"
+            (buttondown.com/blog/deliverability).
+          - An opt-in "Firewall" (docs.buttondown.com/firewall): a
+            dashboard toggle, not a form field, so there is nothing to add
+            here — it audits every incoming subscriber and can
+            auto-engage an "attack mode" under a spam burst. Off by
+            default; the site owner can switch it on from the Buttondown
+            dashboard once the account exists, no code change required.
+          - Double opt-in (see the file-top comment): mandatory, and the
+            actual gate on a bot signup ever reaching the list.
+
+          So the real, only, and vendor-documented defence is Buttondown's
+          own server-side validation and IP screening, plus double
+          opt-in — which is also why this vendor was chosen over one whose
+          embed needs a widget script. */}
 
       <button type="submit" className="button" style={{ marginTop: 16, width: '100%' }}>
         Join the waitlist
