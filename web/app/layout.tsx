@@ -22,7 +22,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://barrel.co.za'),
+  metadataBase: new URL('https://getbarrel.co.za'),
   title: 'Barrel — buy fuel at today’s price',
   description:
     'Buy fuel at today’s price and use it later. Barrel is being built in South Africa. Join the waitlist.',

@@ -141,7 +141,7 @@ for (const p of src.filter(p => p.endsWith('.tsx') && !p.includes(join('app', 't
 // action — and where a font-CDN leak would show. Our own source is where an
 // endpoint we wrote would appear.
 const ALLOWED = [
-  /^https?:\/\/(www\.)?barrel\./i,
+  /^https?:\/\/(www\.)?getbarrel\./i,
 ];
 const scanForOrigins = files => {
   for (const p of files) {

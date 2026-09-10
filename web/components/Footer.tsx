@@ -10,7 +10,7 @@ export function Footer() {
           Barrel is being built in South Africa. It has not launched.
         </p>
         <p style={{ marginTop: 16, marginBottom: 0, fontSize: 15 }}>
-          <a href="mailto:hello@barrel.co.za" style={{ color: 'var(--text)' }}>hello@barrel.co.za</a>
+          <a href="mailto:hello@getbarrel.co.za" style={{ color: 'var(--text)' }}>hello@getbarrel.co.za</a>
         </p>
         <p style={{ marginTop: 24, marginBottom: 0, fontSize: 15, display: 'flex', gap: 20 }}>
           <Link href="/terms" style={{ color: 'var(--text-dim)' }}>Terms</Link>
