@@ -53,6 +53,12 @@ body {
   color: var(--text-muted);
 }
 
+.wrap {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
 hr.rule {
   border: 0;
   border-top: 1px solid var(--hairline);

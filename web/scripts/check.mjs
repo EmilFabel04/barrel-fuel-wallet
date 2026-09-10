@@ -215,6 +215,19 @@ if (existsSync(lockup)) {
   fail('lockup missing', lockup, 'not created');
 }
 
+// Task 3 — /terms must carry the material terms and the pre-launch statement
+const terms = join(ROOT, 'app/terms/page.tsx');
+if (existsSync(terms)) {
+  const s = read(terms);
+  for (const [re, name] of [
+    [/90[-\s]day/i, 'the 90-day term'],
+    [/has not launched|not yet launched/i, 'the pre-launch statement'],
+    [/legal opinion/i, 'the legal-opinion disclosure'],
+  ]) if (!re.test(s)) fail('§4.2 /terms is missing content', terms, name);
+} else {
+  fail('§4.2 /terms missing', terms, 'not created');
+}
+
 if (failures.length) {
   console.error(`\n${failures.length} check failure(s):\n`);
   for (const f of failures) console.error(`  ✗ ${f}`);
