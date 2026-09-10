@@ -31,7 +31,8 @@ export default function Home() {
 
       {/* Block 2 — the problem. The chart lands here in Task 6. */}
       <section id="problem" className="wrap" style={{ paddingTop: 48 }}>
-        <p className="label">The problem</p>
+        <span className="marker marker-fuel" aria-hidden="true" />
+        <p className="label label-fuel">The problem</p>
         <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', lineHeight: 1.2, fontWeight: 800, letterSpacing: '-0.02em', marginTop: 16 }}>
           The price changes on the first Wednesday of every month.
         </h2>
@@ -45,7 +46,8 @@ export default function Home() {
 
       {/* Block 3 — the promise restated. Outcome only; no mechanic named. */}
       <section className="wrap" style={{ paddingTop: 48 }}>
-        <p className="label">What changes</p>
+        <span className="marker marker-gain" aria-hidden="true" />
+        <p className="label label-gain">What changes</p>
         <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', lineHeight: 1.2, fontWeight: 800, letterSpacing: '-0.02em', marginTop: 16 }}>
           You’ve already paid.
         </h2>

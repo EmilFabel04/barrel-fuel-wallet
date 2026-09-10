@@ -48,28 +48,38 @@ for (const d of Object.keys(deps)) {
 const stripComments = s =>
   s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
-// §5.2 — amber exactly once, in globals.css only
-let amber = 0;
+// §5.2 — the palette is closed. These eleven values are the whole system;
+// any other literal is a defect. Comments are stripped first, so
+// documentation may name a value it is explaining.
+const PALETTE = new Set([
+  '#FFFFFF', '#F7F5F0', '#000000', '#3A342D', '#5C554C', '#948A78', '#DCD6C9',
+  '#FF6A00', '#9A3200', '#7A9000', '#3F5406',
+]);
 for (const p of cssish) {
-  const hits = (stripComments(read(p)).match(/#FF6A00/gi) || []).length;
-  amber += hits;
-  if (hits && !p.endsWith('globals.css'))
-    fail('§5.2 amber outside globals.css', p, `${hits} occurrence(s)`);
-}
-if (amber !== 1)
-  fail('§5.2 amber must appear exactly once', join(ROOT, 'app/globals.css'), `found ${amber}`);
-
-// §5.2 — amber is a FILL. The count above proves the token is declared once;
-// this proves it is never painted as text, which is the rule that matters.
-for (const p of cssish) {
-  if (/(^|[;{\s])color:\s*var\(\s*--accent\s*\)/m.test(stripComments(read(p))))
-    fail('§5.2 amber used as text', p, 'color: var(--accent)');
+  for (const m of stripComments(read(p)).matchAll(/#[0-9A-Fa-f]{3,8}\b/g)) {
+    const hex = m[0].toUpperCase();
+    if (!PALETTE.has(hex)) fail('§5.2 colour outside the closed palette', p, hex);
+  }
 }
 
-// §5.2 — lime never appears
+// §5.2 — fills are never text. #FF6A00 is 2.87:1 on white and #7A9000 is
+// 3.61:1; their text twins are #9A3200 and #3F5406.
 for (const p of cssish) {
-  const m = stripComments(read(p)).match(/#(7A9000|D6E84A|3F5406)/gi);
-  if (m) fail('§5.2 lime is forbidden on this site', p, m.join(', '));
+  const s = stripComments(read(p));
+  for (const [re, name] of [
+    [/(^|[;{\s])color:\s*var\(\s*--accent\s*\)/m, 'var(--accent)'],
+    [/(^|[;{\s])color:\s*var\(\s*--positive\s*\)/m, 'var(--positive)'],
+    [/(^|[;{\s])color:\s*['"]?#FF6A00/im, '#FF6A00'],
+    [/(^|[;{\s])color:\s*['"]?#7A9000/im, '#7A9000'],
+  ]) if (re.test(s)) fail('§5.2 a fill colour used as text', p, name);
+}
+
+// §5.2 — lime is never a background, because black on it is 5.82:1: AA, under
+// this site's AAA bar. It is legal as a border, a stroke or an SVG fill.
+for (const p of cssish) {
+  const s = stripComments(read(p));
+  if (/background(-color)?:\s*(var\(\s*--positive\s*\)|['"]?#7A9000)/im.test(s))
+    fail('§5.2 lime must not be a text background', p, '--positive as background');
 }
 
 // §5.1 — no centred body text
@@ -164,6 +174,7 @@ const REQUIRED_TOKENS = {
   '--bg': '#FFFFFF', '--surface': '#F7F5F0', '--text': '#000000',
   '--text-dim': '#3A342D', '--text-muted': '#5C554C',
   '--border': '#948A78', '--hairline': '#DCD6C9', '--accent': '#FF6A00',
+  '--accent-text': '#9A3200', '--positive': '#7A9000', '--positive-text': '#3F5406',
 };
 const globalsPath = join(ROOT, 'app/globals.css');
 const tokens = {};
@@ -197,6 +208,8 @@ const TEXT_PAIRS = [
   ['--text-dim', '--bg', 'textDim on ground'],
   ['--text-muted', '--bg', 'textMuted on ground'],
   ['#000000', '--accent', 'button label on amber'],
+  ['--accent-text', '--bg', 'accentText on ground'],
+  ['--positive-text', '--bg', 'positiveText on ground'],
 ];
 for (const [fgRef, bgRef, name] of TEXT_PAIRS) {
   const fg = resolveColour(fgRef), bg = resolveColour(bgRef);

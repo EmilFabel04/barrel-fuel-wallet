@@ -17,6 +17,21 @@
      2.87:1 against the ground its own edge would be undefined. */
   --accent: #FF6A00;
 
+  /* --accent and --positive are fills and graphic elements only — never
+     text. #FF6A00 (amber) measures 2.87:1 on white and #7A9000 (lime)
+     measures 3.61:1: both fail as text on this site's AAA bar. When amber
+     or lime must carry text, use their text twins instead: --accent-text
+     measures 7.42:1 and --positive-text measures 8.46:1, both clearing
+     AAA. Lime is additionally never a background for text, even with a
+     dark label: black on #7A9000 measures 5.82:1, which is only AA and
+     still under this site's AAA bar — lime is legal as a fill for
+     non-text marks (rules, strokes, section markers), never as a ground
+     a reader has to read through. Amber means fuel and price; lime means
+     the gain. Direction stays on ▲ ▼ glyphs and copy, never on colour. */
+  --accent-text: #9A3200;
+  --positive: #7A9000;
+  --positive-text: #3F5406;
+
   --measure: 34rem;
   --radius: 6px;
 }
@@ -52,6 +67,21 @@ body {
   text-transform: uppercase;
   color: var(--text-muted);
 }
+
+.label-fuel { color: var(--accent-text); }
+.label-gain { color: var(--positive-text); }
+
+/* A pump-panel indicator: a short flat bar that states which system the
+   section belongs to. Flat, single-tone fill, radius 2 to match the app's
+   RADIUS.xs. This is where the vivid brand values live, because as fills
+   they are legible and as text they are not.
+   marker-gain draws its lime as a border rather than a fill: the palette
+   rule below bans --positive as a CSS background outright (border, stroke
+   and SVG fill are its legal forms), because a background is exactly the
+   shape a reader's eye treats as something text could sit on. */
+.marker { display: block; width: 40px; height: 4px; border-radius: 2px; margin-bottom: 16px; }
+.marker-fuel { background: var(--accent); }
+.marker-gain { height: 0; border-top: 4px solid var(--positive); }
 
 /* Left-anchored, not a centred column. A reading measure floating mid-viewport
    is symmetrical rhythm — the §5.1 tell — and it is what the first build
