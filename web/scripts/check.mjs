@@ -3,7 +3,7 @@
 // enforces. This is the project's only automated gate: web/ has no test
 // runner by design (spec §9), so these checks carry that weight.
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
-import { join, extname, relative } from 'node:path';
+import { join, extname, relative, dirname, resolve as resolvePath } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -59,6 +59,13 @@ for (const p of cssish) {
 if (amber !== 1)
   fail('§5.2 amber must appear exactly once', join(ROOT, 'app/globals.css'), `found ${amber}`);
 
+// §5.2 — amber is a FILL. The count above proves the token is declared once;
+// this proves it is never painted as text, which is the rule that matters.
+for (const p of cssish) {
+  if (/(^|[;{\s])color:\s*var\(\s*--accent\s*\)/m.test(stripComments(read(p))))
+    fail('§5.2 amber used as text', p, 'color: var(--accent)');
+}
+
 // §5.2 — lime never appears
 for (const p of cssish) {
   const m = stripComments(read(p)).match(/#(7A9000|D6E84A|3F5406)/gi);
@@ -71,19 +78,35 @@ for (const p of cssish) {
     fail('§5.1 centred text', p, 'text-align: center');
 }
 
-// §5.2 — radius ceiling
+// §5.2 — radius ceiling. Anything that is not 0 or <=10px fails, including
+// percentages and rem, which the px-only pattern used to wave through.
 for (const p of cssish) {
-  for (const m of read(p).matchAll(/border-radius:\s*(\d+)px/gi)) {
-    if (Number(m[1]) > 10) fail('§5.2 radius > 10px', p, `${m[1]}px`);
+  for (const m of stripComments(read(p)).matchAll(/border-radius:\s*([^;}\n]+)/gi)) {
+    const value = m[1].trim();
+    for (const part of value.split(/\s+/)) {
+      const px = /^(\d+(?:\.\d+)?)px$/.exec(part);
+      if (part === '0') continue;
+      if (!px || Number(px[1]) > 10) fail('§5.2 radius must be 0 or <=10px', p, value);
+    }
   }
 }
 
-// Global constraint — no import may escape web/
+// Global constraint — no import may escape web/. Resolved rather than
+// pattern-matched: a bare side-effect import, a dynamic import and a single
+// ../ from the top level all escape a regex, but none escape path resolution.
 for (const p of src) {
-  for (const m of read(p).matchAll(/from\s+['"]([^'"]+)['"]/g)) {
-    const spec = m[1];
-    if (/(^|\/)\.\.\/\.\.\//.test(spec) || /src\/(data|lib|theme|components)/.test(spec))
-      fail('imports must not escape web/', p, spec);
+  const text = read(p);
+  const specs = [
+    ...text.matchAll(/from\s+['"]([^'"]+)['"]/g),
+    ...text.matchAll(/\bimport\s+['"]([^'"]+)['"]/g),
+    ...text.matchAll(/\bimport\(\s*['"]([^'"]+)['"]\s*\)/g),
+    ...text.matchAll(/\brequire\(\s*['"]([^'"]+)['"]\s*\)/g),
+  ].map(m => m[1]);
+  for (const spec of specs) {
+    if (!spec.startsWith('.')) continue;           // bare package or @/ alias
+    const target = resolvePath(dirname(p), spec);
+    if (!target.startsWith(ROOT))
+      fail('imports must not escape web/', p, `${spec} -> ${target}`);
   }
 }
 
@@ -134,6 +157,25 @@ const out = join(ROOT, 'out');
 if (existsSync(out)) scanForOrigins(walk(out, ['.html', '.css']));
 scanForOrigins(src.filter(p => ['.ts', '.tsx'].includes(extname(p))));
 
+// §5.2 — tokens must match src/theme/tokens.ts (LIGHT) exactly. Parsed from
+// the file, not restated here, so drift fails instead of quietly passing a
+// hardcoded copy.
+const REQUIRED_TOKENS = {
+  '--bg': '#FFFFFF', '--surface': '#F7F5F0', '--text': '#000000',
+  '--text-dim': '#3A342D', '--text-muted': '#5C554C',
+  '--border': '#948A78', '--hairline': '#DCD6C9', '--accent': '#FF6A00',
+};
+const globalsPath = join(ROOT, 'app/globals.css');
+const tokens = {};
+if (existsSync(globalsPath)) {
+  for (const m of stripComments(read(globalsPath)).matchAll(/(--[a-z-]+):\s*(#[0-9A-Fa-f]{6})\s*;/g))
+    tokens[m[1]] = m[2].toUpperCase();
+  for (const [name, want] of Object.entries(REQUIRED_TOKENS)) {
+    if (!tokens[name]) fail('§5.2 token missing', globalsPath, name);
+    else if (tokens[name] !== want) fail('§5.2 token drifted from src/theme/tokens.ts', globalsPath, `${name} is ${tokens[name]}, expected ${want}`);
+  }
+}
+
 // §5.4 — every text pair clears AAA (>=7:1), measured, not asserted.
 // This mirrors what tokens.test.ts does for the app's palette.
 const luminance = hex => {
@@ -149,17 +191,18 @@ const contrast = (a, b) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
+const resolveColour = v => (v.startsWith('--') ? tokens[v] : v);
 const TEXT_PAIRS = [
-  ['#000000', '#FFFFFF', 'body on ground'],
-  ['#3A342D', '#FFFFFF', 'textDim on ground'],
-  ['#5C554C', '#FFFFFF', 'textMuted on ground'],
-  ['#000000', '#FF6A00', 'button label on amber'],
+  ['--text', '--bg', 'body on ground'],
+  ['--text-dim', '--bg', 'textDim on ground'],
+  ['--text-muted', '--bg', 'textMuted on ground'],
+  ['#000000', '--accent', 'button label on amber'],
 ];
-for (const [fg, bg, name] of TEXT_PAIRS) {
+for (const [fgRef, bgRef, name] of TEXT_PAIRS) {
+  const fg = resolveColour(fgRef), bg = resolveColour(bgRef);
+  if (!fg || !bg) { fail('§5.4 cannot measure contrast', globalsPath, `${name}: token not found`); continue; }
   const ratio = contrast(fg, bg);
-  if (ratio < 7)
-    fail('§5.4 text below AAA', join(ROOT, 'app/globals.css'),
-      `${name}: ${ratio.toFixed(2)}:1 (needs 7:1)`);
+  if (ratio < 7) fail('§5.4 text below AAA', globalsPath, `${name}: ${ratio.toFixed(2)}:1 (needs 7:1)`);
 }
 
 if (failures.length) {
