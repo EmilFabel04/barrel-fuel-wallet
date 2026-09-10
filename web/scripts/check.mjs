@@ -477,10 +477,17 @@ if (existsSync(form)) {
 const privacy = join(ROOT, 'app/privacy/page.tsx');
 if (existsSync(privacy)) {
   const s = read(privacy);
+  // Each entry is a POPIA s18 notification element the policy has to carry.
+  // The patterns are alternations rather than exact copy so the wording stays
+  // editable — they fail when a section is deleted, not when it is rephrased.
   for (const [re, name] of [
     [/outside South Africa|cross-border|transferred to servers/i, 'the cross-border transfer'],
     [/unsubscribe|remove|opt out/i, 'the removal path'],
-  ]) if (!re.test(s)) fail('§8 privacy notice incomplete', privacy, name);
+    [/responsible party/i, 'the responsible party (s18(1)(b))'],
+    [/voluntary/i, 'whether supplying the address is voluntary (s18(1)(d))'],
+    [/how long|retention|until the launch email/i, 'the retention period (s14)'],
+    [/Information Regulator/i, 'the complaint route to the Information Regulator (s18(1)(h))'],
+  ]) if (!re.test(s)) fail('§8 privacy policy incomplete', privacy, name);
 } else {
   fail('§8 /privacy missing', privacy, 'not created');
 }
@@ -491,6 +498,15 @@ if (existsSync(privacy)) {
 const formFile = join(ROOT, 'components/WaitlistForm.tsx');
 if (existsSync(formFile) && read(formFile).includes('__SET_BEFORE_LAUNCH__'))
   fail('§8 waitlist endpoint not configured', formFile, 'LIST_ID is still the placeholder');
+
+// The responsible party is the other thing only the site owner can supply.
+// POPIA s18(1)(b) wants /privacy to name them and give an address, and until a
+// legal entity exists there is nothing to name. The rights in that policy all
+// end in "write to us"; a reader who cannot tell who "us" is has been given a
+// policy they cannot act on, which is worse than a page that isn't live yet.
+// Same ruling as the endpoint above — refuse the build.
+if (existsSync(privacy) && read(privacy).includes('__SET_BEFORE_LAUNCH__'))
+  fail('§8 responsible party not named', privacy, 'RESPONSIBLE_PARTY is still the placeholder');
 
 if (failures.length) {
   console.error(`\n${failures.length} check failure(s):\n`);

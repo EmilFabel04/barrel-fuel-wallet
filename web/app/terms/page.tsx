@@ -41,7 +41,7 @@ export default function Terms() {
       <h2 style={{ fontSize: 19, fontWeight: 700, marginTop: 40 }}>The waitlist</h2>
       <p className="prose" style={{ color: 'var(--text-dim)' }}>
         Joining the waitlist places you under no obligation and reserves nothing. See the{' '}
-        <Link href="/privacy" style={{ color: 'var(--text)' }}>privacy notice</Link> for what
+        <Link href="/privacy" style={{ color: 'var(--text)' }}>privacy policy</Link> for what
         happens to your email address.
       </p>
     </main>

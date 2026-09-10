@@ -170,7 +170,7 @@ export function WaitlistForm() {
       <p style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 16, marginBottom: 0 }}>
         We’ll email you once, when Barrel launches. Nothing else. You’ll get a
         confirmation email first — Barrel can’t add you without it. See the{' '}
-        <a href="/privacy" style={{ color: 'var(--text)' }}>privacy notice</a>.
+        <a href="/privacy" style={{ color: 'var(--text)' }}>privacy policy</a>.
       </p>
     </form>
   );

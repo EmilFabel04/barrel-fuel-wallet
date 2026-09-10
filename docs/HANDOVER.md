@@ -311,12 +311,19 @@ weaken or route around either check to make a number match the app; get the numb
 `web/data/fuel-prices.ts` or leave it out.
 
 **Not deployed.** The site has been built and verified (`npm run verify` fails on
-exactly one check, deliberately — see below) but no Vercel project exists for it and
-nothing has been pushed live. `LIST_ID` in `web/components/WaitlistForm.tsx` is still
-the placeholder `'__SET_BEFORE_LAUNCH__'`; `check.mjs` refuses the build on that
-placeholder on purpose, so the site cannot go live pointing nowhere. The site owner has
-to create the Buttondown account (it needs their own billing and identity), set
-`LIST_ID` to the real value, and only then deploy.
+exactly two checks, both deliberately — see below) but no Vercel project exists for it
+and nothing has been pushed live. Two values are still the placeholder
+`'__SET_BEFORE_LAUNCH__'`, and `check.mjs` refuses the build on each of them on purpose:
+
+- `LIST_ID` in `web/components/WaitlistForm.tsx` — the waitlist would otherwise post
+  nowhere. The site owner has to create the Buttondown account first; it needs their own
+  billing and identity, so nobody else can.
+- `RESPONSIBLE_PARTY` in `web/app/privacy/page.tsx` — POPIA s18(1)(b) requires the
+  policy to name who is responsible for the list and give an address, and no legal
+  entity has been registered yet. Every right in that policy ends in "write to us", so a
+  reader who cannot tell who "us" is has a policy they cannot act on.
+
+Fill both in, then deploy.
 
 **One launch step no check can catch.** `/privacy` promises the launch email carries no
 open or click tracking. Both are opt-in in Buttondown and off until somebody switches
