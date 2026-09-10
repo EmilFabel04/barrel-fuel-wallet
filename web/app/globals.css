@@ -1,0 +1,71 @@
+/* Tokens copied from src/theme/tokens.ts (LIGHT), which remains the source of
+   record. Divergence from that file is a defect, not a variation.
+   Light mode only: the app has two themes because it is opened at a pump in
+   glare; a marketing page has no such reason. */
+:root {
+  --bg: #FFFFFF;
+  --surface: #F7F5F0;
+  --text: #000000;
+  --text-dim: #3A342D;
+  --text-muted: #5C554C;
+  --border: #948A78;
+  --hairline: #DCD6C9;
+
+  /* The one amber. It is a FILL and never text: FF6A00 measures 2.87:1
+     against white. Black on it measures 7.31:1, which clears AAA — so the
+     label is black, not white. It also takes a 1px ink border, because at
+     2.87:1 against the ground its own edge would be undefined. */
+  --accent: #FF6A00;
+
+  --measure: 34rem;
+  --radius: 6px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-figtree), system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.55;
+  /* Left-aligned throughout. Centred body copy is the single strongest
+     generated-page tell. */
+  text-align: left;
+}
+
+/* Every numeral on this site is monospaced — the pump-readout rule. */
+.num {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* JetBrains Mono 700, 10px, tracking 1.6 — SectionLabel.tsx, verbatim. */
+.label {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+hr.rule {
+  border: 0;
+  border-top: 1px solid var(--hairline);
+  margin: 0;
+}
+
+/* Keyboard focus must stay visible on both interactive elements. The app has
+   no keyboard surface and so no rule to inherit; this is the web's own. */
+:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
