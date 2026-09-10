@@ -22,7 +22,7 @@ function walk(dir, exts, out = []) {
 }
 
 const src = walk(ROOT, ['.ts', '.tsx', '.css', '.mjs']).filter(
-  p => !p.includes(`${join('scripts', 'check.mjs')}`)
+  p => !p.includes(`${join('scripts', 'check.mjs')}`) && !p.endsWith('next-env.d.ts')
 );
 const cssish = src.filter(p => ['.css', '.tsx'].includes(extname(p)));
 const read = p => readFileSync(p, 'utf8');
@@ -45,10 +45,13 @@ for (const d of Object.keys(deps)) {
     fail('§5.1 banned dependency', join(ROOT, 'package.json'), d);
 }
 
+const stripComments = s =>
+  s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
 // §5.2 — amber exactly once, in globals.css only
 let amber = 0;
 for (const p of cssish) {
-  const hits = (read(p).match(/#FF6A00/gi) || []).length;
+  const hits = (stripComments(read(p)).match(/#FF6A00/gi) || []).length;
   amber += hits;
   if (hits && !p.endsWith('globals.css'))
     fail('§5.2 amber outside globals.css', p, `${hits} occurrence(s)`);
@@ -58,7 +61,7 @@ if (amber !== 1)
 
 // §5.2 — lime never appears
 for (const p of cssish) {
-  const m = read(p).match(/#(7A9000|D6E84A|3F5406)/gi);
+  const m = stripComments(read(p)).match(/#(7A9000|D6E84A|3F5406)/gi);
   if (m) fail('§5.2 lime is forbidden on this site', p, m.join(', '));
 }
 
@@ -108,19 +111,28 @@ for (const p of src.filter(p => p.endsWith('.tsx') && !p.includes(join('app', 't
     if (re.test(s)) fail('§2.1 mechanic outside /terms', p, name);
 }
 
-// §9 — no third-party requests in the built output
-const out = join(ROOT, 'out');
-if (existsSync(out)) {
-  const ALLOWED = [/^https?:\/\/(www\.)?barrel\./i];
-  for (const p of walk(out, ['.html', '.js', '.css'])) {
+// §9 — no third-party requests. Two surfaces, deliberately not the built JS:
+// framework bundles carry inert documentation URLs (react.dev's error
+// decoder, nextjs.org, core-js) that are strings, never requests. Built HTML
+// and CSS is where a real resource reference lands — script, link, img, form
+// action — and where a font-CDN leak would show. Our own source is where an
+// endpoint we wrote would appear.
+const ALLOWED = [
+  /^https?:\/\/(www\.)?barrel\./i,
+];
+const scanForOrigins = files => {
+  for (const p of files) {
     for (const m of read(p).matchAll(/https?:\/\/[a-z0-9.-]+/gi)) {
       const url = m[0];
       if (/schema\.org|w3\.org/i.test(url)) continue; // namespaces, not requests
       if (!ALLOWED.some(re => re.test(url)))
-        fail('§9 third-party origin in built output', p, url);
+        fail('§9 third-party origin', p, url);
     }
   }
-}
+};
+const out = join(ROOT, 'out');
+if (existsSync(out)) scanForOrigins(walk(out, ['.html', '.css']));
+scanForOrigins(src.filter(p => ['.ts', '.tsx'].includes(extname(p))));
 
 // §5.4 — every text pair clears AAA (>=7:1), measured, not asserted.
 // This mirrors what tokens.test.ts does for the app's palette.

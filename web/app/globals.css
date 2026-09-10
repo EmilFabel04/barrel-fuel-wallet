@@ -11,7 +11,7 @@
   --border: #948A78;
   --hairline: #DCD6C9;
 
-  /* The one amber. It is a FILL and never text: FF6A00 measures 2.87:1
+  /* The one amber. It is a FILL and never text: #FF6A00 measures 2.87:1
      against white. Black on it measures 7.31:1, which clears AAA — so the
      label is black, not white. It also takes a 1px ink border, because at
      2.87:1 against the ground its own edge would be undefined. */
