@@ -256,7 +256,7 @@ for (const p of src.filter(p => p.endsWith('.tsx') && !p.includes(join('app', 't
 // action — and where a font-CDN leak would show. Our own source is where an
 // endpoint we wrote would appear.
 const ALLOWED = [
-  /^https?:\/\/(www\.)?barrel\./i,
+  /^https?:\/\/(www\.)?getbarrel\./i,
 ];
 const scanForOrigins = files => {
   for (const p of files) {
@@ -656,7 +656,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://barrel.co.za'),
+  metadataBase: new URL('https://getbarrel.co.za'),
   title: 'Barrel — buy fuel at today’s price',
   description:
     'Buy fuel at today’s price and use it later. Barrel is being built in South Africa. Join the waitlist.',
@@ -716,7 +716,7 @@ export function Footer() {
           Barrel is being built in South Africa. It has not launched.
         </p>
         <p style={{ marginTop: 16, marginBottom: 0, fontSize: 15 }}>
-          <a href="mailto:hello@barrel.co.za" style={{ color: 'var(--text)' }}>hello@barrel.co.za</a>
+          <a href="mailto:hello@getbarrel.co.za" style={{ color: 'var(--text)' }}>hello@getbarrel.co.za</a>
         </p>
         <p style={{ marginTop: 24, marginBottom: 0, fontSize: 15, display: 'flex', gap: 20 }}>
           <Link href="/terms" style={{ color: 'var(--text-dim)' }}>Terms</Link>
@@ -728,7 +728,7 @@ export function Footer() {
 }
 ```
 
-Replace `hello@barrel.co.za` and `barrel.co.za` with the real address and domain once they exist; if they do not yet, use the address the site owner supplies rather than inventing one.
+The domain `getbarrel.co.za` was supplied by the site owner on 10 September 2026. The mailbox `hello@getbarrel.co.za` is inferred from it and **must be confirmed to exist before launch** — a real domain does not make the address real.
 
 - [ ] **Step 5: Write `/terms`**
 
@@ -1422,7 +1422,7 @@ export default function Privacy() {
       <h2 style={{ fontSize: 19, fontWeight: 700, marginTop: 40 }}>Getting removed</h2>
       <p style={{ color: 'var(--text-dim)' }}>
         Every email we send carries an unsubscribe link. You can also write to{' '}
-        <a href="mailto:hello@barrel.co.za" style={{ color: 'var(--text)' }}>hello@barrel.co.za</a>{' '}
+        <a href="mailto:hello@getbarrel.co.za" style={{ color: 'var(--text)' }}>hello@getbarrel.co.za</a>{' '}
         and we will delete you from the list.
       </p>
 
