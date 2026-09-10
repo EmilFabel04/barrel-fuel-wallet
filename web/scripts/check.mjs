@@ -243,11 +243,20 @@ if (existsSync(page)) {
 
 // §5.1 — nothing on this site is horizontally centred. The page is anchored
 // left; an auto side-margin is how a centred column gets reintroduced, and it
-// is invisible to the text-align check above.
+// is invisible to the text-align check above. Covers both hyphenated CSS and
+// JSX camelCase (this project writes inline styles as JSX objects). Vertical
+// auto margins (marginTop/marginBottom) are deliberately allowed — they do
+// not centre anything horizontally, and the app uses marginTop: 'auto'
+// legitimately for pinned footers.
 for (const p of cssish) {
   const s = stripComments(read(p));
-  if (/margin(-inline)?:\s*[^;}\n]*\bauto\b/.test(s) || /margin-(left|right|inline-start|inline-end):\s*auto/.test(s))
-    fail('§5.1 auto side-margin centres the layout', p, 'margin: ... auto');
+  const hits = [
+    /margin(-inline)?:\s*[^;}\n]*\bauto\b/,                       // margin: 0 auto
+    /margin-(left|right|inline-start|inline-end):\s*auto/,        // longhand CSS
+    /margin(Left|Right|Inline|InlineStart|InlineEnd)\s*:\s*['"]?[^,}\n]*\bauto\b/, // JSX camelCase
+    /margin\s*:\s*['"][^'"]*\bauto\b/,                            // JSX shorthand string
+  ].some(re => re.test(s));
+  if (hits) fail('§5.1 auto side-margin centres the layout', p, 'auto side-margin');
 }
 
 if (failures.length) {
