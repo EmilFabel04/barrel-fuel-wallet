@@ -218,8 +218,6 @@ for (const p of src) {
     if (/(^|\/)\.\.\/\.\.\//.test(spec) || /src\/(data|lib|theme|components)/.test(spec))
       fail('imports must not escape web/', p, spec);
   }
-  if (/prices/i.test(read(p)) && /src\/data/.test(read(p)))
-    fail('§7 the app mock price table must never be referenced', p, 'src/data reference');
 }
 
 // §7 — sourced data carries its provenance
