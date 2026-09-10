@@ -36,18 +36,31 @@
 //    list exports as CSV on demand (docs.buttondown.com/
 //    data-exports-subscriber).
 //
-// Jurisdiction, for /privacy. Buttondown, LLC's terms name its place of
-// business as Richmond, VA, governed by Delaware law
-// (buttondown.com/legal/terms). That is where the COMPANY is, which is not
-// the same as where the DATA is, and an earlier version of this comment
-// inferred one from the other. Checked 2026-09-10: neither
-// buttondown.com/legal/privacy nor buttondown.com/legal/subprocessors
-// states a country or region for any of the eleven subprocessors it names
-// (Cloudflare, Google Workspace, Heroku, Mailgun, Plain, Postmark, Seline,
-// Sentry, Slack, Stripe, Twilio). So /privacy claims only what is
-// verifiable: a US-based company, named providers, and processing outside
-// South Africa — which is the fact POPIA s72 actually turns on. If the site
-// owner gets a data-residency answer in writing, name it here and there.
+// Jurisdiction and data location, for /privacy. Checked 2026-09-10 against
+// buttondown.com/legal/data-processing-agreement, which is where this is
+// actually stated — NOT the terms, and not the privacy policy or the
+// subprocessor list, neither of which names a location at all. An earlier
+// version of this comment inferred the data location from the company's
+// place of business, which are different things.
+//
+//   DPA s8.1: "the Data Processor is based in the United States and ...
+//   Personal Data will be transferred to and processed in the United
+//   States in connection with the provision of the services."
+//
+//   DPA Annex II: "Services are hosted on Heroku (Salesforce) and Amazon
+//   Web Services, both of which maintain SOC 2 Type II and ISO 27001
+//   certifications."
+//
+//   DPA Annex A, types of personal data: "Email addresses, IP addresses,
+//   referrer metadata, subscription timestamps" — /privacy discloses the
+//   IP address and referrer metadata, because the form posts straight to
+//   Buttondown and they receive both.
+//
+// The DPA's transfer safeguards are built for the EEA, UK and Switzerland
+// and rely on the EU Standard Contractual Clauses. South Africa and POPIA
+// appear nowhere in it. The DPA is still a binding agreement with security
+// obligations, which is the kind of thing POPIA s72(1)(a) looks for, but
+// nobody has confirmed that in writing for this transfer.
 //
 // Endpoint: POST https://buttondown.com/api/emails/embed-subscribe/{username}
 // Fields: email (required), tag (hidden, optional list segmentation),

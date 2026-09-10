@@ -12,7 +12,11 @@ export default function Privacy() {
         Privacy notice
       </h1>
       <p className="prose" style={{ color: 'var(--text-dim)' }}>
-        This site collects one thing: an email address, and only if you type it in.
+        This site asks you for one thing: an email address, and only if you type it in.
+        When you submit the form your browser posts it straight to Buttondown, who run
+        the list. Their data processing agreement records that they also receive your IP
+        address, referrer metadata and the time you subscribed — the IP address is what
+        lets them screen out bots, since this site has no server of its own to do it.
       </p>
 
       <h2 style={{ fontSize: 19, fontWeight: 700, marginTop: 40 }}>What we do with it</h2>
@@ -24,13 +28,12 @@ export default function Privacy() {
 
       <h2 style={{ fontSize: 19, fontWeight: 700, marginTop: 40 }}>Who holds it</h2>
       <p className="prose" style={{ color: 'var(--text-dim)' }}>
-        The list is held by <strong>Buttondown</strong>, a company based in the United
-        States, which uses its own infrastructure providers — among them Heroku,
-        Cloudflare and Postmark. Buttondown does not publish the country its servers sit
-        in, so we will not claim one. What is certain is that your address is processed
-        outside South Africa. Under POPIA that is a cross-border transfer, and by joining
-        the waitlist you consent to it. If you would rather not, do not join the list —
-        email us instead and we will note your interest by reply.
+        The list is held by <strong>Buttondown</strong>, a company in Richmond, Virginia.
+        Their data processing agreement states that personal data is transferred to and
+        processed in the United States, on infrastructure run by Heroku and Amazon Web
+        Services. Under POPIA that is a cross-border transfer out of South Africa, and by
+        joining the waitlist you consent to it. If you would rather not, do not join the
+        list — email us instead and we will note your interest by reply.
       </p>
 
       <h2 style={{ fontSize: 19, fontWeight: 700, marginTop: 40 }}>Getting removed</h2>
