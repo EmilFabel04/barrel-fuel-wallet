@@ -318,6 +318,12 @@ placeholder on purpose, so the site cannot go live pointing nowhere. The site ow
 to create the Buttondown account (it needs their own billing and identity), set
 `LIST_ID` to the real value, and only then deploy.
 
+**One launch step no check can catch.** `/privacy` promises the launch email carries no
+open or click tracking. Both are opt-in in Buttondown and off until somebody switches
+them on at `buttondown.com/settings/tracking` — a dashboard setting, invisible to
+`check.mjs` and to the repo. Leave them off. If the tracking is ever wanted, the privacy
+notice has to change in the same breath, or it is simply false.
+
 **The root `tsconfig.json` excludes `web/`.** It carries `"exclude": ["web"]` for
 exactly one reason: without it, `npx tsc --noEmit` at the repo root walks into `web/`
 and type-checks it against Next's React types, which are not the React types the Expo

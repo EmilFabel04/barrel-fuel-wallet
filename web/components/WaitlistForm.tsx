@@ -56,11 +56,31 @@
 //   IP address and referrer metadata, because the form posts straight to
 //   Buttondown and they receive both.
 //
-// The DPA's transfer safeguards are built for the EEA, UK and Switzerland
-// and rely on the EU Standard Contractual Clauses. South Africa and POPIA
-// appear nowhere in it. The DPA is still a binding agreement with security
-// obligations, which is the kind of thing POPIA s72(1)(a) looks for, but
-// nobody has confirmed that in writing for this transfer.
+// The DPA binds without anyone signing anything: "This DPA is entered into
+// between Buttondown, LLC ... and the Customer ... and forms part of the
+// Agreement." It arrives with the account. So its security obligations —
+// s3, s4 and Annex II — do cover this list, and an earlier version of this
+// comment was wrong to say nobody had confirmed it in writing.
+//
+// What it does not cover is the transfer. The safeguards in s8.2-8.6 are
+// the EU Standard Contractual Clauses, scoped to the EEA, UK and
+// Switzerland; s12.1 puts governing law in the United States, and the
+// carve-out in s12.2 that overrides it names the GDPR and EEA/UK/Swiss law
+// only. South Africa and POPIA appear nowhere in the document. So the
+// written agreement exists, but it is written for the wrong jurisdictions —
+// which is why /privacy rests on consent under POPIA s72(1)(b) and not on
+// the binding-agreement route in s72(1)(a).
+//
+// Email tracking, for /privacy. Annex A names "analytics on email
+// engagement (opens, clicks)" among the purposes of processing, but both
+// are off until someone turns them on: "Buttondown offers opt-in open
+// tracking" (docs.buttondown.com/open-tracking — it injects an <img> pixel
+// at the end of the body) and "Buttondown offers opt-in click tracking"
+// (docs.buttondown.com/click-tracking — it rewrites every link through a
+// proxy URL). Both toggle at buttondown.com/settings/tracking, checked
+// 2026-09-10. /privacy promises the launch email carries neither, so LEAVE
+// THEM OFF. Turning either on makes that notice false, and the notice has
+// to change first.
 //
 // Endpoint: POST https://buttondown.com/api/emails/embed-subscribe/{username}
 // Fields: email (required), tag (hidden, optional list segmentation),

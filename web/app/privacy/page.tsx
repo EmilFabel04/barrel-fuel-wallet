@@ -15,8 +15,9 @@ export default function Privacy() {
         This site asks you for one thing: an email address, and only if you type it in.
         When you submit the form your browser posts it straight to Buttondown, who run
         the list. Their data processing agreement records that they also receive your IP
-        address, referrer metadata and the time you subscribed — the IP address is what
-        lets them screen out bots, since this site has no server of its own to do it.
+        address, referrer metadata and the time you subscribed. Buttondown say they check
+        that IP address against known sources of spam to keep bots off the list — this
+        site has no server of its own to do it.
       </p>
 
       <h2 style={{ fontSize: 19, fontWeight: 700, marginTop: 40 }}>What we do with it</h2>
@@ -47,7 +48,8 @@ export default function Privacy() {
       <p className="prose" style={{ color: 'var(--text-dim)' }}>
         No analytics, no tracking pixels, no advertising cookies. This site sets no
         cookies at all, and makes no request to any third party until you submit the form.
-        That is why this notice is short.
+        The launch email carries no open or click tracking either — Buttondown offer
+        both, and both stay switched off. That is why this notice is short.
       </p>
     </main>
   );
