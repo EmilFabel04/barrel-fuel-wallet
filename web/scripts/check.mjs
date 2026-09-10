@@ -228,6 +228,19 @@ if (existsSync(terms)) {
   fail('§4.2 /terms missing', terms, 'not created');
 }
 
+// Task 4 — the landing page must carry the pre-launch status in the hero,
+// and must not use call-to-action copy that implies a product to start
+const page = join(ROOT, 'app/page.tsx');
+if (existsSync(page)) {
+  const s = read(page);
+  if (!/has not launched|not launched yet|isn.t live yet/i.test(s))
+    fail('§4.1 hero must state pre-launch status', page, 'no status line found');
+  if (/get started|sign up now|try it free|download the app/i.test(s))
+    fail('§4.1 copy implies a shipped product', page, 'CTA wording');
+} else {
+  fail('§4.1 landing page missing', page, 'not created');
+}
+
 if (failures.length) {
   console.error(`\n${failures.length} check failure(s):\n`);
   for (const f of failures) console.error(`  ✗ ${f}`);
