@@ -65,17 +65,49 @@ localStorage.clear(); location.reload()                        // full cold star
 
 In-app, `Settings → RESET DEMO DATA` restores the wallet seed without touching the session.
 
-## Android
+## Android — the one surface you can both see and drive
 
 ```bash
-~/Library/Android/sdk/emulator/emulator -avd Pixel_9_Pro_API_35 &
-npx expo start --android
+ADB=~/Library/Android/sdk/platform-tools/adb
+~/Library/Android/sdk/emulator/emulator -avd Pixel_9_Pro_API_35 -no-snapshot-load &
+until [ "$($ADB shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do sleep 5; done
+npx expo start --android --port 8084
 ```
 
-AVDs available: `Pixel_9_Pro_API_35`, `Medium_Phone_API_35`.
+AVDs: `Pixel_9_Pro_API_35`, `Medium_Phone_API_35`. Cold boot takes a couple of minutes, and
+`adb devices` shows the device as `offline` until it finishes — wait on `sys.boot_completed`,
+not on the device appearing.
 
-This is the only surface for **notifications** — and local notifications work in Expo Go, so no
-development build is needed. Only remote push on Android requires one (SDK 53+).
+Expo Go is downloaded and installed automatically on first run, which takes a few minutes more
+and produces no visible progress.
+
+**Screenshot and tap:**
+
+```bash
+$ADB exec-out screencap -p > /tmp/a.png     # then Read the file
+$ADB shell input tap <x> <y>                # coordinates in FULL-RES screenshot space
+$ADB shell input text "0821234567"          # only reaches real TextInputs, not the custom Keypad
+```
+
+Screenshots come back at full device resolution (1280x2856 on the Pixel 9 Pro). A `Read` of
+the image reports a display size and a multiplier — multiply the coordinates you read off it
+by that factor before passing them to `input tap`.
+
+**This is the only surface that is both visible and drivable**, so any verification needing
+interaction belongs here. It is also the only place to test **notifications** — and local
+notifications work in Expo Go, so no development build is needed. Only remote push on Android
+requires one (SDK 53+).
+
+**First launch shows an Expo Go developer-menu dialog** over the app. Tap its **Continue**
+button — unlike iOS, you can do this yourself.
+
+**A "Cannot connect to Expo CLI" toast** means the app is pointed at a Metro instance that is
+gone — usually because Metro was restarted under it. Relaunch the app rather than the server:
+
+```bash
+$ADB shell am force-stop host.exp.exponent
+$ADB shell am start -a android.intent.action.VIEW -d "exp://127.0.0.1:8084" host.exp.exponent
+```
 
 ## iOS
 
