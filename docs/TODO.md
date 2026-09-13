@@ -15,22 +15,37 @@ Nobody but the site owner can clear the first three. `web/` is built and verifie
 **not deployed**, and `npm run verify` deliberately fails on two of these until they are
 done — see the *Not deployed* section of `HANDOVER.md`.
 
-- [ ] **Create the Buttondown account and set `LIST_ID`** — `web/components/WaitlistForm.tsx`.
-      It needs the owner's own billing and identity, so nobody else can do it. Until then
-      the form posts nowhere and `check.mjs` refuses the build.
-- [ ] **Register the entity, or decide to trade personally, and fill in `ENTITY`** —
-      `web/data/entity.ts`, both `name` and `address`. `/privacy` needs a responsible
-      party for POPIA s18(1)(b); `/terms` needs to say whose terms they are. Second build
-      gate.
-- [ ] **Put MX records on `getbarrel.co.za`.** Checked 2026-09-10: the domain resolves
-      (GoDaddy nameservers, parked A records) but publishes **no MX record at all**, so
+- [x] ~~**Create the Buttondown account and set `LIST_ID`**~~ — done 2026-09-13. The
+      username is `barrelza`, verified live that day (`buttondown.com/barrelza` returns
+      200; a nonexistent username 404s). Live on `main`. Do not rename the Buttondown
+      account: the username is the entire endpoint the form posts to, so a rename would
+      break every submission silently.
+- [ ] **Register the entity and fill in `ENTITY`** — `web/data/entity.ts`: set
+      `registered: true` and fill both `name` and `address`. Nothing else needs changing;
+      both legal pages switch over on their own.
+
+      **This no longer blocks the build.** On 2026-09-13 the site owner decided to open
+      the waitlist before the entity exists, on the grounds that the site says throughout
+      that Barrel is still being built. Both pages now state the gap in plain words
+      instead of printing a placeholder, and `check.mjs` warns on every build rather than
+      failing. The POPIA gap is real and still open: clear it before Barrel sells
+      anything, and before the first email goes out to the list.
+- [ ] **Put MX records on `getbarrel.co.za`.** Re-checked 2026-09-13, still none — and
+      now more urgent, because the waitlist is open and the policy is live. The domain
+      resolves (Vercel) but publishes **no MX record at all**, so
       `hello@getbarrel.co.za` refuses mail. Every right in the privacy policy — access,
       correction, deletion, objection — and the unsubscribe fallback route to that one
       address, and the footer publishes it on every page. No automated check can see this.
-- [ ] **Create the Vercel project.** Root Directory `web/`, build `next build`, output
-      `out`, no environment variables. Deploy a preview first.
-- [ ] **Point the domain at Vercel** once the preview looks right. It is currently parked.
-- [ ] **Set the two Buttondown dashboard toggles**, once the account exists:
+- [x] ~~**Create the Vercel project**~~ and ~~**point the domain at it**~~ — both done.
+      `getbarrel.co.za` serves from Vercel and redirects to `www.`.
+- [ ] **Change the Vercel build command to `npm run verify`.** `web/vercel.json` on the
+      `launch-wiring` branch does this. It matters: the project was deployed with the
+      default `next build`, which never runs `check.mjs`, so the site went live on
+      2026-09-13 with all three `__SET_BEFORE_LAUNCH__` placeholders rendered on public
+      pages — a form posting to a nonexistent endpoint, and both legal pages naming
+      nobody. The gate was correct and nothing was calling it.
+- [ ] **Set the two Buttondown dashboard toggles.** The account now exists; none of
+      these have been touched yet:
       - Open and click tracking stay **off**. `/privacy` promises the launch email carries
         neither, in writing. Turning either on makes the policy false, and the policy has
         to change first.

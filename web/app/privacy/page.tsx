@@ -50,13 +50,25 @@ export default function Privacy() {
       </p>
 
       <h2 style={h2}>Who is asking</h2>
-      <p className="prose" style={prose}>
-        <strong>{ENTITY.name}</strong> is the responsible party for this list
-        under POPIA — the one who decides why your address is collected and answers for
-        what happens to it. The registered address is {ENTITY.address}. For
-        anything in this policy, write to{' '}
-        <a href={`mailto:${ENTITY.contact}`} style={link}>{ENTITY.contact}</a>.
-      </p>
+      {ENTITY.registered ? (
+        <p className="prose" style={prose}>
+          <strong>{ENTITY.name}</strong> is the responsible party for this list under POPIA —
+          the one who decides why your address is collected and answers for what happens to
+          it. The registered address is {ENTITY.address}. For anything in this policy, write
+          to <a href={`mailto:${ENTITY.contact}`} style={link}>{ENTITY.contact}</a>.
+        </p>
+      ) : (
+        <p className="prose" style={prose}>
+          Barrel is not yet a registered company, so there is no registered name or address
+          to give you here — and POPIA would normally want both before anyone asks you for
+          an email address. We are asking anyway, because the list is how we tell you Barrel
+          exists, and we would rather say that plainly than pretend the gap isn’t there. The
+          person building Barrel is responsible for this list in the meantime and answers
+          for it at <a href={`mailto:${ENTITY.contact}`} style={link}>{ENTITY.contact}</a>.
+          The registered details go on this page as soon as they exist, and before any email
+          is sent to this list.
+        </p>
+      )}
 
       <h2 style={h2}>What we do with it</h2>
       <p className="prose" style={prose}>

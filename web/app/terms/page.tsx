@@ -43,11 +43,21 @@ export default function Terms() {
       </p>
 
       <h2 style={h2}>Who runs this site</h2>
-      <p className="prose" style={prose}>
-        This site is operated by <strong>{ENTITY.name}</strong>, of {ENTITY.address}. Write
-        to <a href={`mailto:${ENTITY.contact}`} style={link}>{ENTITY.contact}</a> about
-        anything on it.
-      </p>
+      {ENTITY.registered ? (
+        <p className="prose" style={prose}>
+          This site is operated by <strong>{ENTITY.name}</strong>, of {ENTITY.address}. Write
+          to <a href={`mailto:${ENTITY.contact}`} style={link}>{ENTITY.contact}</a> about
+          anything on it.
+        </p>
+      ) : (
+        <p className="prose" style={prose}>
+          Barrel is being built in South Africa and is not yet a registered company, so there
+          is no registered operator to name here yet. The registered name and address go on
+          this page as soon as they exist, and before anything can be bought. Write to{' '}
+          <a href={`mailto:${ENTITY.contact}`} style={link}>{ENTITY.contact}</a> about
+          anything on this site.
+        </p>
+      )}
 
       <h2 style={h2}>What this site is for</h2>
       <p className="prose" style={prose}>
@@ -105,8 +115,8 @@ export default function Terms() {
       <p className="prose" style={prose}>
         Read it, share it, quote it. Do not try to break it, overload it, or submit other
         people’s email addresses to the waitlist. The Barrel name, the lockup and the
-        wording of these pages belong to the operator named above; the fuel price figures
-        do not, and belong to the bodies that published them.
+        wording of these pages belong to whoever operates this site — see above; the fuel
+        price figures do not, and belong to the bodies that published them.
       </p>
 
       <h2 style={h2}>What we don’t promise about the site</h2>
