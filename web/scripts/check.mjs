@@ -11,6 +11,14 @@ const failures = [];
 const fail = (rule, file, detail) =>
   failures.push(`${rule}\n    ${relative(ROOT, file)}: ${detail}`);
 
+// Warnings print and do not fail the build. Exactly one thing uses this: a
+// launch-readiness fact the site owner has consciously accepted for now (the
+// unnamed responsible party, below). A defect gets fail(), never warn() — if
+// something must be fixed before the next deploy, it is not a warning.
+const warnings = [];
+const warn = (rule, file, detail) =>
+  warnings.push(`${rule}\n    ${relative(ROOT, file)}: ${detail}`);
+
 function walk(dir, exts, out = []) {
   for (const name of readdirSync(dir)) {
     if (['node_modules', '.next', 'out', '.git'].includes(name)) continue;
@@ -492,6 +500,23 @@ if (existsSync(privacy)) {
   fail('§8 /privacy missing', privacy, 'not created');
 }
 
+// The invariant this file failed to hold on 2026-09-13, now checked where it
+// actually matters: whatever is unfinished, a placeholder token must never be
+// rendered at a reader. The site went live with "__SET_BEFORE_LAUNCH__" printed
+// on /privacy and /terms where the responsible party and the operator belong,
+// and posted the waitlist form to an endpoint built from the same string.
+//
+// Every gate below reads SOURCE, which is why none of them caught it: they were
+// all correct, and Vercel was building with `next build`, so none of them ran.
+// web/vercel.json now builds with `npm run verify`. This check is the backstop —
+// it reads the BUILT OUTPUT, so it fails on any placeholder that survives into
+// a page regardless of which file introduced it or whether anyone remembered to
+// add a gate for that file.
+if (existsSync(out))
+  for (const p of walk(out, ['.html']))
+    if (read(p).includes('__SET_BEFORE_LAUNCH__'))
+      fail('placeholder rendered to a public page', p, '__SET_BEFORE_LAUNCH__ reached built HTML');
+
 // The waitlist endpoint is inert until the site owner fills in their list id.
 // Failing here is deliberate: a form that silently posts to an incomplete URL
 // is worse than a build that refuses.
@@ -514,8 +539,16 @@ if (existsSync(formFile) && read(formFile).includes('__SET_BEFORE_LAUNCH__'))
 const entity = join(ROOT, 'data/entity.ts');
 if (!existsSync(entity))
   fail('§8 entity module missing', entity, 'not created');
-else if (read(entity).includes('__SET_BEFORE_LAUNCH__'))
-  fail('§8 responsible party not named', entity, 'ENTITY is still the placeholder');
+else if (/registered:\s*false/.test(read(entity)))
+  warn('§8 responsible party not yet named', entity,
+    'ENTITY.registered is false — POPIA s18(1)(b) wants a name and address. ' +
+    'Accepted deliberately on 2026-09-13 to open the waitlist; both legal pages ' +
+    'state the gap in the open. Clear this before Barrel sells anything.');
+
+if (warnings.length) {
+  console.error(`\n${warnings.length} warning(s) — not fatal:\n`);
+  for (const w of warnings) console.error(`  ! ${w}`);
+}
 
 if (failures.length) {
   console.error(`\n${failures.length} check failure(s):\n`);

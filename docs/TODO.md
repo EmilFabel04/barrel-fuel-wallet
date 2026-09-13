@@ -17,16 +17,22 @@ done — see the *Not deployed* section of `HANDOVER.md`.
 
 - [x] ~~**Create the Buttondown account and set `LIST_ID`**~~ — done 2026-09-13. The
       username is `barrelza`, verified live that day (`buttondown.com/barrelza` returns
-      200; a nonexistent username 404s). **Waiting on the branch `launch-wiring`, not
-      merged**, because merging it to `main` would auto-deploy a working form while
-      `/privacy` still names nobody — see the item below. Do not rename the Buttondown
-      account: the username is the entire endpoint the form posts to.
-- [ ] **Register the entity, or decide to trade personally, and fill in `ENTITY`** —
-      `web/data/entity.ts`, both `name` and `address`. `/privacy` needs a responsible
-      party for POPIA s18(1)(b); `/terms` needs to say whose terms they are. Second build
-      gate.
-- [ ] **Put MX records on `getbarrel.co.za`.** Checked 2026-09-10: the domain resolves
-      (GoDaddy nameservers, parked A records) but publishes **no MX record at all**, so
+      200; a nonexistent username 404s). Live on `main`. Do not rename the Buttondown
+      account: the username is the entire endpoint the form posts to, so a rename would
+      break every submission silently.
+- [ ] **Register the entity and fill in `ENTITY`** — `web/data/entity.ts`: set
+      `registered: true` and fill both `name` and `address`. Nothing else needs changing;
+      both legal pages switch over on their own.
+
+      **This no longer blocks the build.** On 2026-09-13 the site owner decided to open
+      the waitlist before the entity exists, on the grounds that the site says throughout
+      that Barrel is still being built. Both pages now state the gap in plain words
+      instead of printing a placeholder, and `check.mjs` warns on every build rather than
+      failing. The POPIA gap is real and still open: clear it before Barrel sells
+      anything, and before the first email goes out to the list.
+- [ ] **Put MX records on `getbarrel.co.za`.** Re-checked 2026-09-13, still none — and
+      now more urgent, because the waitlist is open and the policy is live. The domain
+      resolves (Vercel) but publishes **no MX record at all**, so
       `hello@getbarrel.co.za` refuses mail. Every right in the privacy policy — access,
       correction, deletion, objection — and the unsubscribe fallback route to that one
       address, and the footer publishes it on every page. No automated check can see this.

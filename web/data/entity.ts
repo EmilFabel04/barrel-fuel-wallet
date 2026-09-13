@@ -1,28 +1,34 @@
-// SET THIS BEFORE LAUNCH, together with LIST_ID in components/WaitlistForm.tsx.
-//
 // Who is behind this site. Two pages need it and they must not disagree:
 // /privacy names the responsible party because POPIA s18(1)(b) requires the
 // notice to give a name and an address, and /terms names the operator because
 // terms of use that never say whose terms they are cannot be agreed to or
 // enforced against anyone.
 //
-// Nothing in this repo knows who that is. The site says only "Barrel is being
-// built in South Africa", and no legal entity has been registered yet, so
-// there is nobody to name and no address to give.
+// `registered` is false until a legal entity exists. Both pages branch on it
+// and say plainly that there is no registered company yet, rather than leaving
+// a gap or — worse — printing a placeholder token at a reader. That happened:
+// the site went live on 2026-09-13 rendering the literal string
+// "__SET_BEFORE_LAUNCH__" where a name belongs, on both legal pages, because
+// the Vercel build ran `next build` and never called scripts/check.mjs.
 //
-// Every right in the privacy policy ends in "write to us". A reader who cannot
-// tell who "us" is has been handed a policy they cannot act on, which is worse
-// than a page that is not live yet — so scripts/check.mjs refuses the build
-// while either field is still the placeholder, exactly as it does for the
-// waitlist endpoint. Fill both in when the entity exists.
+// The site owner decided on 2026-09-13 to open the waitlist before the entity
+// exists, on the grounds that the site says throughout that Barrel is still
+// being built. That is a real decision and this file implements it — but it
+// does not make the POPIA gap disappear, so check.mjs warns on every build
+// while `registered` is false, and the copy on both pages states the gap in
+// the open rather than papering over it.
 //
-// One thing the check cannot see: the contact address below has to be a
-// mailbox somebody reads. As of 2026-09-10 getbarrel.co.za publishes no MX
-// record, so mail to it is refused. Both legal pages route every request a
-// reader can make to that address; set the MX records up before the site is
-// live, or the policy is a promise the domain cannot keep.
+// WHEN THE ENTITY EXISTS: set `registered` to true and fill in both fields.
+// Nothing else needs changing; both pages switch over on their own.
+//
+// One thing no check can see: `contact` has to be a mailbox somebody reads.
+// As of 2026-09-13 getbarrel.co.za publishes no MX record, so mail to it is
+// refused outright. Both legal pages route every request a reader can make —
+// access, correction, deletion, objection — to that address, and the footer
+// publishes it on every page. Set the MX records up.
 export const ENTITY = {
-  name: '__SET_BEFORE_LAUNCH__',
-  address: '__SET_BEFORE_LAUNCH__',
+  registered: false,
+  name: '',
+  address: '',
   contact: 'hello@getbarrel.co.za',
-} as const;
+};
