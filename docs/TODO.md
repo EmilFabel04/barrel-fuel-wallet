@@ -15,9 +15,12 @@ Nobody but the site owner can clear the first three. `web/` is built and verifie
 **not deployed**, and `npm run verify` deliberately fails on two of these until they are
 done — see the *Not deployed* section of `HANDOVER.md`.
 
-- [ ] **Create the Buttondown account and set `LIST_ID`** — `web/components/WaitlistForm.tsx`.
-      It needs the owner's own billing and identity, so nobody else can do it. Until then
-      the form posts nowhere and `check.mjs` refuses the build.
+- [x] ~~**Create the Buttondown account and set `LIST_ID`**~~ — done 2026-09-13. The
+      username is `barrelza`, verified live that day (`buttondown.com/barrelza` returns
+      200; a nonexistent username 404s). **Waiting on the branch `launch-wiring`, not
+      merged**, because merging it to `main` would auto-deploy a working form while
+      `/privacy` still names nobody — see the item below. Do not rename the Buttondown
+      account: the username is the entire endpoint the form posts to.
 - [ ] **Register the entity, or decide to trade personally, and fill in `ENTITY`** —
       `web/data/entity.ts`, both `name` and `address`. `/privacy` needs a responsible
       party for POPIA s18(1)(b); `/terms` needs to say whose terms they are. Second build
@@ -27,10 +30,16 @@ done — see the *Not deployed* section of `HANDOVER.md`.
       `hello@getbarrel.co.za` refuses mail. Every right in the privacy policy — access,
       correction, deletion, objection — and the unsubscribe fallback route to that one
       address, and the footer publishes it on every page. No automated check can see this.
-- [ ] **Create the Vercel project.** Root Directory `web/`, build `next build`, output
-      `out`, no environment variables. Deploy a preview first.
-- [ ] **Point the domain at Vercel** once the preview looks right. It is currently parked.
-- [ ] **Set the two Buttondown dashboard toggles**, once the account exists:
+- [x] ~~**Create the Vercel project**~~ and ~~**point the domain at it**~~ — both done.
+      `getbarrel.co.za` serves from Vercel and redirects to `www.`.
+- [ ] **Change the Vercel build command to `npm run verify`.** `web/vercel.json` on the
+      `launch-wiring` branch does this. It matters: the project was deployed with the
+      default `next build`, which never runs `check.mjs`, so the site went live on
+      2026-09-13 with all three `__SET_BEFORE_LAUNCH__` placeholders rendered on public
+      pages — a form posting to a nonexistent endpoint, and both legal pages naming
+      nobody. The gate was correct and nothing was calling it.
+- [ ] **Set the two Buttondown dashboard toggles.** The account now exists; none of
+      these have been touched yet:
       - Open and click tracking stay **off**. `/privacy` promises the launch email carries
         neither, in writing. Turning either on makes the policy false, and the policy has
         to change first.

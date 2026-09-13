@@ -91,9 +91,14 @@
 // field and the submit button, for the full reasoning and what Buttondown's
 // own documentation says about spam handling — checked 2026-09-10.
 //
-// SET THIS BEFORE LAUNCH. The site owner creates the Buttondown account;
-// nobody else can — it requires their own billing and identity.
-const LIST_ID = '__SET_BEFORE_LAUNCH__';
+// The Buttondown username, which IS the endpoint — see ENDPOINT below. Set
+// 2026-09-13 from the account the site owner created; verified the same day
+// that buttondown.com/barrelza returns 200 while a nonexistent username 404s.
+//
+// Do not rename the Buttondown account. The username is the whole address the
+// form posts to, so renaming it silently breaks every submission on the live
+// site with no error anyone would see until the list stopped growing.
+const LIST_ID = 'barrelza';
 
 const ENDPOINT = `https://buttondown.com/api/emails/embed-subscribe/${LIST_ID}`;
 
