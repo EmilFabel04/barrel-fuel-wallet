@@ -65,11 +65,29 @@ done — see the *Not deployed* section of `HANDOVER.md`.
 
       Safe only because no `__SET_BEFORE_LAUNCH__` token remains in any source *value* —
       it survives in comments in `data/entity.ts` and `scripts/check.mjs` alone.
-- [ ] **Set the two Buttondown dashboard toggles.** The account now exists; none of
-      these have been touched yet:
-      - Open and click tracking stay **off**. `/privacy` promises the launch email carries
-        neither, in writing. Turning either on makes the policy false, and the policy has
-        to change first.
+- [ ] **Decide the Buttondown welcome email.** Inspected the live account (`Barrel ZA`)
+      on 2026-09-14. *Welcome email* — "send a welcome email when a subscriber confirms" —
+      is **on**, and the site says the opposite: "We'll email you once, when Barrel
+      launches. **Nothing else.** You'll get a confirmation email first." That promises
+      exactly two emails and the welcome email is a third, undisclosed one. Either switch
+      it off at Settings → Subscribing, or change the copy in `WaitlistForm.tsx` and
+      `/privacy` to admit it. Left on deliberately on 2026-09-14 — the site owner chose to
+      decide later — so the published promise is inaccurate until one of the two happens.
+
+      State of the rest of that account, same inspection:
+      - Open and click tracking are already **off** (Buttondown's defaults). `/privacy`
+        promises the launch email carries neither, in writing, so leave them off. Turning
+        either on makes the policy false, and the policy has to change first.
+      - *UTM information* is **on**: it appends `utm_*` parameters to links in outgoing
+        emails. Not open or click tracking, so it does not breach the policy — but the
+        site runs no analytics, so nothing consumes them. Harmless, and pointless.
+      - **The confirmation email cannot be customised on the current plan.** "Custom
+        transactional emails is only available for accounts on the Standard plan or
+        higher." Subscribers get Buttondown's default wording, and that wording is the
+        POPIA consent record. Upgrading is the only way to change it.
+      - Public subscriptions on, double opt-in on, subscriber cleanup on, and both
+        post-subscribe redirects empty — so a subscriber lands on Buttondown's own page
+        after submitting, not back on getbarrel.co.za.
       - Firewall is off by default (`docs.buttondown.com/firewall`). Switch it on if you
         want the extra spam screening; it is a dashboard setting, not a code change.
 
