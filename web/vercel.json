@@ -1,5 +1,0 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "next build && (node scripts/check.mjs || echo 'CHECK_MJS_FAILED_SEE_ABOVE')",
-  "outputDirectory": "out"
-}

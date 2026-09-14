@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/check.mjs || echo CHECK_MJS_FAILED_SEE_ABOVE",
     "start": "next start",
     "lint": "eslint",
     "check": "node scripts/check.mjs",
