@@ -74,6 +74,23 @@ done — see the *Not deployed* section of `HANDOVER.md`.
       `/privacy` to admit it. Left on deliberately on 2026-09-14 — the site owner chose to
       decide later — so the published promise is inaccurate until one of the two happens.
 
+- [ ] **Decide the Buttondown "From" name.** *Author name* — "shown in the email 'From'
+      field" — is **`Emil`**, the account's signup default. Subscribers signed up for
+      Barrel, so that is who the confirmation and launch emails appear to come from. The
+      newsletter itself is already named `Barrel ZA`. This needs no email address and no
+      DNS: Buttondown sends from its own domain, so the display name can say `Barrel`
+      today. Left as-is on 2026-09-14 because sending as a person is a legitimate choice,
+      not obviously a mistake — but it should be a decision, not a default.
+
+      **Buttondown's accent colour is `#9A3200`, not `#FF6A00`, and that is deliberate.**
+      Set 2026-09-14 on both Settings → Design → Web and → Email. Buttondown exposes one
+      accent colour and applies it to *links as well as buttons* ("Applied to links and
+      buttons in your emails"), so it lands on text. The brand amber `--accent: #FF6A00`
+      is fill-only by construction — `globals.css` records it at 2.87:1 on white, which
+      fails as text — so the site's own text twin `--accent-text: #9A3200` (7.42:1, AAA)
+      is the correct token for a single-slot system. If anyone later "corrects" Buttondown
+      to `#FF6A00` to match the site, they will make every link in every email unreadable.
+
       State of the rest of that account, same inspection:
       - Open and click tracking are already **off** (Buttondown's defaults). `/privacy`
         promises the launch email carries neither, in writing, so leave them off. Turning
