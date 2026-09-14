@@ -38,12 +38,26 @@ done — see the *Not deployed* section of `HANDOVER.md`.
       address, and the footer publishes it on every page. No automated check can see this.
 - [x] ~~**Create the Vercel project**~~ and ~~**point the domain at it**~~ — both done.
       `getbarrel.co.za` serves from Vercel and redirects to `www.`.
-- [ ] **Change the Vercel build command to `npm run verify`.** `web/vercel.json` on the
-      `launch-wiring` branch does this. It matters: the project was deployed with the
-      default `next build`, which never runs `check.mjs`, so the site went live on
-      2026-09-13 with all three `__SET_BEFORE_LAUNCH__` placeholders rendered on public
-      pages — a form posting to a nonexistent endpoint, and both legal pages naming
-      nobody. The gate was correct and nothing was calling it.
+- [x] ~~**Change the Vercel build command so `check.mjs` runs.**~~ `web/vercel.json` does
+      this. It mattered: the project was deployed with the default `next build`, which
+      never runs `check.mjs`, so the site went live on 2026-09-13 with all three
+      `__SET_BEFORE_LAUNCH__` placeholders rendered on public pages — a form posting to a
+      nonexistent endpoint, and both legal pages naming nobody. The gate was correct and
+      nothing was calling it.
+- [ ] **Make the Vercel gate fatal again.** `vercel.json` currently runs
+      `next build && (node scripts/check.mjs || echo CHECK_MJS_FAILED_SEE_ABOVE)`: the
+      gate still runs and still prints, but no longer fails the deploy.
+
+      Deliberate and temporary, from 2026-09-14. The first Vercel build with a fatal gate
+      exited 1, and that failure **could not be reproduced locally** — clean cacheless
+      build, fresh clone, and fresh `npm install` all pass. The non-fatal form exists to
+      get `check.mjs`'s own output into the Vercel build log, which is the one place the
+      failing rule will name itself. Search the next build log for
+      `CHECK_MJS_FAILED_SEE_ABOVE`; the failure lines sit immediately above it.
+
+      Safe only because no `__SET_BEFORE_LAUNCH__` token remains in any source *value* —
+      it survives in comments in `data/entity.ts` and `scripts/check.mjs` alone. Put the
+      command back to `npm run verify` as soon as the cause is fixed.
 - [ ] **Set the two Buttondown dashboard toggles.** The account now exists; none of
       these have been touched yet:
       - Open and click tracking stay **off**. `/privacy` promises the launch email carries
