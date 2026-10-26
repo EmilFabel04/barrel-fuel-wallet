@@ -54,7 +54,7 @@ export default function Settings() {
           </View>
           <View>
             <Text style={{ fontFamily: 'Figtree_700Bold', fontSize: 20, letterSpacing: -0.4, color: t.text }}>Thabo Makhubela</Text>
-            <Readout size={12} weight="500" color={t.textMuted} style={{ marginTop: 8 }}>+27 82 441 0912 · verified</Readout>
+            <Readout size={12} weight="500" color={t.textMuted} style={{ marginTop: 8 }}>+27 82 123 4567 · verified</Readout>
           </View>
         </View>
 
@@ -139,7 +139,7 @@ export default function Settings() {
             }
           />
           <Readout size={11} weight="500" color={t.textMuted} style={{ textAlign: 'center' }}>
-            Barrel v2.4.0 · FSP 51284
+            Barrel v2.4.0 · FSP number pending
           </Readout>
         </View>
       </ScrollView>

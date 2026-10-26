@@ -20,7 +20,7 @@ Copied verbatim from the spec. Every task's requirements implicitly include this
 - **No component may reference a raw hex value.** All colour comes from `useTheme()`.
 - **Geometry:** border radius **3px on buttons only** — cards, chips, tabs and inputs are square. Borders always 1px. **No shadows, no gradients, no blur.** Screen horizontal padding 26px. Primary button height 58px; in-card CTA 54px; keypad key 62px.
 - **Typography:** Outfit 300–900. Numeric hero = Outfit 800, `fontVariant: ['tabular-nums']`, letterSpacing −0.045em converted to points at call site. Section labels = platform monospace 600, 10px, 0.16em, uppercase, `textMuted`.
-- **Fixed data:** price `R21.87/L` petrol 95 Gauteng inland (+0.55%); balance `42.6 L`; app "today" is **30 September 2026**; holder Thabo Makhubela (`TM`), `+27 82 441 0912`, card `•••• 4127`, vehicle `CA 418 921`, payment `FNB ••4127`; footer `Barrel v2.4.0 · FSP 51284`.
+- **Fixed data:** price `R21.87/L` petrol 95 Gauteng inland (+0.55%); balance `42.6 L`; app "today" is **30 September 2026**; holder Thabo Makhubela (`TM`), `+27 82 123 4567`, card `•••• 4127`, vehicle `CA 418 921`, payment `FNB ••4127`; footer `Barrel v2.4.0 · FSP number pending`.
 - **Guardrails:** 90-day redemption window; 150 L per-vehicle monthly cap; expiry converts litres back to rand paid, never to zero.
 - **Package manager:** npm. **Node:** 20+.
 
@@ -2933,7 +2933,7 @@ export default function Settings() {
           </View>
           <View>
             <Text style={{ fontFamily: 'Outfit_700Bold', fontSize: 20, letterSpacing: -0.4, color: t.text }}>Thabo Makhubela</Text>
-            <Num size={12} weight="500" color={t.textMuted} style={{ marginTop: 8 }}>+27 82 441 0912 · verified</Num>
+            <Num size={12} weight="500" color={t.textMuted} style={{ marginTop: 8 }}>+27 82 123 4567 · verified</Num>
           </View>
         </View>
 
@@ -2968,7 +2968,7 @@ export default function Settings() {
         <View style={{ paddingTop: 24, paddingBottom: 12, gap: 14 }}>
           <Button label="SIGN OUT" variant="secondary" height={54} />
           <Num size={11} weight="500" color={t.textMuted} style={{ textAlign: 'center' }}>
-            Barrel v2.4.0 · FSP 51284
+            Barrel v2.4.0 · FSP number pending
           </Num>
         </View>
       </ScrollView>

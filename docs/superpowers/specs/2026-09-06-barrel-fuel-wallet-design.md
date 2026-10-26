@@ -334,7 +334,7 @@ Mock content is copied exactly so the build is comparable to the canvas side by 
 - Opening balance: `42.6 L`, all petrol 95. The design's 31.2 / 11.4 grade split on the
   Balance screen is replaced by an expiry split (§9.4), which is the more useful cut in a
   single-grade product and serves the §8.1 guardrail.
-- Holder: Thabo Makhubela, initials TM, `+27 82 441 0912`, card `•••• 4127`,
+- Holder: Thabo Makhubela, initials TM, `+27 82 123 4567`, card `•••• 4127`,
   vehicle `CA 418 921`, payment method `FNB ••4127`.
 - Network: the design's `412 stations · 9 provinces` is **replaced**. A station-agnostic
   card has no network to count, and quoting one understates the product. The Stations
@@ -368,7 +368,7 @@ Mock content is copied exactly so the build is comparable to the canvas side by 
   from the canvas.
 - Settings toggles: Price increase alerts (on), Weekly balance summary (on),
   Station promotions (off).
-- Footer: `Barrel v2.4.0 · FSP 51284`.
+- Footer: `Barrel v2.4.0 · FSP number pending`.
 
 ### 4.2 Two arithmetic defects in the source design
 

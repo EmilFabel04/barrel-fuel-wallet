@@ -181,7 +181,7 @@ cd web && npm run lint && npm run verify
 
 The app's tests cover `src/lib`, `src/data`, both stores (including a real write through the persist middleware), isolated components, and the theme's contrast ratios. No test renders a full screen. A chart bug that squeezed both lines into the middle third of the panel passed every test and was caught only by opening the app. Visual changes are therefore checked by running it, and `.claude/skills/run-barrel/SKILL.md` documents how to do that on web, the Android emulator and the iOS simulator.
 
-GitHub Actions runs the website's lint and `npm run verify` on every push and pull request. The app's tests and type-check run locally for now; adding them to CI is the first task in the foundations plan.
+GitHub Actions runs on every push and pull request: the app's type-check and Jest suite, and the website's lint and `npm run verify`.
 
 ## Status and known gaps
 

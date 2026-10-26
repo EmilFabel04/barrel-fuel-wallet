@@ -5,6 +5,19 @@ on:
   pull_request:
 
 jobs:
+  # The Expo app: type-check, then the Jest suite.
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm test
+
   # The marketing site in web/: lint, then `npm run verify`, which is
   # `next build` followed by the design and content checks in scripts/check.mjs.
   web:
