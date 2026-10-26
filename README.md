@@ -214,4 +214,4 @@ The specs and plans under `docs/superpowers/` were written to drive AI coding ag
 
 ## License
 
-No license file has been added, so default copyright applies.
+MIT. See [LICENSE](LICENSE).
